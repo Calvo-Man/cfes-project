@@ -1,4 +1,5 @@
 <script setup>
+//SideBar.vue
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 //import logoURL from '../assets/logo.png'
 import MenuItem from './MenuItem.vue'
@@ -60,7 +61,7 @@ onBeforeUnmount(() => {
 <template>
   <div>
     <button
-      class="menu-toggle-no-expanded"
+      class="menu-toggle-no-expande"
       :class="`${is_expanded ? 'is-expanded' : ''}`"
       @click.stop="toggleSidebar"
     >
@@ -102,16 +103,16 @@ onBeforeUnmount(() => {
 </template>
 <script>
 import MenuItem from './MenuItem.vue'
-import store from '@/store'
-import { MenuSidebar } from '@/assets/js/MenuSidebar'
+import store from '@/store/userStore'
+import { MenuSideBar } from '@/assets/js/MenuSideBar'
 
 export default {
-  name: 'recursive-menu',
+  name: 'SideBar',
   data: () => ({
     smallMenu: false,
     is_expanded: true,
     //Menu de opciones de la barra lateral
-    menuTree: MenuSidebar,
+    menuTree: MenuSideBar,
     dialogLogout: false,
   }),
   components: {
@@ -178,10 +179,10 @@ aside {
   display: flex;
   flex-direction: column;
 
-  background-color: var(--light);
+  background-color: var(--blue);
   color: var(--light);
 
-  width: calc(2rem + 32px);
+  width: calc(2.5rem + 32px);
   overflow: hidden;
   min-height: 100vh;
   padding: 1rem;
@@ -220,7 +221,7 @@ aside {
       &:hover {
         .material-icons {
           color: var(--red-dark);
-          transform: translateX(0.5rem);
+          //transform: translateX(0.5rem);
         }
       }
     }
@@ -233,7 +234,7 @@ aside {
   }
 
   h3 {
-    color: var(--dark);
+    color: var(--light);
     font-size: 0.975rem;
     margin-bottom: 0.5rem;
     text-transform: uppercase;
@@ -253,11 +254,11 @@ aside {
 
       .material-icons {
         font-size: 2rem;
-        color: var(--dark);
+        color: var(--light);
         transition: 0.2s ease-in-out;
       }
       .text {
-        color: var(--dark);
+        color: var(--light);
         transition: 0.2s ease-in-out;
       }
 
@@ -273,11 +274,11 @@ aside {
 
       &.router-link-exact-active {
         background-color: var(--dark);
-        border-right: 5px solid var(--red-dark);
+        border-right: 5px solid var(--light);
 
         .material-icons,
         .text {
-          color: var(--red-dark);
+          color: var(--light);
         }
       }
     }

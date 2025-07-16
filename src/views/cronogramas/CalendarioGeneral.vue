@@ -1,0 +1,313 @@
+<template>
+  <v-container class="py-4" style="max-width: 900px">
+    <v-row justify="center">
+      <v-col cols="12">
+        <v-col cols="12" class="text-center bg-primary pa-0">
+          <h2 class="text-h5 font-weight-bold">Calendario de Aseo - {{ nombreMes }} {{ año }}</h2>
+        </v-col>
+        <div class="calendar-grid">
+          <!-- Encabezados -->
+          <div class="day-header" v-for="d in diasSemana" :key="d">{{ d }}</div>
+
+          <!-- Espacios vacíos según el día de inicio del mes -->
+          <div v-for="n in diaInicioMes" :key="'vacio' + n"></div>
+
+          <!-- Días del mes -->
+          <div
+            v-for="dia in diasEnMes"
+            :key="'dia' + dia"
+            class="calendar-day"
+            @click="asignarEvento(dia, estado.mes, estado.año)"
+            :class="{ asignado: esDiaAsignado(dia), libre: !esDiaAsignado(dia) }"
+          >
+            <div class="dia-numero">{{ dia }}</div>
+            <div
+              class="asignacion"
+              v-for="evento in asignacionesPorFecha(claveFecha(dia))"
+              :key="evento.id"
+            >
+              <p class="name-event text-body-2">{{ evento.name }}</p>
+            </div>
+          </div>
+        </div>
+      </v-col>
+      <v-dialog v-model="showEventosDelDia" max-width="500">
+        <v-card>
+          <v-card-title class="font-weight-bold"
+            >Eventos para {{ fechaEvento }}
+            <v-btn variant="outlined" @click="asignarEvento(dia, estado.mes, estado.año)"
+              >Agregar</v-btn
+            ></v-card-title
+          >
+          <v-card-text>
+            <v-list dense>
+              <v-list-item v-for="(evento, index) in eventosDelDiaSeleccionado" :key="index">
+                <v-list-item-content>
+                  <v-list-item-title class="text-subtitle-1 font-weight-medium">{{
+                    evento.name
+                  }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ evento.description }}</v-list-item-subtitle>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn color="primary" @click="showEventosDelDia = false">Cerrar</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+      <!-- Navegación -->
+      <v-col cols="12" class="text-center">
+        <v-btn @click="cambiarMes(-1)" color="primary" class="mx-2"> Anterior </v-btn>
+
+        <v-btn @click="cambiarMes(1)" color="primary"> Siguiente </v-btn>
+      </v-col>
+    </v-row>
+    <!-- ENVOLTORIO CLARO PARA EL PDF -->
+  </v-container>
+
+  <v-dialog v-model="showAgendar" @update:modelValue="onDialogChange" max-width="600">
+    <v-card class="pa-3 elevation-3">
+      <h3 class="dialog-title">Agendar {{ fechaEvento }}</h3>
+      <v-card-text>
+        <v-form ref="form">
+          <v-text-field label="Nombre de evento" v-model="events.name" required></v-text-field>
+          <v-text-field label="Descripción" v-model="events.description" required></v-text-field>
+        </v-form>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn color="red" @click="cerrarModal"> Cerrar </v-btn>
+
+        <v-btn color="primary" @click="crearEvento"> Agendar </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <Notificacion ref="notificacionRef" />
+</template>
+
+<script setup>
+import { io } from 'socket.io-client'
+
+import { nextTick } from 'vue'
+import api from '@/plugins/axios'
+import Notificacion from '@/components/Notificacion.vue'
+
+import { ref, reactive, computed, onMounted } from 'vue'
+const events = ref({
+  name: null,
+  description: null,
+  date: null,
+})
+const showEventosDelDia = ref(false)
+const eventosDelDiaSeleccionado = ref([])
+
+const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const showAgendar = ref(false)
+const getEvents = ref({
+  events: [],
+})
+const estado = reactive({
+  mes: new Date().getMonth(),
+  año: new Date().getFullYear(),
+  asignacionesPorMes: {},
+})
+const notificacionRef = ref(null)
+
+const nombreMes = computed(() =>
+  new Date(estado.año, estado.mes).toLocaleString('es-CO', { month: 'long' }),
+)
+const diasEnMes = computed(() => new Date(estado.año, estado.mes + 1, 0).getDate())
+const diaInicioMes = computed(() => new Date(estado.año, estado.mes, 1).getDay())
+const año = computed(() => estado.año)
+const fechaEvento = computed(
+  () =>
+    new Date(events.value.date).toLocaleDateString('es-CO', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }),
+  console.log(events.value.date),
+)
+function claveFecha(dia) {
+  const mesStr = String(estado.mes + 1).padStart(2, '0')
+  const diaStr = String(dia).padStart(2, '0')
+  return `${estado.año}-${mesStr}-${diaStr}`
+}
+
+function esDiaAsignado(dia) {
+  const fecha = claveFecha(dia) // Ej: "2025-07-15"
+  const mesClave = `${estado.año}-${String(estado.mes + 1).padStart(2, '0')}`
+  const asignaciones = estado.asignacionesPorMes[mesClave] || []
+  return asignaciones.some((evento) => evento.date?.startsWith(fecha))
+}
+
+function asignacionesPorFecha(fecha) {
+  const mesClave = `${estado.año}-${String(estado.mes + 1).padStart(2, '0')}`
+  const eventosMes = estado.asignacionesPorMes[mesClave] || []
+  return eventosMes.filter((evento) => evento.date?.startsWith(fecha))
+}
+
+function cambiarMes(delta) {
+  estado.mes += delta
+  if (estado.mes < 0) {
+    estado.mes = 11
+    estado.año--
+  } else if (estado.mes > 11) {
+    estado.mes = 0
+    estado.año++
+  }
+}
+
+onMounted(async () => {
+  await obtenerEventos()
+})
+async function obtenerEventos() {
+  try {
+    const response = await api.get('/eventos')
+    getEvents.value.events = response.data
+    estado.asignacionesPorMes = response.data
+    console.log('Eventos obtenidos:', getEvents.value.events)
+    console.log('Asignaciones obtenidas:', estado.asignacionesPorMes)
+  } catch (error) {
+    console.error('Error al obtener las asignaciones:', error)
+  }
+}
+
+// async function generarYEnviarPDF() {
+//   mostrarPDF.value = true
+//   await nextTick()
+
+//   const elemento = document.getElementById('pdf-target')
+//   const canvas = await html2canvas(elemento, { scale: 2 })
+//   const imgData = canvas.toDataURL('image/jpeg', 1.0)
+
+//   const pdf = new jsPDF({
+//     orientation: 'portrait',
+//     unit: 'mm',
+//     format: 'a4',
+//   })
+
+//   // Cálculo dinámico
+//   const imgProps = pdf.getImageProperties(imgData)
+//   const pdfWidth = pdf.internal.pageSize.getWidth()
+//   const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
+
+//   pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight)
+//   const pdfBlob = pdf.output('blob')
+
+//   mostrarPDF.value = false
+
+//   const formData = new FormData()
+//   formData.append('pdf', pdfBlob, `calendario-aseo-${estado.año}-${estado.mes + 1}.pdf`)
+
+//   try {
+//     await api.post('/aseos/enviar', formData, {
+//       headers: { 'Content-Type': 'multipart/form-data' },
+//     })
+//     console.log('✅ PDF enviado correctamente')
+//   } catch (err) {
+//     console.error('❌ Error al enviar el PDF', err)
+//   }
+// }
+async function asignarEvento(dia, mes, año) {
+  const fecha = new Date(año, mes, dia)
+  const clave = claveFecha(dia)
+  const asignaciones = asignacionesPorFecha(clave)
+  showEventosDelDia.value = false
+
+  if (asignaciones.length > 0) {
+    eventosDelDiaSeleccionado.value = asignaciones
+    events.value.date = fecha.toISOString()
+
+    showEventosDelDia.value = true
+  } else {
+    showAgendar.value = true
+    events.value.date = fecha.toISOString()
+  }
+}
+
+async function crearEvento() {
+  try {
+    const response = await api.post('/eventos', events.value)
+    console.log('Evento creado:', response.data)
+    obtenerEventos()
+    cerrarModal()
+    notificacionRef.value.mostrar('Evento creado', 'success')
+  } catch (error) {
+    console.error('Error al crear el evento:', error)
+    notificacionRef.value.mostrar('Error al crear el evento', 'error')
+  }
+}
+function cerrarModal() {
+  events.value = {
+    name: null,
+    description: null,
+    date: null,
+  }
+  showAgendar.value = false
+}
+function onDialogChange(val) {
+  showAgendar.value = val
+  if (!val) {
+    cerrarModal()
+  }
+}
+</script>
+
+<style scoped lang="scss">
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+.day-header {
+  font-weight: bold;
+  text-align: center;
+  color: var(--dark);
+}
+.calendar-day {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  min-height: 80px;
+  padding: 8px;
+  background-color: #f9f9f9;
+  cursor: pointer;
+}
+.calendar-day.asignado {
+  background-color: var(--blue);
+  color: var(--light);
+}
+.calendar-day.libre {
+  background-color: #f0f0f0;
+  opacity: 0.7;
+}
+.dia-numero {
+  font-weight: bold;
+}
+.asignacion {
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+.pdf-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background-color: var(--grey);
+  position: relative;
+  z-index: 1;
+
+  .fondo-personalizado {
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+
+    img {
+      height: auto;
+      opacity: 0.5;
+    }
+  }
+}
+</style>

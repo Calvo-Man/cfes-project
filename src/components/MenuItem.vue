@@ -1,7 +1,7 @@
 <template>
   <div class="menu-item" :class="{ opened: expanded }">
     <!-- Si 'to' no es null, renderiza <router-link>, de lo contrario, renderiza un <div> -->
-    <router-link v-if="to" class="button" :to="to" v-show="showItems">
+    <router-link v-if="to" class="button" :to="to" v-show="showItems" style="height: 50px">
       <div class="label" @click="toggleMenu() && CloseSidebar()">
         <div class="left">
           <span v-if="icon" class="material-icons">{{ icon }}</span>
@@ -14,7 +14,7 @@
     </router-link>
 
     <!--Si href no es null, renderiza <a>, de lo contrario, renderiza un <div>-->
-    <div v-else class="button" @click="toggleMenu()" v-show="showItems">
+    <div v-else class="button" @click="toggleMenu()" v-show="showItems" style="height: 50px">
       <a class="label" :href="href" :download="shouldDownload ? '' : null">
         <div class="left">
           <span v-if="icon" class="material-icons">{{ icon }}</span>
@@ -52,8 +52,6 @@
   </div>
 </template>
 <script>
-import store from '@/store'
-
 export default {
   name: 'menu-item',
   data() {
@@ -79,11 +77,11 @@ export default {
       return this.smallMenu ? this.depth > 0 : true
     },
     showItems() {
-      if (this.noRequiresAdmin === true && store.getters.isAuthenticated === false) {
+      if (this.noRequiresAdmin === true) {
         return true
-      } else if (this.noRequiresAdmin === true && store.getters.isAuthenticated === true) {
+      } else if (this.noRequiresAdmin === true) {
         return true
-      } else if (this.noRequiresAdmin === false && store.getters.isAuthenticated === true) {
+      } else if (this.noRequiresAdmin === false) {
         return true
       } else {
         return false

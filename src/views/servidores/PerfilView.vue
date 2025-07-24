@@ -121,8 +121,8 @@
       <v-card-title class="text-h5"> Cambiar preferencia de horario </v-card-title>
       <v-card-text>
         <p>
-          <strong>Nota: </strong>El horario de aseo se genera de manera automática los dias 25 de
-          cada mes usando la preferencia seleccionada.
+          <strong>Nota: </strong>El horario de aseo se genera de manera automáticamente los dias 25
+          de cada mes usando la preferencia seleccionada.
         </p>
         <p>¿Estas seguro de continuar?</p>
       </v-card-text>
@@ -171,6 +171,7 @@ const cambiarPassword = async () => {
     notificacionRef.value.mostrar('Por favor ingresa una contraseña', 'warning')
     return
   }
+
   try {
     await api.patch(`/auth/change-password`, {
       password: passwordNueva.value,
@@ -182,6 +183,8 @@ const cambiarPassword = async () => {
     console.error(error)
     alert('Error al cambiar la contraseña')
   }
+
+  passwordChange.value = false
 }
 const cambiarPasswordConfirm = () => {
   if (!passwordNueva.value) {

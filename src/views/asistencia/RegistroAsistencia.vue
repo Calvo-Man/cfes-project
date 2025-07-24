@@ -83,6 +83,19 @@
     </v-data-table>
   </v-card>
   <Notificacion ref="notificacionRef" />
+  <v-dialog v-model="dialogDelete" max-width="500">
+    <v-card>
+      <v-card-title class="text-h5"> Eliminar asistencia </v-card-title>
+      <v-card-text>
+        <p>¿Estas seguro de continuar?</p>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn color="green" variant="elevated" @click="dialogDelete = false"> Cancelar </v-btn>
+        <v-btn color="red" variant="elevated" @click="confirmDelete"> Continuar </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup>
@@ -114,7 +127,8 @@ const headers = ref([
 
 const asistencias = ref([])
 const notificacionRef = ref(null)
-
+const casa_id = ref(null)
+const dialogDelete = ref(false)
 const ultimoCampoEscrito = ref('')
 let map = null
 let marker = null
@@ -320,14 +334,19 @@ async function editar(item) {
 }
 
 async function eliminar(item) {
+  dialogDelete.value = true
+  casa_id.value = item
+}
+async function confirmDelete() {
   try {
-    await api.delete(`/asistencias/${item.id}`)
+    await api.delete(`/asistencias/${casa_id.value.id}`)
     obtenerAsistencias()
     notificacionRef.value.mostrar('Asistencia eliminada', 'error')
   } catch (error) {
     console.error('Error al eliminar la asistencia:', error)
     notificacionRef.value.mostrar('Error al eliminar la asistencia', 'error')
   }
+  dialogDelete.value = false
 }
 </script>
 

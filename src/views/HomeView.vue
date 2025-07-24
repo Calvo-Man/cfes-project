@@ -10,7 +10,6 @@
           </h2>
         </v-col>
       </v-row>
-
       <!-- Mensaje de bienvenida -->
       <v-row justify="center" class="mb-4">
         <v-col cols="12" md="8" class="text-center">
@@ -53,7 +52,7 @@
         </v-col>
         <v-col cols="12" sm="4" class="text-center">
           <v-card color="indigo" dark>
-            <v-card-title class="justify-center">Asistencias</v-card-title>
+            <v-card-title class="justify-center">Nuevas Asistencias</v-card-title>
             <v-card-text>{{ estadisticas.asistencias }} este mes</v-card-text>
           </v-card>
         </v-col>

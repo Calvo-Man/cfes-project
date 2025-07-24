@@ -73,7 +73,8 @@
                   color="deep-purple lighten-4"
                   label
                 >
-                  {{ encargado.name }} {{ encargado.apellido }} - {{ encargado.rol }}
+                  {{ encargado.name }} {{ encargado.apellido }} - {{ encargado.rol }} -
+                  {{ encargado.telefono }}
                 </v-chip>
               </v-card>
             </v-col>
@@ -192,7 +193,8 @@
                 color="deep-purple lighten-4"
                 label
               >
-                {{ encargado.name }} {{ encargado.apellido }} - {{ encargado.rol }}
+                {{ encargado.name }} {{ encargado.apellido }} - {{ encargado.rol }} -
+                {{ encargado.telefono }}
               </v-chip>
             </v-card>
           </v-col>

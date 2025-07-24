@@ -66,10 +66,8 @@
 </template>
 
 <script setup>
-import { io } from 'socket.io-client'
-// import html2canvas from 'html2canvas'
-// import jsPDF from 'jspdf'
-// import { nextTick } from 'vue'
+//import { io } from 'socket.io-client'
+
 import api from '@/plugins/axios'
 import { useUserStore } from '@/store/userStore'
 
@@ -77,7 +75,8 @@ import { ref, reactive, computed, onMounted } from 'vue'
 
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const userStore = useUserStore()
-const userId = 100
+const userId = userStore.user.id
+console.log(userId)
 
 const estado = reactive({
   mes: new Date().getMonth(),
@@ -144,51 +143,15 @@ onMounted(async () => {
   await obtenerAsignaciones()
 })
 const mostrarPDF = ref(false)
-const socket = io('http://localhost:3000') // Cambia al dominio real si es producción
+//const socket = io('http://localhost:3000') // Cambia al dominio real si es producción
 
-socket.on('nuevo-horario', async () => {
-  console.log('📢 Se generó un nuevo horario desde el backend')
-  //await obtenerAsignaciones()
-  setTimeout(() => {
-    generarYEnviarPDF()
-  }, 500) // Le das tiempo a Vue de renderizar
-})
-// async function generarYEnviarPDF() {
-//   mostrarPDF.value = true
-//   await nextTick()
-
-//   const elemento = document.getElementById('pdf-target')
-//   const canvas = await html2canvas(elemento, { scale: 2 })
-//   const imgData = canvas.toDataURL('image/jpeg', 1.0)
-
-//   const pdf = new jsPDF({
-//     orientation: 'portrait',
-//     unit: 'mm',
-//     format: 'a4',
-//   })
-
-//   // Cálculo dinámico
-//   const imgProps = pdf.getImageProperties(imgData)
-//   const pdfWidth = pdf.internal.pageSize.getWidth()
-//   const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
-
-//   pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight)
-//   const pdfBlob = pdf.output('blob')
-
-//   mostrarPDF.value = false
-
-//   const formData = new FormData()
-//   formData.append('pdf', pdfBlob, `calendario-aseo-${estado.año}-${estado.mes + 1}.pdf`)
-
-//   try {
-//     await api.post('/aseos/enviar', formData, {
-//       headers: { 'Content-Type': 'multipart/form-data' },
-//     })
-//     console.log('✅ PDF enviado correctamente')
-//   } catch (err) {
-//     console.error('❌ Error al enviar el PDF', err)
-//   }
-// }
+// socket.on('nuevo-horario', async () => {
+//   console.log('📢 Se generó un nuevo horario desde el backend')
+//   //await obtenerAsignaciones()
+//   setTimeout(() => {
+//     generarYEnviarPDF()
+//   }, 500) // Le das tiempo a Vue de renderizar
+// })
 </script>
 
 <style scoped lang="scss">

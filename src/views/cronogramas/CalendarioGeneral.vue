@@ -3,7 +3,7 @@
     <v-row justify="center">
       <v-col cols="12">
         <v-col cols="12" class="text-center bg-primary pa-0">
-          <h2 class="text-h5 font-weight-bold">Calendario de Aseo - {{ nombreMes }} {{ año }}</h2>
+          <h2 class="text-h5 font-weight-bold">Calendario General - {{ nombreMes }} {{ año }}</h2>
         </v-col>
         <div class="calendar-grid">
           <!-- Encabezados -->

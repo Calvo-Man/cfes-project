@@ -63,7 +63,7 @@
           <v-btn icon color="primary" class="mr-2" size="x-small" @click="editar(item)">
             <i class="material-icons icon-sm">edit</i>
           </v-btn>
-          <v-btn icon color="red" size="x-small" class="mr-2" @click="eliminar(item)">
+          <v-btn icon color="red" size="x-small" class="mr-2" @click="confirmDelete(item)">
             <i class="material-icons icon-sm">delete</i>
           </v-btn>
         </template>
@@ -71,6 +71,20 @@
     </v-card>
   </div>
   <Notificacion ref="notificacionRef" />
+
+  <v-dialog v-model="dialogDelete" max-width="600">
+    <v-card>
+      <v-card-title class="text-h5"> Eliminar casa de fe </v-card-title>
+      <v-card-text>
+        <p>¿Estas seguro de continuar?</p>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn color="green" variant="elevated" @click="dialogDelete = false"> Cancelar </v-btn>
+        <v-btn color="red" variant="elevated" @click="eliminar"> Continuar </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup>
@@ -86,7 +100,8 @@ const headers = ref([
   { title: 'Acciones', value: 'acciones', sortable: false },
 ])
 const notificacionRef = ref(null)
-
+const dialogDelete = ref(false)
+const casaIdToDelete = ref(null)
 const casas = ref([])
 const encargados = ref([])
 const form = ref({
@@ -243,9 +258,9 @@ async function submitForm() {
   }
 }
 
-async function eliminar(item) {
+async function eliminar() {
   try {
-    await api.delete(`/casas-de-fe/${item.id}`)
+    await api.delete(`/casas-de-fe/${casaIdToDelete.value.id}`)
     notificacionRef.value.mostrar('Casa de fe eliminada', 'error') // 👈 aquí la notificación de update
 
     await getCasas()
@@ -253,6 +268,12 @@ async function eliminar(item) {
   } catch (error) {
     console.error('Error al eliminar la casa:', error)
   }
+
+  dialogDelete.value = false
+}
+function confirmDelete(item) {
+  casaIdToDelete.value = item
+  dialogDelete.value = true
 }
 
 function verCasa(id) {

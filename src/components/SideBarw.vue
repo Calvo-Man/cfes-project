@@ -106,7 +106,7 @@ onBeforeUnmount(() => {
 <script>
 import MenuItem from './MenuItem.vue'
 import { MenuSideBar } from '@/assets/js/MenuSideBar'
-import logoURL from '@/assets/centro-de-fe-removebg.png'
+import logoURL from '@/assets/triangulo-logo.png'
 
 export default {
   name: 'SideBar',
@@ -199,8 +199,9 @@ aside {
 
     .logo {
       margin-top: 1rem;
+
       img {
-        width: 5rem;
+        width: 7rem;
       }
     }
   }

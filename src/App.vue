@@ -90,6 +90,7 @@ button {
     left: 50%;
   }
 }
+
 /* 🔵 Estilo para navegadores basados en WebKit (Chrome, Edge, Safari) */
 .scrollable-nav::-webkit-scrollbar {
   width: 8px;

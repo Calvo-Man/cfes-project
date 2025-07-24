@@ -2,7 +2,7 @@
   <v-container v-if="esPastor" class="fill-height" fluid>
     <v-row justify="center" align="center">
       <v-col cols="12">
-        <v-card class="pa-4 ma-4 mx-auto" elevation="3" max-width="800">
+        <v-card class="pa-4 ma-4 mx-auto bg-blur" elevation="3" max-width="800">
           <v-card-title class="text-h6 font-weight-bold">Registrar Servidor</v-card-title>
           <v-form ref="form" v-model="valid" lazy-validation>
             <v-row>
@@ -77,20 +77,43 @@
       </v-col>
     </v-row>
   </v-container>
-  <v-card class="pa-4 elevation-2 list-container">
+  <v-card class="pa-4 elevation-2 list-container bg-blur">
     <h2 class="text-h6 font-weight-bold mb-4">Listado de Servidores</h2>
 
     <v-data-table :headers="headers" :items="servidores" class="elevation-1" density="comfortable">
+      <template #item.activo="{ item }">
+        <v-chip
+          small
+          variant="outlined"
+          :color="item.activo ? 'success' : 'error'"
+          label
+          text-color="white"
+          class="ma-1"
+        >
+          {{ item.activo ? 'Activo' : 'Inactivo' }}
+        </v-chip>
+      </template>
       <template #item.acciones="{ item }">
-        <v-btn icon class="mr-2" size="x-small" @click="editar(item)">
-          <i class="material-icons icon-sm">edit</i>
-        </v-btn>
-        <v-btn icon color="red" size="x-small" class="mr-2" @click="eliminar(item)">
+        <v-btn icon color="red" size="x-small" class="mr-2" @click="confirmDelete(item)">
           <i class="material-icons icon-sm">delete</i>
         </v-btn>
       </template>
     </v-data-table>
   </v-card>
+  <Notificacion ref="notificacionRef" />
+  <v-dialog v-model="dialogDelete" max-width="500">
+    <v-card>
+      <v-card-title class="text-h5"> Eliminar servidor </v-card-title>
+      <v-card-text>
+        <p>¿Estas seguro de continuar?</p>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn color="green" variant="elevated" @click="dialogDelete = false"> Cancelar </v-btn>
+        <v-btn color="red" variant="elevated" @click="eliminar"> Continuar </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
   <Notificacion ref="notificacionRef" />
 </template>
 
@@ -122,6 +145,8 @@ const headers = computed(() => {
     { title: 'Apellido', value: 'apellido' },
     { title: 'Teléfono', value: 'telefono' },
     { title: 'Rol', value: 'rol' },
+    { title: 'Dia de aseo', value: 'horario_aseo', sortable: true },
+    { title: 'Estado', value: 'activo', sortable: true },
   ]
 
   // Si es pastor, añade columna de acciones
@@ -149,18 +174,20 @@ const rules = {
 onMounted(() => {
   obtenerServidores()
 })
-const guardar = async () => {
+
+async function guardar() {
   const isValid = await form.value.validate()
   if (!isValid) return
 
   try {
     await api.post('/miembros/create', miembro)
-    this.notificacionRef.mostrar('Miembro registrado', 'success')
+    notificacionRef.value.mostrar('Nuevo servidor registrado', 'success')
 
     await obtenerServidores()
     resetFormulario()
   } catch (error) {
-    console.error('❌ Error al guardar el miembro', error)
+    console.error('Error al registrar el servidor:', error)
+    notificacionRef.value.mostrar('Error al registrar el servidor', 'error')
   }
 }
 
@@ -171,7 +198,6 @@ function resetFormulario() {
   miembro.password = ''
   miembro.telefono = ''
   miembro.rol = null
-  form.value.resetValidation()
 }
 
 async function obtenerServidores() {
@@ -182,6 +208,23 @@ async function obtenerServidores() {
     console.error('Error al obtener los servidores:', error)
   }
 }
+
+const miembroIdToDelete = ref(null)
+const dialogDelete = ref(false)
+async function confirmDelete(item) {
+  miembroIdToDelete.value = item
+  dialogDelete.value = true
+}
+async function eliminar() {
+  try {
+    await api.delete(`/miembros/softDelete/${miembroIdToDelete.value.id}`)
+    obtenerServidores()
+    notificacionRef.value.mostrar('Miembro eliminado', 'error')
+  } catch (error) {
+    console.error('Error al eliminar el miembro:', error)
+  }
+  dialogDelete.value = false
+}
 </script>
 
 <style scoped>
@@ -189,5 +232,8 @@ html,
 body,
 .v-container.fill-height {
   height: 100%;
+}
+.bg-blur {
+  background-color: var(--blur-light);
 }
 </style>

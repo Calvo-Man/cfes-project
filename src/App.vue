@@ -118,5 +118,20 @@ button {
 .scrollable-nav {
   scrollbar-width: thin; /* Delgada */
   scrollbar-color: var(--dark-alt) var(--grey); /* thumb - track */
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: var(--grey); /* Track gris claro */
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--dark-alt); /* Color oscuro */
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.3s;
+  }
 }
 </style>

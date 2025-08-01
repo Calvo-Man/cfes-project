@@ -76,7 +76,6 @@ import { ref, reactive, computed, onMounted } from 'vue'
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const userStore = useUserStore()
 const userId = userStore.user.id
-console.log(userId)
 
 const estado = reactive({
   mes: new Date().getMonth(),
@@ -142,15 +141,12 @@ async function obtenerAsignaciones() {
 onMounted(async () => {
   await obtenerAsignaciones()
 })
-const mostrarPDF = ref(false)
-//const socket = io('http://localhost:3000') // Cambia al dominio real si es producción
+//const mostrarPDF = ref(false)
+// const socket = io('http://localhost:3000') // Cambia al dominio real si es producción
 
 // socket.on('nuevo-horario', async () => {
 //   console.log('📢 Se generó un nuevo horario desde el backend')
-//   //await obtenerAsignaciones()
-//   setTimeout(() => {
-//     generarYEnviarPDF()
-//   }, 500) // Le das tiempo a Vue de renderizar
+//   await obtenerAsignaciones()
 // })
 </script>
 

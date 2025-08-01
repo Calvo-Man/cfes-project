@@ -2,7 +2,7 @@
   <div class="container-div">
     <v-row class="mb-1">
       <!-- Formulario -->
-      <v-col cols="12" md="6">
+      <v-col v-if="userStore.user.rol === 'pastor'" cols="12" md="6">
         <v-card class="pa-6 elevation-3 form-container">
           <h2 class="text-h5 font-weight-bold mb-4">Agregar casa de fe</h2>
           <v-form @submit.prevent="sendForm">
@@ -12,6 +12,15 @@
               </v-col>
               <v-col cols="12">
                 <v-text-field v-model="form.direccion" label="Dirección" required />
+              </v-col>
+              <v-col cols="12">
+                <v-select
+                  v-model="form.categoria"
+                  :items="categories"
+                  item-value="value"
+                  item-title="label"
+                  label="Categoria de la casa de fe"
+                />
               </v-col>
               <v-col cols="12">
                 <v-select
@@ -32,7 +41,7 @@
       </v-col>
 
       <!-- Mapa -->
-      <v-col cols="12" md="6">
+      <v-col cols="12" :md="userStore.user.rol === 'pastor' ? 6 : 12">
         <div id="google-map" class="map-container"></div>
       </v-col>
     </v-row>
@@ -60,10 +69,24 @@
           <v-btn icon color="green" size="x-small" class="mr-2" @click="verCasa(item.id)">
             <i class="material-icons icon-sm">visibility</i>
           </v-btn>
-          <v-btn icon color="primary" class="mr-2" size="x-small" @click="editar(item)">
+          <v-btn
+            v-if="userStore.user.rol === 'pastor'"
+            icon
+            color="primary"
+            class="mr-2"
+            size="x-small"
+            @click="editar(item)"
+          >
             <i class="material-icons icon-sm">edit</i>
           </v-btn>
-          <v-btn icon color="red" size="x-small" class="mr-2" @click="confirmDelete(item)">
+          <v-btn
+            v-if="userStore.user.rol === 'pastor'"
+            icon
+            color="red"
+            size="x-small"
+            class="mr-2"
+            @click="confirmDelete(item)"
+          >
             <i class="material-icons icon-sm">delete</i>
           </v-btn>
         </template>
@@ -72,7 +95,7 @@
   </div>
   <Notificacion ref="notificacionRef" />
 
-  <v-dialog v-model="dialogDelete" max-width="600">
+  <v-dialog v-model="dialogDelete" v-if="userStore.user.rol === 'pastor'" max-width="600">
     <v-card>
       <v-card-title class="text-h5"> Eliminar casa de fe </v-card-title>
       <v-card-text>
@@ -92,24 +115,33 @@ import { ref, onMounted, watch } from 'vue'
 
 import api from '@/plugins/axios'
 import Notificacion from '@/components/Notificacion.vue'
+import { useUserStore } from '@/store/userStore'
 
 const headers = ref([
   { title: 'Nombre', value: 'nombre' },
+  { title: 'Categoria', value: 'categoria' },
   { title: 'Dirección', value: 'direccion' },
   { title: 'Encargados', value: 'encargadosId' },
   { title: 'Acciones', value: 'acciones', sortable: false },
 ])
+const categories = [
+  { label: 'Niños', value: 'Niños' },
+  { label: 'Jovenes', value: 'Jovenes' },
+  { label: 'Adultos', value: 'Adultos' },
+]
 const notificacionRef = ref(null)
 const dialogDelete = ref(false)
 const casaIdToDelete = ref(null)
 const casas = ref([])
 const encargados = ref([])
+const userStore = useUserStore()
 const form = ref({
   nombre: '',
   longitud: null,
   latitud: null,
   direccion: '',
   encargadosId: [],
+  categoria: '',
 })
 
 let map
@@ -156,7 +188,7 @@ async function getMembers() {
 }
 
 async function obtenerDireccionPorCoordenadas(lat, lng) {
-  const geocoder = new google.maps.Geocoder()
+  const geocoder = await new google.maps.Geocoder()
   return new Promise((resolve, reject) => {
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
       if (status === 'OK' && results[0]) {
@@ -168,17 +200,17 @@ async function obtenerDireccionPorCoordenadas(lat, lng) {
   })
 }
 
-function initMap() {
+async function initMap() {
   const lat = parseFloat(form.value.latitud) || 8.960823
   const lng = parseFloat(form.value.longitud) || -75.838673
   const center = { lat, lng }
 
-  map = new google.maps.Map(document.getElementById('google-map'), {
+  map = await new google.maps.Map(document.getElementById('google-map'), {
     center,
     zoom: 13,
   })
 
-  marker = new google.maps.Marker({
+  marker = await new google.maps.Marker({
     position: center,
     map,
     draggable: false,
@@ -201,7 +233,7 @@ function initMap() {
   })
 }
 
-function renderMarcadores() {
+async function renderMarcadores() {
   marcadoresExistentes.forEach((m) => m.setMap(null))
   marcadoresExistentes = casas.value.map((casa) => {
     return new google.maps.Marker({
@@ -293,13 +325,34 @@ function verCasa(id) {
   }
   const url = `https://www.google.com/maps?q=${lat},${lng}`
   infoWindow.setContent(`
-    <div style="min-width: 200px;">
-      <h3>Casa de Fé ${casa.nombre}</h3>
-      <a href="${url}" target="_blank" style="display: inline-block; margin-top: 8px; padding: 6px 12px; background-color: #1976d2; color: white; text-decoration: none; border-radius: 4px;">
-        Ver en Google Maps
-      </a>
+  <div style="min-width: 300px; max-width: 380px; font-family: 'Roboto', sans-serif; color: #2c3e50; padding: 8px;">
+    <h2 style="margin: 0 0 6px; font-size: 18px;">🏠 Casa de Fe</h2>
+    <p style="margin: 0 0 8px; font-size: 16px; font-weight: bold;">${casa.nombre}</p>
+
+    <div style="margin-bottom: 8px;">
+      <p style="margin: 4px 0;"><strong>📍 Dirección:</strong> ${casa.direccion || 'No disponible'}</p>
+      <p style="margin: 4px 0;"><strong>👤 Encargado(s):</strong> ${casa.encargadosId.map((encargado) => encargado.name).join(', ') || 'Sin asignar'}</p>
+      <p style="margin: 4px 0;"><strong>👥 Miembros:</strong> ${casa.miembros?.length ?? 0}</p>
     </div>
-  `)
+
+    <a href="${url}" target="_blank"
+       style="
+         display: inline-block;
+         background-color: #1976d2;
+         color: white;
+         padding: 8px 14px;
+         text-decoration: none;
+         border-radius: 6px;
+         font-weight: 500;
+         transition: background-color 0.3s;
+       "
+       onmouseover="this.style.backgroundColor='#125ea2'"
+       onmouseout="this.style.backgroundColor='#1976d2'">
+      🌍 Ver en Google Maps
+    </a>
+  </div>
+`)
+
   infoWindow.open(map, marker)
 }
 </script>

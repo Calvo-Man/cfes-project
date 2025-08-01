@@ -214,7 +214,6 @@ const actualizarHorario = async () => {
   } catch (error) {
     notificacionRef.value.mostrar('Error al actualizar el horario', 'error')
     const mensaje = error.response?.data?.message || 'Error al guardar el horario'
-    alert(mensaje)
   }
   confirmChange.value = false
 }

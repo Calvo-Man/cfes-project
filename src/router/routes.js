@@ -43,6 +43,11 @@ export const routes = [
         component: () => import('../views/servidores/AgregarServidor.vue'),
       },
       {
+        path: 'ver-contratos',
+        name: 'Contratos de voluntariado',
+        component: () => import('../views/servidores/ContratosVista.vue'),
+      },
+      {
         path: 'registro-asistencia',
         name: 'Registro de asistencia',
         component: () => import('../views/asistencia/RegistroAsistencia.vue'),

@@ -40,7 +40,7 @@
         :data="item.children"
         :label="item.label"
         :icon="item.icon"
-        :noRequiresAdmin="item.noRequiresAdmin"
+        :RequiresAdmin="item.RequiresAdmin"
         :to="item.to"
         :href="item.href"
         :shouldDownload="item.shouldDownload"
@@ -52,6 +52,8 @@
   </div>
 </template>
 <script>
+import { useUserStore } from '@/store/userStore'
+
 export default {
   name: 'menu-item',
   data() {
@@ -59,6 +61,7 @@ export default {
       expanded: false,
       showChildren: false,
       containerHeight: 0,
+      userStore: useUserStore(),
     }
   },
   props: {
@@ -70,18 +73,18 @@ export default {
     to: String,
     href: String,
     shouldDownload: Boolean,
-    noRequiresAdmin: Boolean,
+    RequiresAdmin: Boolean,
   },
   computed: {
     showLabel() {
       return this.smallMenu ? this.depth > 0 : true
     },
     showItems() {
-      if (this.noRequiresAdmin === true) {
+      if (this.RequiresAdmin === true && this.userStore.user.rol === 'pastor') {
         return true
-      } else if (this.noRequiresAdmin === true) {
-        return true
-      } else if (this.noRequiresAdmin === false) {
+      } else if (this.RequiresAdmin === true && this.userStore.user.rol !== 'pastor') {
+        return false
+      } else if (this.RequiresAdmin === false) {
         return true
       } else {
         return false
@@ -162,6 +165,7 @@ export default {
   .items-container {
     width: 100%;
     transition: height 0.3s ease;
+    background-color: rgb(39, 39, 248);
     overflow: hidden;
     border-left: solid 1px var(--dark-alt);
   }

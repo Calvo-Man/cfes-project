@@ -2,7 +2,7 @@
   <v-container v-if="esPastor" class="fill-height" fluid>
     <v-row justify="center" align="center">
       <v-col cols="12">
-        <v-card class="pa-4 ma-4 mx-auto bg-blur" elevation="3" max-width="800">
+        <v-card class="pa-4 ma-4 mx-auto bg-blur" elevation="3" max-width="900">
           <v-card-title class="text-h6 font-weight-bold">Registrar Servidor</v-card-title>
           <v-form ref="form" v-model="valid" lazy-validation>
             <v-row>
@@ -65,9 +65,33 @@
                   variant="outlined"
                 />
               </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  label="Cargo"
+                  v-model="miembro.cargo"
+                  :items="cargos"
+                  :rules="[rules.required]"
+                  item-title="label"
+                  item-value="value"
+                  variant="outlined"
+                />
+              </v-col>
+              <v-col cols="12" class="text-center">
+                <v-btn
+                  color="primary"
+                  :disabled="!valid"
+                  class="mt-4"
+                  @click="DialogFirmarConsetimiento"
+                >
+                  Firmar Consentimiento de voluntariado
+                </v-btn>
+              </v-col>
+              <v-dialog v-model="dialogFirma" max-width="800">
+                <FirmaPad ref="firmaPad" @firmado="guardarFirma" @cancelar="cerrarDialogo" />
+              </v-dialog>
 
               <v-col cols="12" class="text-center">
-                <v-btn color="primary" :disabled="!valid" class="mt-4" @click="guardar">
+                <v-btn color="primary" :disabled="!Firmado" class="mt-4" @click="guardar">
                   Guardar
                 </v-btn>
               </v-col>
@@ -121,12 +145,15 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import api from '@/plugins/axios'
 import Notificacion from '@/components/Notificacion.vue'
+import FirmaPad from '@/components/FirmaPad.vue'
 
 const form = ref(null)
 const valid = ref(false)
 const mostrarPassword = ref(false)
 import { useUserStore } from '@/store/userStore'
 const notificacionRef = ref(null)
+const dialogFirma = ref(false)
+const Firmado = ref(false)
 
 const userStore = useUserStore()
 const esPastor = ref(userStore.user?.rol === 'pastor')
@@ -138,6 +165,8 @@ const miembro = reactive({
   password: '',
   telefono: '',
   rol: null,
+  cargo: null,
+  firma: null,
 })
 const headers = computed(() => {
   const baseHeaders = [
@@ -145,6 +174,7 @@ const headers = computed(() => {
     { title: 'Apellido', value: 'apellido' },
     { title: 'Teléfono', value: 'telefono' },
     { title: 'Rol', value: 'rol' },
+    { title: 'Cargo', value: 'cargo' },
     { title: 'Dia de aseo', value: 'horario_aseo', sortable: true },
     { title: 'Estado', value: 'activo', sortable: true },
   ]
@@ -167,6 +197,14 @@ const roles = [
   { label: 'Servidor', value: 'servidor' },
   { label: 'Líder', value: 'lider' },
 ]
+const cargos = [
+  { label: 'Alabanza', value: 'Alabanza' },
+  { label: 'Diacono', value: 'Diacono' },
+  { label: 'Administrador', value: 'Administrador' },
+  { label: 'Red MIA', value: 'Red MIA' },
+  { label: 'Jovenes', value: 'Jovenes' },
+  { label: 'Ninguno', value: 'Ninguno' },
+]
 
 const rules = {
   required: (v) => !!v || 'Este campo es obligatorio',
@@ -178,7 +216,6 @@ onMounted(() => {
 async function guardar() {
   const isValid = await form.value.validate()
   if (!isValid) return
-
   try {
     await api.post('/miembros/create', miembro)
     notificacionRef.value.mostrar('Nuevo servidor registrado', 'success')
@@ -190,6 +227,20 @@ async function guardar() {
     notificacionRef.value.mostrar('Error al registrar el servidor', 'error')
   }
 }
+function DialogFirmarConsetimiento() {
+  dialogFirma.value = true
+}
+const cerrarDialogo = () => {
+  dialogFirma.value = false
+}
+
+const guardarFirma = (firmaBase64) => {
+  Firmado.value = true
+  console.log('Firma recibida:', firmaBase64)
+  miembro.firma = firmaBase64
+  // Aquí puedes guardar la firma o enviarla al backend
+  dialogFirma.value = false
+}
 
 function resetFormulario() {
   miembro.name = ''
@@ -198,6 +249,7 @@ function resetFormulario() {
   miembro.password = ''
   miembro.telefono = ''
   miembro.rol = null
+  miembro.cargo = null
 }
 
 async function obtenerServidores() {

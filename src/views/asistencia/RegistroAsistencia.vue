@@ -40,6 +40,15 @@
                 required
               ></v-text-field>
             </v-col>
+            <v-col cols="12">
+              <v-select
+                v-model="form.categoria"
+                :items="categoria"
+                label="Categoria"
+                item-value="value"
+                item-title="label"
+              />
+            </v-col>
             <v-col cols="12" class="text-right">
               <v-btn color="primary" type="submit">Submit</v-btn>
             </v-col>
@@ -112,9 +121,16 @@ const form = ref({
   carrera: '',
   calle: '',
   direccion: '',
+  categoria: '',
   latitud: null,
   longitud: null,
 })
+
+const categoria = [
+  { label: 'Niños', value: 'Niños' },
+  { label: 'Jovenes', value: 'Jovenes' },
+  { label: 'Adultos', value: 'Adultos' },
+]
 
 const headers = ref([
   { title: 'Nombre', value: 'nombre' },
@@ -268,7 +284,25 @@ async function initMap() {
   })
 }
 
+async function obtenerCoordenadasPorDireccion(direccion) {
+  const geocoder = new google.maps.Geocoder()
+  return await new Promise((resolve, reject) => {
+    geocoder.geocode({ address: direccion }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        const location = results[0].geometry.location
+        const lat = location.lat()
+        const lng = location.lng()
+        resolve({ lat, lng })
+      } else {
+        reject('Error al obtener las coordenadas')
+      }
+    })
+  })
+}
+
 async function obtenerDireccionPorCoordenadas(lat, lng) {
+  form.value.latitud = lat.toFixed(6)
+  form.value.longitud = lng.toFixed(6)
   const geocoder = new google.maps.Geocoder()
   return await new Promise((resolve, reject) => {
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
@@ -287,7 +321,12 @@ const sendForm = () => {
 
 async function submitForm() {
   try {
-    const response = await api.post('/asistencias', form.value)
+    const payload = {
+      ...form.value,
+      latitud: Number(form.value.latitud),
+      longitud: Number(form.value.longitud),
+    }
+    const response = await api.post('/asistencias', payload)
     limpiarForm()
     notificacionRef.value.mostrar('Asistencia registrada', 'success') // 👈 aquí la notificación de update
 

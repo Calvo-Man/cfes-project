@@ -35,7 +35,10 @@
         <v-card>
           <v-card-title class="font-weight-bold"
             >Eventos para {{ fechaEvento }}
-            <v-btn variant="outlined" @click="asignarEvento(dia, estado.mes, estado.año)"
+            <v-btn
+              variant="outlined"
+              v-if="userStore.user.rol !== 'servidor'"
+              @click="asignarEvento(dia, estado.mes, estado.año)"
               >Agregar</v-btn
             ></v-card-title
           >
@@ -67,7 +70,12 @@
     <!-- ENVOLTORIO CLARO PARA EL PDF -->
   </v-container>
 
-  <v-dialog v-model="showAgendar" @update:modelValue="onDialogChange" max-width="600">
+  <v-dialog
+    v-model="showAgendar"
+    v-if="userStore.user.rol !== 'servidor'"
+    @update:modelValue="onDialogChange"
+    max-width="600"
+  >
     <v-card class="pa-3 elevation-3">
       <h3 class="dialog-title">Agendar {{ fechaEvento }}</h3>
       <v-card-text>
@@ -93,6 +101,7 @@ import { io } from 'socket.io-client'
 import { nextTick } from 'vue'
 import api from '@/plugins/axios'
 import Notificacion from '@/components/Notificacion.vue'
+import { useUserStore } from '@/store/userStore'
 
 import { ref, reactive, computed, onMounted } from 'vue'
 const events = ref({
@@ -102,7 +111,7 @@ const events = ref({
 })
 const showEventosDelDia = ref(false)
 const eventosDelDiaSeleccionado = ref([])
-
+const userStore = useUserStore()
 const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const showAgendar = ref(false)
 const getEvents = ref({
@@ -121,14 +130,12 @@ const nombreMes = computed(() =>
 const diasEnMes = computed(() => new Date(estado.año, estado.mes + 1, 0).getDate())
 const diaInicioMes = computed(() => new Date(estado.año, estado.mes, 1).getDay())
 const año = computed(() => estado.año)
-const fechaEvento = computed(
-  () =>
-    new Date(events.value.date).toLocaleDateString('es-CO', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }),
-  console.log(events.value.date),
+const fechaEvento = computed(() =>
+  new Date(events.value.date).toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }),
 )
 function claveFecha(dia) {
   const mesStr = String(estado.mes + 1).padStart(2, '0')
@@ -168,8 +175,6 @@ async function obtenerEventos() {
     const response = await api.get('/eventos')
     getEvents.value.events = response.data
     estado.asignacionesPorMes = response.data
-    console.log('Eventos obtenidos:', getEvents.value.events)
-    console.log('Asignaciones obtenidas:', estado.asignacionesPorMes)
   } catch (error) {
     console.error('Error al obtener las asignaciones:', error)
   }
@@ -223,8 +228,10 @@ async function asignarEvento(dia, mes, año) {
 
     showEventosDelDia.value = true
   } else {
-    showAgendar.value = true
-    events.value.date = fecha.toISOString()
+    if (userStore.user.rol === 'pastor' || userStore.user.rol === 'lider') {
+      showAgendar.value = true
+      events.value.date = fecha.toISOString()
+    }
   }
 }
 

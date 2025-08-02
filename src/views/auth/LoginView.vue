@@ -68,10 +68,10 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
 import { useUserStore } from '@/store/userStore'
 import { useRouter } from 'vue-router'
 import Notificacion from '@/components/Notificacion.vue'
+import api from '@/plugins/axios'
 
 const usuario = ref('')
 const password = ref('')
@@ -87,8 +87,8 @@ const submit = async () => {
   password_error.value = ''
 
   try {
-    const response = await axios
-      .post('http://localhost:3000/auth/login', {
+    const response = await api
+      .post('/auth/login', {
         user: usuario.value,
         password: password.value,
       })

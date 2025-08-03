@@ -27,3 +27,6 @@ npm run dev
 ```sh
 npm run build
 ```
+
+pm2 restart cfes-bot
+pm2 logs cfes-bot

@@ -39,7 +39,7 @@
       <v-table v-if="asignaciones.length" density="compact">
         <tbody>
           <tr v-for="(fecha, i) in asignaciones" :key="i">
-            <td><v-icon size="small" color="teal">mdi-calendar</v-icon> {{ fecha }}</td>
+            <td><v-icon size="small" color="teal">mdi-calendar</v-icon> {{ fecha.fecha }}</td>
           </tr>
         </tbody>
       </v-table>

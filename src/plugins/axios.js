@@ -5,7 +5,7 @@ import router from '@/router'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BACKEND,
-  timeout: 5000,
+  timeout: 20000,
 })
 
 // Interceptor para agregar token a cada petición

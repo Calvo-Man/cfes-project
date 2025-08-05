@@ -221,7 +221,7 @@ async function asignarEvento(dia, mes, año) {
   const clave = claveFecha(dia)
   const asignaciones = asignacionesPorFecha(clave)
   showEventosDelDia.value = false
-
+  console.log(fecha)
   if (asignaciones.length > 0) {
     eventosDelDiaSeleccionado.value = asignaciones
     events.value.date = fecha.toISOString()

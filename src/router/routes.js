@@ -62,6 +62,11 @@ export const routes = [
         name: 'Casas de Fe',
         component: () => import('../views/casas-de-fe/ControlCasaDeFe.vue'),
       },
+      {
+        path: 'banco-preguntas',
+        name: 'Banco de preguntas',
+        component: () => import('../views/banco-preguntas/BancoPreguntas.vue'),
+      },
     ],
   },
 

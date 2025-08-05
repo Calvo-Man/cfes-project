@@ -101,4 +101,10 @@ export const MenuSideBar = [
       },
     ],
   },
+  {
+    label: 'Banco de preguntas',
+    icon: 'quiz',
+    to: '/banco-preguntas',
+    RequiresAdmin: true,
+  },
 ]

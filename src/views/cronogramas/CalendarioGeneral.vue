@@ -221,7 +221,6 @@ async function asignarEvento(dia, mes, año) {
   const clave = claveFecha(dia)
   const asignaciones = asignacionesPorFecha(clave)
   showEventosDelDia.value = false
-  console.log(fecha)
   if (asignaciones.length > 0) {
     eventosDelDiaSeleccionado.value = asignaciones
     events.value.date = fecha.toISOString()
@@ -229,8 +228,8 @@ async function asignarEvento(dia, mes, año) {
   } else {
     if (userStore.user.rol === 'pastor' || userStore.user.rol === 'lider') {
       showAgendar.value = true
-      events.value.date = fecha.toISOString()
-      console.log('Asignar evento para:', fecha.toISOString())
+      events.value.date = fecha.toISOString().split('T')[0]
+      console.log('Asignar evento para:', events.value.date)
     }
   }
 }

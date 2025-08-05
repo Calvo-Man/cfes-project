@@ -225,12 +225,12 @@ async function asignarEvento(dia, mes, año) {
   if (asignaciones.length > 0) {
     eventosDelDiaSeleccionado.value = asignaciones
     events.value.date = fecha.toISOString()
-
     showEventosDelDia.value = true
   } else {
     if (userStore.user.rol === 'pastor' || userStore.user.rol === 'lider') {
       showAgendar.value = true
       events.value.date = fecha.toISOString()
+      console.log('Asignar evento para:', fecha.toISOString())
     }
   }
 }

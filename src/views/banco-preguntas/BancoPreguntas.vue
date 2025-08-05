@@ -36,7 +36,7 @@ const enviarPregunta = async () => {
 
   cargando.value = true
   try {
-    const res = await api.post('/telogia/agregar', {
+    const res = await api.post('/teologia/agregar', {
       pregunta: pregunta.value,
       respuesta: respuesta.value,
     })

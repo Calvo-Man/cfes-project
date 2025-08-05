@@ -1,106 +1,104 @@
 <template>
-  <v-container v-if="esPastor" class="fill-height" fluid>
-    <v-row justify="center" align="center">
-      <v-col cols="12">
-        <v-card class="pa-4 ma-4 mx-auto bg-blur" elevation="3" max-width="900">
-          <v-card-title class="text-h6 font-weight-bold">Registrar Servidor</v-card-title>
-          <v-form ref="form" v-model="valid" lazy-validation>
-            <v-row>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  label="Nombre"
-                  v-model="miembro.name"
-                  :rules="[rules.required]"
-                  variant="outlined"
-                />
-              </v-col>
+  <v-row v-if="esPastor" justify="center" align="center">
+    <v-col cols="12">
+      <v-card class="pa-4 ma-4 mx-auto bg-blur" elevation="3" max-width="900">
+        <v-card-title class="text-h6 font-weight-bold">Registrar Servidor</v-card-title>
+        <v-form ref="form" v-model="valid" lazy-validation>
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-text-field
+                label="Nombre"
+                v-model="miembro.name"
+                :rules="[rules.required]"
+                variant="outlined"
+              />
+            </v-col>
 
-              <v-col cols="12" md="6">
-                <v-text-field
-                  label="Apellido"
-                  v-model="miembro.apellido"
-                  :rules="[rules.required]"
-                  variant="outlined"
-                />
-              </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                label="Apellido"
+                v-model="miembro.apellido"
+                :rules="[rules.required]"
+                variant="outlined"
+              />
+            </v-col>
 
-              <v-col cols="12" md="6">
-                <v-text-field
-                  label="Usuario"
-                  v-model="miembro.user"
-                  :rules="[rules.required]"
-                  variant="outlined"
-                />
-              </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                label="Usuario"
+                v-model="miembro.user"
+                :rules="[rules.required]"
+                variant="outlined"
+              />
+            </v-col>
 
-              <v-col cols="12" md="6">
-                <v-text-field
-                  label="Contraseña"
-                  v-model="miembro.password"
-                  :type="mostrarPassword ? 'text' : 'password'"
-                  :append-inner-icon="mostrarPassword ? 'mdi-eye-off' : 'mdi-eye'"
-                  @click:append-inner="mostrarPassword = !mostrarPassword"
-                  :rules="[rules.required]"
-                  variant="outlined"
-                />
-              </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                label="Contraseña"
+                v-model="miembro.password"
+                :type="mostrarPassword ? 'text' : 'password'"
+                :append-inner-icon="mostrarPassword ? 'mdi-eye-off' : 'mdi-eye'"
+                @click:append-inner="mostrarPassword = !mostrarPassword"
+                :rules="[rules.required]"
+                variant="outlined"
+              />
+            </v-col>
 
-              <v-col cols="12" md="6">
-                <v-text-field
-                  label="Teléfono"
-                  v-model="miembro.telefono"
-                  :rules="[rules.required]"
-                  variant="outlined"
-                />
-              </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                label="Teléfono"
+                v-model="miembro.telefono"
+                :rules="[rules.required]"
+                variant="outlined"
+              />
+            </v-col>
 
-              <v-col cols="12" md="6">
-                <v-select
-                  label="Rol"
-                  v-model="miembro.rol"
-                  :items="roles"
-                  :rules="[rules.required]"
-                  item-title="label"
-                  item-value="value"
-                  variant="outlined"
-                />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-select
-                  label="Cargo"
-                  v-model="miembro.cargo"
-                  :items="cargos"
-                  :rules="[rules.required]"
-                  item-title="label"
-                  item-value="value"
-                  variant="outlined"
-                />
-              </v-col>
-              <v-col cols="12" class="text-center">
-                <v-btn
-                  color="primary"
-                  :disabled="!valid"
-                  class="mt-4"
-                  @click="DialogFirmarConsetimiento"
-                >
-                  Firmar Consentimiento de voluntariado
-                </v-btn>
-              </v-col>
-              <v-dialog v-model="dialogFirma" max-width="800">
-                <FirmaPad ref="firmaPad" @firmado="guardarFirma" @cancelar="cerrarDialogo" />
-              </v-dialog>
+            <v-col cols="12" md="6">
+              <v-select
+                label="Rol"
+                v-model="miembro.rol"
+                :items="roles"
+                :rules="[rules.required]"
+                item-title="label"
+                item-value="value"
+                variant="outlined"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-select
+                label="Cargo"
+                v-model="miembro.cargo"
+                :items="cargos"
+                :rules="[rules.required]"
+                item-title="label"
+                item-value="value"
+                variant="outlined"
+              />
+            </v-col>
+            <v-col cols="12" class="text-center">
+              <v-btn
+                color="primary"
+                :disabled="!valid"
+                class="mt-4"
+                @click="DialogFirmarConsetimiento"
+              >
+                Firmar Consentimiento de voluntariado
+              </v-btn>
+            </v-col>
+            <v-dialog v-model="dialogFirma" max-width="800">
+              <FirmaPad ref="firmaPad" @firmado="guardarFirma" @cancelar="cerrarDialogo" />
+            </v-dialog>
 
-              <v-col cols="12" class="text-center">
-                <v-btn color="primary" :disabled="!Firmado" class="mt-4" @click="guardar">
-                  Guardar
-                </v-btn>
-              </v-col>
-            </v-row>
-          </v-form>
-        </v-card>
-      </v-col>
-    </v-row>
-  </v-container>
+            <v-col cols="12" class="text-center">
+              <v-btn color="primary" :disabled="!Firmado" class="mt-4" @click="guardar">
+                Guardar
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-form>
+      </v-card>
+    </v-col>
+  </v-row>
   <v-card class="pa-4 elevation-2 list-container bg-blur">
     <h2 class="text-h6 font-weight-bold mb-4">Listado de Servidores</h2>
 

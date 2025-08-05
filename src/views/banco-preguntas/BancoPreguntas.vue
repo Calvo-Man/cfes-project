@@ -21,7 +21,6 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
 import api from '@/plugins/axios'
 
 const pregunta = ref('')

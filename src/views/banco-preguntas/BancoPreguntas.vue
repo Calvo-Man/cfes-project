@@ -7,6 +7,7 @@
           <v-text-field v-model="pregunta" label="Pregunta" required></v-text-field>
 
           <v-textarea v-model="respuesta" label="Respuesta" rows="5" required></v-textarea>
+          <v-text-field v-model="fuente" label="Fuente (opcional)"></v-text-field>
 
           <v-btn color="primary" type="submit" :loading="cargando"> Guardar </v-btn>
 
@@ -25,6 +26,7 @@ import api from '@/plugins/axios'
 
 const pregunta = ref('')
 const respuesta = ref('')
+const fuente = ref('')
 const mensaje = ref(null)
 const cargando = ref(false)
 
@@ -39,6 +41,7 @@ const enviarPregunta = async () => {
     const res = await api.post('/teologia/agregar', {
       pregunta: pregunta.value,
       respuesta: respuesta.value,
+      fuente: fuente.value || null,
     })
 
     mensaje.value = { tipo: 'success', texto: 'Pregunta agregada correctamente' }

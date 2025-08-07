@@ -41,7 +41,7 @@ const enviarPregunta = async () => {
     const res = await api.post('/teologia/agregar', {
       pregunta: pregunta.value,
       respuesta: respuesta.value,
-      fuente: fuente.value || null,
+      fuente: fuente.value || 'No proporcionada',
     })
 
     mensaje.value = { tipo: 'success', texto: 'Pregunta agregada correctamente' }

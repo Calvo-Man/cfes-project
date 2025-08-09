@@ -47,6 +47,7 @@ const enviarPregunta = async () => {
     mensaje.value = { tipo: 'success', texto: 'Pregunta agregada correctamente' }
     pregunta.value = ''
     respuesta.value = ''
+    fuente.value = ''
   } catch (e) {
     mensaje.value = { tipo: 'error', texto: 'Error al guardar la pregunta' }
     console.error(e)

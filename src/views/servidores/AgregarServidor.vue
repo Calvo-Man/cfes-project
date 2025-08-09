@@ -52,6 +52,14 @@
                 variant="outlined"
               />
             </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                label="Cédula"
+                v-model="miembro.cedula"
+                :rules="[rules.required]"
+                variant="outlined"
+              />
+            </v-col>
 
             <v-col cols="12" md="6">
               <v-select
@@ -85,8 +93,20 @@
                 Firmar Consentimiento de voluntariado
               </v-btn>
             </v-col>
-            <v-dialog v-model="dialogFirma" max-width="800">
-              <FirmaPad ref="firmaPad" @firmado="guardarFirma" @cancelar="cerrarDialogo" />
+            <v-dialog v-model="dialogFirma">
+              <FirmaPad
+                ref="firmaPad"
+                :nombre="miembro.name + ' ' + miembro.apellido"
+                :cedula="miembro.cedula || 'N/A'"
+                :actividad="'Voluntariado como ' + (miembro.cargo || '')"
+                :iglesia="'Centro de Fe y Esperanza San Pelayo'"
+                :direccion="'Dirección de la iglesia aquí'"
+                :fecha="new Date().toISOString().split('T')[0]"
+                :lugar="'Sede principal'"
+                :ciudad="'San Pelayo'"
+                @firmado="guardarFirma"
+                @cancelar="cerrarDialogo"
+              />
             </v-dialog>
 
             <v-col cols="12" class="text-center">
@@ -135,7 +155,7 @@
     </v-data-table>
   </v-card>
   <Notificacion ref="notificacionRef" />
-  <v-dialog v-model="dialogDelete" max-width="500">
+  <v-dialog v-model="dialogDelete" max-width="900">
     <v-card>
       <v-card-title class="text-h5"> Eliminar servidor </v-card-title>
       <v-card-text>
@@ -174,6 +194,7 @@ const miembro = reactive({
   user: '',
   password: '',
   telefono: '',
+  cedula: '',
   rol: null,
   cargo: null,
   firma: null,
@@ -183,6 +204,7 @@ const headers = computed(() => {
     { title: 'Nombre', value: 'name' },
     { title: 'Apellido', value: 'apellido' },
     { title: 'Teléfono', value: 'telefono' },
+    { title: 'Cedula', value: 'cedula' },
     { title: 'Rol', value: 'rol' },
     { title: 'Cargo', value: 'cargo' },
     { title: 'Dia de aseo', value: 'horario_aseo', sortable: true },

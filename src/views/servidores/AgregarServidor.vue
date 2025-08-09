@@ -115,6 +115,18 @@
           {{ item.activo ? 'Activo' : 'Inactivo' }}
         </v-chip>
       </template>
+      <template #item.disponibilidad_aseo="{ item }">
+        <v-chip
+          small
+          variant="outlined"
+          :color="item.disponibilidad_aseo ? 'success' : 'error'"
+          label
+          text-color="white"
+          class="ma-1"
+        >
+          {{ item.disponibilidad_aseo ? 'Si' : 'No' }}
+        </v-chip>
+      </template>
       <template #item.acciones="{ item }">
         <v-btn icon color="red" size="x-small" class="mr-2" @click="confirmDelete(item)">
           <i class="material-icons icon-sm">delete</i>
@@ -174,6 +186,7 @@ const headers = computed(() => {
     { title: 'Rol', value: 'rol' },
     { title: 'Cargo', value: 'cargo' },
     { title: 'Dia de aseo', value: 'horario_aseo', sortable: true },
+    { title: 'Disponibilidad', value: 'disponibilidad_aseo', sortable: true },
     { title: 'Estado', value: 'activo', sortable: true },
   ]
 

@@ -89,7 +89,7 @@ export default {
 
       // Si requiere Admin y Pastor → aceptar ambos
       if (this.RequiresAdmin && this.RequiresPastor) {
-        const permisos = this.userStore.user.rol[('administrador', 'pastor')].includes(rolUsuario)
+        const permisos = rolUsuario === 'administrador' || rolUsuario === 'pastor'
         console.log(permisos)
         return permisos
       }

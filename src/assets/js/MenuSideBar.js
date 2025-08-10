@@ -85,7 +85,7 @@ export const MenuSideBar = [
   {
     label: 'Casas de fe',
     icon: 'church',
-    RequiresAdmin: false,
+    RequiresAdmin: true,
     children: [
       {
         label: 'Registro casa de fe',

@@ -200,6 +200,7 @@ async function asignarEvento(dia, mes, año) {
     showEventosDelDia.value = true
   } else {
     if (userStore.user.rol !== 'servidor') {
+      showEventosDelDia.value = false
       showAgendar.value = true
       events.value.date = formatearFechaLocal(fecha)
     }
@@ -212,6 +213,7 @@ async function crearEvento() {
     console.log('Evento creado:', response.data)
     obtenerEventos()
     cerrarModal()
+
     notificacionRef.value.mostrar('Evento creado', 'success')
   } catch (error) {
     console.error('Error al crear el evento:', error)
@@ -225,6 +227,7 @@ function cerrarModal() {
     date: null,
   }
   showAgendar.value = false
+  showEventosDelDia.value = false
 }
 function onDialogChange(val) {
   showAgendar.value = val

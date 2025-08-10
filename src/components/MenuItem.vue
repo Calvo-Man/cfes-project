@@ -75,37 +75,41 @@ export default {
     href: String,
     shouldDownload: Boolean,
     RequiresAdmin: Boolean,
+    RequiresPastor: Boolean,
   },
   computed: {
     showLabel() {
       return this.smallMenu ? this.depth > 0 : true
     },
-    computed: {
-      showItems() {
-        const rolUsuario = this.userStore.user.rol
+    showItems() {
+      const rolUsuario = this.userStore.user.rol
 
-        // No requiere permisos especiales → mostrar siempre
-        if (!this.RequiresAdmin && !this.RequiresPastor) return true
+      // No requiere permisos especiales → mostrar siempre
+      if (!this.RequiresAdmin && !this.RequiresPastor) return true
 
-        // Si requiere Admin y Pastor → aceptar ambos
-        if (this.RequiresAdmin && this.RequiresPastor) {
-          return ['administrador', 'pastor'].includes(rolUsuario)
-        }
+      // Si requiere Admin y Pastor → aceptar ambos
+      if (this.RequiresAdmin && this.RequiresPastor) {
+        const permisos = this.userStore.user.rol[('administrador', 'pastor')].includes(rolUsuario)
+        console.log(permisos)
+        return permisos
+      }
 
-        // Solo Admin
-        if (this.RequiresAdmin) {
-          return rolUsuario === 'administrador'
-        }
+      // Solo Admin
+      if (this.RequiresAdmin) {
+        console.log(rolUsuario === 'administrador')
+        return rolUsuario === 'administrador'
+      }
 
-        // Solo Pastor
-        if (this.RequiresPastor) {
-          return rolUsuario === 'pastor'
-        }
+      // Solo Pastor
+      if (this.RequiresPastor) {
+        console.log(rolUsuario === 'pastor')
+        return rolUsuario === 'pastor'
+      }
 
-        return false
-      },
+      return false
     },
   },
+
   methods: {
     handleClick() {
       this.toggleMenu()

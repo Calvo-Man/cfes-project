@@ -80,10 +80,11 @@ export default {
       return this.smallMenu ? this.depth > 0 : true
     },
     showItems() {
-      if (this.RequiresAdmin === true && this.userStore.user.rol === 'pastor') {
+      if (
+        (this.RequiresAdmin === true && this.userStore.user.rol === 'pastor') ||
+        this.userStore.user.rol === 'administrador'
+      ) {
         return true
-      } else if (this.RequiresAdmin === true && this.userStore.user.rol !== 'pastor') {
-        return false
       } else if (this.RequiresAdmin === false) {
         return true
       } else {

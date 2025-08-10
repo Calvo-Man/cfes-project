@@ -229,6 +229,7 @@ const roles = [
   { label: 'Pastor', value: 'pastor' },
   { label: 'Servidor', value: 'servidor' },
   { label: 'Líder', value: 'lider' },
+  { label: 'Administrador', value: 'administrador' },
 ]
 const cargos = [
   { label: 'Alabanza', value: 'Alabanza' },

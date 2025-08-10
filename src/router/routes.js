@@ -41,11 +41,13 @@ export const routes = [
         path: 'servidores',
         name: 'Servidores',
         component: () => import('../views/servidores/AgregarServidor.vue'),
+        meta: { requiresAdmin: true, requiresPastor: true },
       },
       {
         path: 'ver-contratos',
         name: 'Contratos de voluntariado',
         component: () => import('../views/servidores/ContratosVista.vue'),
+        meta: { requiresAdmin: true, requiresPastor: true },
       },
       {
         path: 'registro-asistencia',

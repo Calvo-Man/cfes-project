@@ -23,14 +23,14 @@ router.beforeEach((to, from, next) => {
     }
 
     if (to.matched.some((record) => record.meta.requiresAdmin)) {
-      if (userRole !== 'admin') {
-        return next({ path: '/sugas' })
+      if (userRole !== 'administrador') {
+        return next({ path: '/' })
       }
     }
 
-    if (to.matched.some((record) => record.meta.requiresAdmin && record.meta.requiresCoordinador)) {
-      if (userRole !== 'admin' && userRole !== 'coordinador') {
-        return next({ path: '/sugas' })
+    if (to.matched.some((record) => record.meta.requiresAdmin && record.meta.requiresPastor)) {
+      if (userRole !== 'administrador' && userRole !== 'pastor') {
+        return next({ path: '/' })
       }
     }
   }

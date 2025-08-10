@@ -253,7 +253,6 @@ async function guardar() {
   try {
     await api.post('/miembros/create', miembro)
     notificacionRef.value.mostrar('Nuevo servidor registrado', 'success')
-
     await obtenerServidores()
     resetFormulario()
   } catch (error) {
@@ -285,6 +284,7 @@ function resetFormulario() {
   miembro.cedula = ''
   miembro.rol = null
   miembro.cargo = null
+  Firmado.value = false
 }
 
 async function obtenerServidores() {

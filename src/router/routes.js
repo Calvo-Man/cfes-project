@@ -50,6 +50,11 @@ export const routes = [
         meta: { requiresAdmin: true, requiresPastor: true },
       },
       {
+        path: 'listado-servidores',
+        name: 'Listado de servidores',
+        component: () => import('../views/servidores/ListaServidores.vue'),
+      },
+      {
         path: 'registro-asistencia',
         name: 'Registro de asistencia',
         component: () => import('../views/asistencia/RegistroAsistencia.vue'),
@@ -75,6 +80,6 @@ export const routes = [
 
   {
     path: '/:catchAll(.*)',
-    redirect: '/not-found',
+    redirect: '/',
   },
 ]

@@ -186,7 +186,7 @@ const dialogFirma = ref(false)
 const Firmado = ref(false)
 
 const userStore = useUserStore()
-const esPastor = ref(userStore.user?.rol === 'pastor')
+const esPastor = ref(userStore.user?.rol === 'pastor' || userStore.user?.rol === 'administrador')
 
 const miembro = reactive({
   name: '',

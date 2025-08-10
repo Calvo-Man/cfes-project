@@ -226,7 +226,7 @@ async function asignarEvento(dia, mes, año) {
     events.value.date = fecha.toISOString()
     showEventosDelDia.value = true
   } else {
-    if (userStore.user.rol === 'pastor' || userStore.user.rol === 'lider') {
+    if (userStore.user.rol !== 'servidor') {
       showAgendar.value = true
       events.value.date = fecha.toISOString().split('T')[0]
       console.log('Asignar evento para:', events.value.date)

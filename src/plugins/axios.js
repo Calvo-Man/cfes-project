@@ -1,7 +1,8 @@
 // src/plugins/axios.js
 import axios from 'axios'
 import { useUserStore } from '@/store/userStore'
-import router from '@/router'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BACKEND,
@@ -27,7 +28,7 @@ api.interceptors.response.use(
     if (status === 401) {
       // Token inválido o expirado
       store.logout()
-      router.push({ path: '/login' }) // redirige al login
+      router.push({ path: '/login' })
     }
 
     return Promise.reject(error)

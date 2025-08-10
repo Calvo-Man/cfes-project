@@ -221,14 +221,14 @@ async function asignarEvento(dia, mes, año) {
   const clave = claveFecha(dia)
   const asignaciones = asignacionesPorFecha(clave)
   showEventosDelDia.value = false
+  events.value.date = fecha.toISOString().split('T')[0]
   if (asignaciones.length > 0) {
     eventosDelDiaSeleccionado.value = asignaciones
-    events.value.date = fecha.toISOString().split('T')[0]
     showEventosDelDia.value = true
+    console.log('Asignar evento para:', events.value.date)
   } else {
     if (userStore.user.rol !== 'servidor') {
       showAgendar.value = true
-      events.value.date = fecha.toISOString().split('T')[0]
       console.log('Asignar evento para:', events.value.date)
     }
   }

@@ -236,7 +236,6 @@ async function asignarEvento(dia, mes, año) {
 
 async function crearEvento() {
   try {
-    events.value.date = new Date(events.value.date).toISOString()
     const response = await api.post('/eventos', events.value)
     console.log('Evento creado:', response.data)
     obtenerEventos()

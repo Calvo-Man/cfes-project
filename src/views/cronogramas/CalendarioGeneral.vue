@@ -223,7 +223,7 @@ async function asignarEvento(dia, mes, año) {
   showEventosDelDia.value = false
   if (asignaciones.length > 0) {
     eventosDelDiaSeleccionado.value = asignaciones
-    events.value.date = fecha.toISOString()
+    events.value.date = fecha.toISOString().split('T')[0]
     showEventosDelDia.value = true
   } else {
     if (userStore.user.rol !== 'servidor') {

@@ -281,6 +281,7 @@ function resetFormulario() {
   miembro.user = ''
   miembro.password = ''
   miembro.telefono = ''
+  miembro.cedula = ''
   miembro.rol = null
   miembro.cargo = null
 }

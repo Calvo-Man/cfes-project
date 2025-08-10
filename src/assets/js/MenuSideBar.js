@@ -42,17 +42,12 @@ export const MenuSideBar = [
     icon: 'groups',
     RequiresAdmin: false,
     children: [
-      // {
-      //   label: 'Ver servidores',
-      //   icon: '',
-      //   to: '/ver-servidores',
-      //   RequiresAdmin: false,
-      // },
       {
         label: 'Administrar servidores',
         icon: '',
         to: '/servidores',
         RequiresAdmin: true,
+        RequiresPastor: true,
       },
       {
         label: 'Listado de servidores',
@@ -65,6 +60,7 @@ export const MenuSideBar = [
         icon: '',
         to: '/ver-contratos',
         RequiresAdmin: true,
+        RequiresPastor: true,
       },
     ],
   },
@@ -85,7 +81,7 @@ export const MenuSideBar = [
   {
     label: 'Casas de fe',
     icon: 'church',
-    RequiresAdmin: true,
+    RequiresAdmin: false,
     children: [
       {
         label: 'Registro casa de fe',
@@ -106,5 +102,6 @@ export const MenuSideBar = [
     icon: 'quiz',
     to: '/banco-preguntas',
     RequiresAdmin: true,
+    RequiresPastor: true,
   },
 ]

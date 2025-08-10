@@ -41,6 +41,7 @@
         :label="item.label"
         :icon="item.icon"
         :RequiresAdmin="item.RequiresAdmin"
+        :RequiresPastor="item.RequiresPastor"
         :to="item.to"
         :href="item.href"
         :shouldDownload="item.shouldDownload"
@@ -79,16 +80,30 @@ export default {
     showLabel() {
       return this.smallMenu ? this.depth > 0 : true
     },
-    showItems() {
-      const rolesConPermiso = ['pastor', 'administrador']
-      const rolUsuario = this.userStore.user.rol
+    computed: {
+      showItems() {
+        const rolUsuario = this.userStore.user.rol
 
-      if (!this.RequiresAdmin) {
-        return true // No requiere admin, mostrar siempre
-      }
+        // No requiere permisos especiales → mostrar siempre
+        if (!this.RequiresAdmin && !this.RequiresPastor) return true
 
-      // Si requiere admin, solo mostrar si el rol está en la lista
-      return rolesConPermiso.includes(rolUsuario)
+        // Si requiere Admin y Pastor → aceptar ambos
+        if (this.RequiresAdmin && this.RequiresPastor) {
+          return ['administrador', 'pastor'].includes(rolUsuario)
+        }
+
+        // Solo Admin
+        if (this.RequiresAdmin) {
+          return rolUsuario === 'administrador'
+        }
+
+        // Solo Pastor
+        if (this.RequiresPastor) {
+          return rolUsuario === 'pastor'
+        }
+
+        return false
+      },
     },
   },
   methods: {

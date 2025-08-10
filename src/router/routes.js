@@ -68,6 +68,7 @@ export const routes = [
         path: 'banco-preguntas',
         name: 'Banco de preguntas',
         component: () => import('../views/banco-preguntas/BancoPreguntas.vue'),
+        meta: { requiresAdmin: true, requiresPastor: true },
       },
     ],
   },

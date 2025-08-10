@@ -6,30 +6,32 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 })
-
 router.beforeEach((to, from, next) => {
   const store = useUserStore()
-
   const isAuthenticated = store.isAuthenticated
   const userRole = store.user?.rol || ''
 
-  // ⛔ Impedir acceso a /login si ya está autenticado
+  // Evitar que un usuario logueado entre al login
   if (to.path === '/login' && isAuthenticated) {
-    return next({ path: '/' }) // o a donde quieras redirigir después de login
+    return next({ path: '/' })
   }
+
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (!isAuthenticated) {
-      return next({ path: '/login' }) // ✅ corregido
+      return next({ path: '/login' })
     }
 
-    if (to.matched.some((record) => record.meta.requiresAdmin)) {
+    // Roles permitidos según meta
+    if (to.matched.some((record) => record.meta.requiresAdmin && record.meta.requiresPastor)) {
+      if (!['administrador', 'pastor'].includes(userRole)) {
+        return next({ path: '/' })
+      }
+    } else if (to.matched.some((record) => record.meta.requiresAdmin)) {
       if (userRole !== 'administrador') {
         return next({ path: '/' })
       }
-    }
-
-    if (to.matched.some((record) => record.meta.requiresAdmin && record.meta.requiresPastor)) {
-      if (userRole !== 'administrador' && userRole !== 'pastor') {
+    } else if (to.matched.some((record) => record.meta.requiresPastor)) {
+      if (userRole !== 'pastor') {
         return next({ path: '/' })
       }
     }

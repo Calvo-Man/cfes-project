@@ -31,17 +31,19 @@
           </div>
         </div>
       </v-col>
+
+      <!-- Modal eventos del día -->
       <v-dialog v-model="showEventosDelDia" max-width="500">
         <v-card>
-          <v-card-title class="font-weight-bold"
-            >Eventos para {{ fechaEvento }}
+          <v-card-title class="font-weight-bold">
+            Eventos para {{ fechaEvento }}
             <v-btn
               variant="outlined"
               v-if="userStore.user.rol !== 'servidor'"
-              @click="asignarEvento(dia, estado.mes, estado.año)"
+              @click="showAgendar = true"
               >Agregar</v-btn
-            ></v-card-title
-          >
+            >
+          </v-card-title>
           <v-card-text>
             <v-list dense>
               <v-list-item v-for="(evento, index) in eventosDelDiaSeleccionado" :key="index">
@@ -60,16 +62,16 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
       <!-- Navegación -->
       <v-col cols="12" class="text-center">
         <v-btn @click="cambiarMes(-1)" color="primary" class="mx-2"> Anterior </v-btn>
-
         <v-btn @click="cambiarMes(1)" color="primary"> Siguiente </v-btn>
       </v-col>
     </v-row>
-    <!-- ENVOLTORIO CLARO PARA EL PDF -->
   </v-container>
 
+  <!-- Modal agendar evento -->
   <v-dialog
     v-model="showAgendar"
     v-if="userStore.user.rol !== 'servidor'"
@@ -87,23 +89,20 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn color="red" @click="cerrarModal"> Cerrar </v-btn>
-
         <v-btn color="primary" @click="crearEvento"> Agendar </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
+
   <Notificacion ref="notificacionRef" />
 </template>
 
 <script setup>
-import { io } from 'socket.io-client'
-
-import { nextTick } from 'vue'
 import api from '@/plugins/axios'
 import Notificacion from '@/components/Notificacion.vue'
 import { useUserStore } from '@/store/userStore'
-
 import { ref, reactive, computed, onMounted } from 'vue'
+
 const events = ref({
   name: null,
   description: null,
@@ -124,37 +123,46 @@ const estado = reactive({
 })
 const notificacionRef = ref(null)
 
+// ===== FUNCIONES DE FECHA SEGURAS (sin desfase por zona horaria) =====
+function formatearFechaLocal(date) {
+  const anio = date.getFullYear()
+  const mes = String(date.getMonth() + 1).padStart(2, '0')
+  const dia = String(date.getDate()).padStart(2, '0')
+  return `${anio}-${mes}-${dia}`
+}
+
+function claveFecha(dia) {
+  return formatearFechaLocal(new Date(estado.año, estado.mes, dia))
+}
+
+function esDiaAsignado(dia) {
+  const fecha = claveFecha(dia)
+  const mesClave = `${estado.año}-${String(estado.mes + 1).padStart(2, '0')}`
+  const asignaciones = estado.asignacionesPorMes[mesClave] || []
+  return asignaciones.some((evento) => evento.date === fecha)
+}
+
+function asignacionesPorFecha(fecha) {
+  const mesClave = `${estado.año}-${String(estado.mes + 1).padStart(2, '0')}`
+  const eventosMes = estado.asignacionesPorMes[mesClave] || []
+  return eventosMes.filter((evento) => evento.date === fecha)
+}
+
 const nombreMes = computed(() =>
   new Date(estado.año, estado.mes).toLocaleString('es-CO', { month: 'long' }),
 )
 const diasEnMes = computed(() => new Date(estado.año, estado.mes + 1, 0).getDate())
 const diaInicioMes = computed(() => new Date(estado.año, estado.mes, 1).getDay())
 const año = computed(() => estado.año)
-const fechaEvento = computed(() =>
-  new Date(events.value.date).toLocaleDateString('es-CO', {
+const fechaEvento = computed(() => {
+  if (!events.value.date) return ''
+  const fecha = new Date(events.value.date + 'T00:00:00')
+  return fecha.toLocaleDateString('es-CO', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  }),
-)
-function claveFecha(dia) {
-  const mesStr = String(estado.mes + 1).padStart(2, '0')
-  const diaStr = String(dia).padStart(2, '0')
-  return `${estado.año}-${mesStr}-${diaStr}`
-}
-
-function esDiaAsignado(dia) {
-  const fecha = claveFecha(dia) // Ej: "2025-07-15"
-  const mesClave = `${estado.año}-${String(estado.mes + 1).padStart(2, '0')}`
-  const asignaciones = estado.asignacionesPorMes[mesClave] || []
-  return asignaciones.some((evento) => evento.date?.startsWith(fecha))
-}
-
-function asignacionesPorFecha(fecha) {
-  const mesClave = `${estado.año}-${String(estado.mes + 1).padStart(2, '0')}`
-  const eventosMes = estado.asignacionesPorMes[mesClave] || []
-  return eventosMes.filter((evento) => evento.date?.startsWith(fecha))
-}
+  })
+})
 
 function cambiarMes(delta) {
   estado.mes += delta
@@ -180,56 +188,20 @@ async function obtenerEventos() {
   }
 }
 
-// async function generarYEnviarPDF() {
-//   mostrarPDF.value = true
-//   await nextTick()
-
-//   const elemento = document.getElementById('pdf-target')
-//   const canvas = await html2canvas(elemento, { scale: 2 })
-//   const imgData = canvas.toDataURL('image/jpeg', 1.0)
-
-//   const pdf = new jsPDF({
-//     orientation: 'portrait',
-//     unit: 'mm',
-//     format: 'a4',
-//   })
-
-//   // Cálculo dinámico
-//   const imgProps = pdf.getImageProperties(imgData)
-//   const pdfWidth = pdf.internal.pageSize.getWidth()
-//   const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
-
-//   pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight)
-//   const pdfBlob = pdf.output('blob')
-
-//   mostrarPDF.value = false
-
-//   const formData = new FormData()
-//   formData.append('pdf', pdfBlob, `calendario-aseo-${estado.año}-${estado.mes + 1}.pdf`)
-
-//   try {
-//     await api.post('/aseos/enviar', formData, {
-//       headers: { 'Content-Type': 'multipart/form-data' },
-//     })
-//     console.log('✅ PDF enviado correctamente')
-//   } catch (err) {
-//     console.error('❌ Error al enviar el PDF', err)
-//   }
-// }
 async function asignarEvento(dia, mes, año) {
   const fecha = new Date(año, mes, dia)
   const clave = claveFecha(dia)
   const asignaciones = asignacionesPorFecha(clave)
   showEventosDelDia.value = false
-  events.value.date = fecha.toISOString().split('T')[0]
+
   if (asignaciones.length > 0) {
     eventosDelDiaSeleccionado.value = asignaciones
+    events.value.date = formatearFechaLocal(fecha)
     showEventosDelDia.value = true
-    console.log('Asignar evento para:', events.value.date)
   } else {
     if (userStore.user.rol !== 'servidor') {
       showAgendar.value = true
-      console.log('Asignar evento para:', events.value.date)
+      events.value.date = formatearFechaLocal(fecha)
     }
   }
 }
@@ -295,25 +267,5 @@ function onDialogChange(val) {
 .asignacion {
   font-size: 0.8rem;
   margin-top: 4px;
-}
-.pdf-container {
-  max-width: 900px;
-  margin: 0 auto;
-  background-color: var(--grey);
-  position: relative;
-  z-index: 1;
-
-  .fondo-personalizado {
-    position: absolute;
-    top: 60%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: -1;
-
-    img {
-      height: auto;
-      opacity: 0.5;
-    }
-  }
 }
 </style>

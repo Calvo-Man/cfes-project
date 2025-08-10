@@ -2,7 +2,7 @@
   <div class="container-div">
     <v-row class="mb-1">
       <!-- Formulario -->
-      <v-col v-if="userStore.user.rol === 'pastor'" cols="12" md="6">
+      <v-col cols="12" md="6">
         <v-card class="pa-6 elevation-3 form-container">
           <h2 class="text-h5 font-weight-bold mb-4">Agregar casa de fe</h2>
           <v-form @submit.prevent="sendForm">
@@ -41,7 +41,7 @@
       </v-col>
 
       <!-- Mapa -->
-      <v-col cols="12" :md="userStore.user.rol === 'pastor' ? 6 : 12">
+      <v-col cols="12" md="6">
         <div id="google-map" class="map-container"></div>
       </v-col>
     </v-row>
@@ -70,7 +70,7 @@
             <i class="material-icons icon-sm">visibility</i>
           </v-btn>
           <v-btn
-            v-if="userStore.user.rol === 'pastor'"
+            v-if="userStore.user.rol === 'pastor' || userStore.user.rol === 'administrador'"
             icon
             color="primary"
             class="mr-2"
@@ -80,7 +80,7 @@
             <i class="material-icons icon-sm">edit</i>
           </v-btn>
           <v-btn
-            v-if="userStore.user.rol === 'pastor'"
+            v-if="userStore.user.rol === 'pastor' || userStore.user.rol === 'administrador'"
             icon
             color="red"
             size="x-small"
@@ -95,7 +95,11 @@
   </div>
   <Notificacion ref="notificacionRef" />
 
-  <v-dialog v-model="dialogDelete" v-if="userStore.user.rol === 'pastor'" max-width="600">
+  <v-dialog
+    v-model="dialogDelete"
+    v-if="userStore.user.rol === 'pastor' || userStore.user.rol === 'administrador'"
+    max-width="600"
+  >
     <v-card>
       <v-card-title class="text-h5"> Eliminar casa de fe </v-card-title>
       <v-card-text>

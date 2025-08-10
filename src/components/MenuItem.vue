@@ -80,16 +80,15 @@ export default {
       return this.smallMenu ? this.depth > 0 : true
     },
     showItems() {
-      if (
-        (this.RequiresAdmin === true && this.userStore.user.rol === 'pastor') ||
-        this.userStore.user.rol === 'administrador'
-      ) {
-        return true
-      } else if (this.RequiresAdmin === false) {
-        return true
-      } else {
-        return false
+      const rolesConPermiso = ['pastor', 'administrador']
+      const rolUsuario = this.userStore.user.rol
+
+      if (!this.RequiresAdmin) {
+        return true // No requiere admin, mostrar siempre
       }
+
+      // Si requiere admin, solo mostrar si el rol está en la lista
+      return rolesConPermiso.includes(rolUsuario)
     },
   },
   methods: {

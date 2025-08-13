@@ -58,6 +58,14 @@ button {
   font-weight: 600;
   letter-spacing: 0.3px;
 }
+.v-hover {
+  transition: all 0.1s ease-in-out;
+}
+.v-hover:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
 
 .app {
   display: flex;

@@ -130,7 +130,8 @@
           :color="item.activo ? 'success' : 'error'"
           label
           text-color="white"
-          class="ma-1"
+          class="ma-1 v-hover"
+          @click="confirmDelete(item)"
         >
           {{ item.activo ? 'Activo' : 'Inactivo' }}
         </v-chip>
@@ -142,7 +143,8 @@
           :color="item.disponibilidad_aseo ? 'success' : 'error'"
           label
           text-color="white"
-          class="ma-1"
+          class="ma-1 v-hover"
+          @click="confirmDisponibilidad(item)"
         >
           {{ item.disponibilidad_aseo ? 'Si' : 'No' }}
         </v-chip>
@@ -157,7 +159,7 @@
   <Notificacion ref="notificacionRef" />
   <v-dialog v-model="dialogDelete" max-width="900">
     <v-card>
-      <v-card-title class="text-h5"> Eliminar servidor </v-card-title>
+      <v-card-title class="text-h5">Cambiar Estado del Servidor</v-card-title>
       <v-card-text>
         <p>¿Estas seguro de continuar?</p>
       </v-card-text>
@@ -165,6 +167,21 @@
         <v-spacer />
         <v-btn color="green" variant="elevated" @click="dialogDelete = false"> Cancelar </v-btn>
         <v-btn color="red" variant="elevated" @click="eliminar"> Continuar </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+  <v-dialog v-model="dialogDisponibilidad" max-width="900">
+    <v-card>
+      <v-card-title class="text-h5">Cambiar Disponibilidad de Aseo</v-card-title>
+      <v-card-text>
+        <p>¿Estas seguro de continuar?</p>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn color="green" variant="elevated" @click="dialogDisponibilidad = false">
+          Cancelar
+        </v-btn>
+        <v-btn color="red" variant="elevated" @click="cambiarDisponibilidad"> Continuar </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -183,6 +200,7 @@ const mostrarPassword = ref(false)
 import { useUserStore } from '@/store/userStore'
 const notificacionRef = ref(null)
 const dialogFirma = ref(false)
+const dialogDisponibilidad = ref(false)
 const Firmado = ref(false)
 
 const userStore = useUserStore()
@@ -208,7 +226,7 @@ const headers = computed(() => {
     { title: 'Rol', value: 'rol' },
     { title: 'Cargo', value: 'cargo' },
     { title: 'Dia de aseo', value: 'horario_aseo', sortable: true },
-    { title: 'Disponibilidad', value: 'disponibilidad_aseo', sortable: true },
+    { title: 'Disponibilidad para aseo', value: 'disponibilidad_aseo', sortable: true },
     { title: 'Estado', value: 'activo', sortable: true },
   ]
 
@@ -302,11 +320,27 @@ async function confirmDelete(item) {
   miembroIdToDelete.value = item
   dialogDelete.value = true
 }
+async function confirmDisponibilidad(item) {
+  miembroIdToDelete.value = item
+  dialogDisponibilidad.value = true
+}
+async function cambiarDisponibilidad() {
+  try {
+    const response = await api.patch(
+      `/miembros/cambiarDisponibilidadDeAseo/${miembroIdToDelete.value.id}`,
+    )
+    obtenerServidores()
+    notificacionRef.value.mostrar(response.data.message, response.data.color)
+  } catch (error) {
+    console.error('Error al cambiar la disponibilidad:', error)
+  }
+  dialogDisponibilidad.value = false
+}
 async function eliminar() {
   try {
-    await api.delete(`/miembros/softDelete/${miembroIdToDelete.value.id}`)
+    const response = await api.delete(`/miembros/cambiarEstado/${miembroIdToDelete.value.id}`)
     obtenerServidores()
-    notificacionRef.value.mostrar('Miembro eliminado', 'error')
+    notificacionRef.value.mostrar(response.data.message, response.data.color)
   } catch (error) {
     console.error('Error al eliminar el miembro:', error)
   }

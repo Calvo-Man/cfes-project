@@ -115,6 +115,13 @@ export const MenuSideBar = [
     ],
   },
   {
+    label: 'Envio de mensajes',
+    icon: 'message',
+    to: '/envio-mensajes',
+    RequiresAdmin: true,
+    RequiresPastor: true,
+  },
+  {
     label: 'Banco de preguntas',
     icon: 'quiz',
     to: '/banco-preguntas',

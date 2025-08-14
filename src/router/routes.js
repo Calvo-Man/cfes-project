@@ -70,6 +70,12 @@ export const routes = [
         component: () => import('../views/casas-de-fe/ControlCasaDeFe.vue'),
       },
       {
+        path: 'envio-mensajes',
+        name: 'Envio de mensajes',
+        component: () => import('../views/manejo-mensajes/EnviarMensajes.vue'),
+        meta: { requiresAdmin: true, requiresPastor: true },
+      },
+      {
         path: 'banco-preguntas',
         name: 'Banco de preguntas',
         component: () => import('../views/banco-preguntas/BancoPreguntas.vue'),

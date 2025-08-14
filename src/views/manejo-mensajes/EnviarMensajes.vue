@@ -68,7 +68,7 @@ const enviarMensaje = async () => {
     // Ajusta la URL a tu endpoint en NestJS
     const response = await api.post('/manejo-de-mensajes/enviar-mensajes', mensaje.value)
     notificacionRef.value.mostrar(
-      `El mensaje sera enviado a ${response.data} destinatarios`,
+      `El mensaje sera enviado a ${response.data.total} destinatarios`,
       'success',
     ) // 👈 aquí la notificación de update
     mensaje.value.contenido = ''

@@ -1,5 +1,5 @@
 <template>
-  <v-card class="pa-4" max-width="700">
+  <v-card class="pa-4 mt-10">
     <v-card-title>Enviar Mensaje</v-card-title>
     <v-card-text>
       <v-form ref="form" @submit.prevent="enviarMensaje">

@@ -61,6 +61,12 @@
                   <strong>Direccion:</strong>
                   <v-chip class="ma-1" color="blue lighten-4" label> Calle 12 #7-40 </v-chip>
                 </p>
+                <p>
+                  <strong>Barrio:</strong>
+                  <v-chip class="ma-1" color="blue lighten-4" label>
+                    {{ casa.barrio }}
+                  </v-chip>
+                </p>
               </v-card>
             </v-col>
 
@@ -220,6 +226,12 @@
               <p>
                 <strong>Direccion:</strong>
                 <v-chip class="ma-1" color="blue lighten-4" label> Calle 12 #7-40 </v-chip>
+              </p>
+              <p>
+                <strong>Barrio:</strong>
+                <v-chip class="ma-1" color="blue lighten-4" label>
+                  {{ casa.barrio }}
+                </v-chip>
               </p>
             </v-card>
           </v-col>

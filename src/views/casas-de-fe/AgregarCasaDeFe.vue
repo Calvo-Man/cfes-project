@@ -8,10 +8,29 @@
           <v-form @submit.prevent="sendForm">
             <v-row dense>
               <v-col cols="12">
-                <v-text-field v-model="form.nombre" label="Nombre" required />
+                <v-text-field v-model="form.nombre" label="Nombre de la casa de fe" required />
+              </v-col>
+              <v-col cols="6">
+                <v-text-field v-model="form.carrera" label="Carrera" required></v-text-field>
+              </v-col>
+              <v-col cols="6">
+                <v-text-field v-model="form.calle" label="Calle" required></v-text-field>
               </v-col>
               <v-col cols="12">
-                <v-text-field v-model="form.direccion" label="Dirección" required />
+                <v-text-field
+                  v-model="form.direccion"
+                  label="Dirección completa"
+                  readonly
+                  required
+                />
+              </v-col>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="form.barrio"
+                  label="Barrio"
+                  type="text"
+                  required
+                ></v-text-field>
               </v-col>
               <v-col cols="12">
                 <v-select
@@ -139,11 +158,15 @@ const casaIdToDelete = ref(null)
 const casas = ref([])
 const encargados = ref([])
 const userStore = useUserStore()
+const ultimoCampoEscrito = ref('')
 const form = ref({
   nombre: '',
   longitud: null,
   latitud: null,
   direccion: '',
+  barrio: '',
+  carrera: '',
+  calle: '',
   encargadosId: [],
   categoria: '',
 })
@@ -152,6 +175,7 @@ let map
 let marker
 let marcadoresExistentes = []
 let infoWindow = null
+let debounceTimer = null
 
 onMounted(async () => {
   getMembers()
@@ -192,13 +216,15 @@ async function getMembers() {
 }
 
 async function obtenerDireccionPorCoordenadas(lat, lng) {
-  const geocoder = await new google.maps.Geocoder()
-  return new Promise((resolve, reject) => {
+  form.value.latitud = lat.toFixed(6)
+  form.value.longitud = lng.toFixed(6)
+  const geocoder = new google.maps.Geocoder()
+  return await new Promise((resolve, reject) => {
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === 'OK' && results[0]) {
-        resolve(results[0].formatted_address)
+      if (status === 'OK') {
+        resolve(results[0]?.formatted_address || 'Dirección no encontrada')
       } else {
-        reject('Error en geocodificación: ' + status)
+        reject(status)
       }
     })
   })
@@ -264,6 +290,81 @@ watch(
     }
   },
 )
+watch(
+  () => form.value.calle,
+  (nuevaCalle) => {
+    if (nuevaCalle && !ultimoCampoEscrito.value) ultimoCampoEscrito.value = 'calle'
+    if (!nuevaCalle && ultimoCampoEscrito.value === 'calle') ultimoCampoEscrito.value = ''
+    actualizarDireccion()
+  },
+)
+
+watch(
+  () => form.value.carrera,
+  (nuevaCarrera) => {
+    if (nuevaCarrera && !ultimoCampoEscrito.value) ultimoCampoEscrito.value = 'carrera'
+    if (!nuevaCarrera && ultimoCampoEscrito.value === 'carrera') ultimoCampoEscrito.value = ''
+    actualizarDireccion()
+  },
+)
+watch(
+  () => form.value.barrio,
+  (nuevoBarrio) => {
+    if (nuevoBarrio && !form.value.direccion) actualizarDireccion()
+  },
+)
+
+function actualizarDireccion() {
+  const { calle, carrera } = form.value
+  if (!calle || (!carrera && form.value.barrio)) {
+    debounceBuscarDireccion()
+  }
+  if (calle && carrera) {
+    form.value.direccion =
+      ultimoCampoEscrito.value === 'calle'
+        ? `Cl. ${calle} #${carrera}`
+        : `Carrera ${carrera} #${calle}`
+
+    debounceBuscarDireccion()
+  } else {
+    form.value.direccion = ''
+  }
+}
+function debounceBuscarDireccion() {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => {
+    buscarDireccion()
+  }, 600)
+}
+async function buscarDireccion() {
+  let direccionCompleta = null
+  if (form.value.direccion) {
+    direccionCompleta = `${form.value.direccion}, San Pelayo, Córdoba, Colombia`
+    console.log(direccionCompleta)
+  }
+  if (form.value.barrio) {
+    direccionCompleta = `${form.value.barrio}, San Pelayo, Córdoba, Colombia`
+  }
+
+  const geocoder = new google.maps.Geocoder()
+  geocoder.geocode({ address: direccionCompleta }, (results, status) => {
+    if (status === 'OK' && results[0]) {
+      const location = results[0].geometry.location
+      const lat = location.lat()
+      const lng = location.lng()
+
+      form.value.latitud = lat.toFixed(6)
+      form.value.longitud = lng.toFixed(6)
+
+      const posicion = { lat, lng }
+      map.setCenter(posicion)
+      map.setZoom(17)
+      marker.setPosition(posicion)
+    } else {
+      console.warn('No se encontró la dirección dentro de San Pelayo.')
+    }
+  })
+}
 
 const sendForm = () => {
   submitForm()

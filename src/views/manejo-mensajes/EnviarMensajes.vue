@@ -22,7 +22,7 @@
         <v-select
           v-model="mensaje.enviado_a"
           :items="opcionesDestinatarios"
-          label="Enviar a"
+          label="Enviar a (Selecciona uno o varios)"
           multiple
           outlined
           required

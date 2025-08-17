@@ -49,7 +49,7 @@ const mensaje = ref({
 
 const notificacionRef = ref(null)
 
-const opcionesDestinatarios = ['lideres', 'servidores', 'asistentes']
+const opcionesDestinatarios = ['pastores', 'administradores', 'lideres', 'servidores', 'asistentes']
 const loading = ref(false)
 
 const primerLink = computed(() => {

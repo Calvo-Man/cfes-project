@@ -70,6 +70,16 @@ export const routes = [
         component: () => import('../views/casas-de-fe/ControlCasaDeFe.vue'),
       },
       {
+        path: 'realizar-peticiones',
+        name: 'Realizar peticiones',
+        component: () => import('../views/peticiones/PeticionesView.vue'),
+      },
+      {
+        path: 'peticiones',
+        name: 'Peticiones',
+        component: () => import('../views/peticiones/ListadoView.vue'),
+      },
+      {
         path: 'envio-mensajes',
         name: 'Envio de mensajes',
         component: () => import('../views/manejo-mensajes/EnviarMensajes.vue'),

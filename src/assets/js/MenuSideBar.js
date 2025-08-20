@@ -115,6 +115,29 @@ export const MenuSideBar = [
     ],
   },
   {
+    label: 'Oraciones',
+    icon: 'volunteer_activism',
+    RequiresAdmin: false,
+    RequiresPastor: false,
+
+    children: [
+      {
+        label: 'Realizar peticiones',
+        icon: '',
+        to: '/realizar-peticiones',
+        RequiresAdmin: false,
+        RequiresPastor: false,
+      },
+      {
+        label: 'Ver peticiones',
+        icon: '',
+        to: '/peticiones',
+        RequiresAdmin: false,
+        RequiresPastor: false,
+      },
+    ],
+  },
+  {
     label: 'Envio de mensajes',
     icon: 'message',
     to: '/envio-mensajes',

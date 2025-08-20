@@ -69,10 +69,10 @@
               <v-card-text>
                 Visualiza y gestiona las Casas de Fe de tu iglesia.
                 <br />
-                <small>Sólo los pastores pueden crear nuevas casas.</small>
+                <small>Registra tú casa de fe y comienza a gestionarla.</small>
               </v-card-text>
               <v-card-actions class="justify-center">
-                <v-btn to="/casas-de-fe/control" color="white" text>Ver casas</v-btn>
+                <v-btn to="/casas-de-fe/agregar" color="white" text>Ver casas</v-btn>
               </v-card-actions>
             </v-card>
           </v-slide-y-transition>

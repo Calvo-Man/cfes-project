@@ -1,4 +1,24 @@
 <template>
+  <v-row justify="center" class="mt-10">
+    <v-col cols="12" md="6" class="card-container text-center">
+      <v-card v-if="casas.length == 0">
+        <v-slide-y-transition>
+          <v-card color="primary" dark>
+            <v-card-title class="justify-center">
+              <v-icon class="mr-2">mdi-church</v-icon> No tienes casas de fé registradas
+            </v-card-title>
+            <v-card-text>
+              Registra tú casa de fe y comienza a gestionarla.
+              <br />
+            </v-card-text>
+            <v-card-actions class="justify-center">
+              <v-btn to="/casas-de-fe/agregar" color="white" text>Registrar</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-slide-y-transition>
+      </v-card>
+    </v-col>
+  </v-row>
   <v-container v-if="isDesktop">
     <v-expansion-panels>
       <v-expansion-panel v-for="(casa, index) in casas" :key="index" class="v-expansion-panel">

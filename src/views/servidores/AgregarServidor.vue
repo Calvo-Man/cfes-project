@@ -122,7 +122,13 @@
   <v-card class="pa-4 elevation-2 list-container bg-blur">
     <h2 class="text-h6 font-weight-bold mb-4">Listado de Servidores</h2>
 
-    <v-data-table :headers="headers" :items="servidores" class="elevation-1" density="comfortable">
+    <v-data-table
+      :headers="headers"
+      :items="servidores"
+      :loading="loading"
+      class="elevation-1"
+      density="comfortable"
+    >
       <template #item.activo="{ item }">
         <v-chip
           small
@@ -194,6 +200,7 @@ import api from '@/plugins/axios'
 import Notificacion from '@/components/Notificacion.vue'
 import FirmaPad from '@/components/FirmaPad.vue'
 
+const loading = ref(false)
 const form = ref(null)
 const valid = ref(false)
 const mostrarPassword = ref(false)

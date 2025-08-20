@@ -6,7 +6,13 @@
         <v-spacer />
       </v-card-title>
 
-      <v-data-table :headers="headers" :items="contratos" class="elevation-1" item-value="id">
+      <v-data-table
+        :headers="headers"
+        :items="contratos"
+        :loading="loading"
+        class="elevation-1"
+        item-value="id"
+      >
         <!-- Mostrar firma como imagen -->
         <template #item.firma="{ item }">
           <v-img
@@ -56,6 +62,7 @@ import api from '@/plugins/axios'
 const contratos = ref([])
 const dialogFirma = ref(false)
 const firma = ref('')
+const loading = ref(false)
 
 const headers = [
   { title: 'ID', value: 'id' },

@@ -68,7 +68,13 @@
     <v-card v-if="casas.length > 0" class="pa-4 elevation-2 list-container">
       <h2 class="text-h6 font-weight-bold mb-4">Listado de Casas de Fe</h2>
 
-      <v-data-table :headers="headers" :items="casas" class="elevation-1" density="comfortable">
+      <v-data-table
+        :headers="headers"
+        :items="casas"
+        :loading="loading"
+        class="elevation-1"
+        density="comfortable"
+      >
         <template #item.encargadosId="{ item }">
           <div>
             <v-chip
@@ -152,6 +158,7 @@ const categories = [
   { label: 'Jovenes', value: 'Jovenes' },
   { label: 'Adultos', value: 'Adultos' },
 ]
+const loading = ref(false)
 const notificacionRef = ref(null)
 const dialogDelete = ref(false)
 const casaIdToDelete = ref(null)

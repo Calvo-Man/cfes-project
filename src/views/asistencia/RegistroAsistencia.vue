@@ -65,7 +65,13 @@
   <v-card class="pa-4 elevation-2 list-container">
     <h2 class="text-h6 font-weight-bold mb-4">Listado de Asistencias</h2>
 
-    <v-data-table :headers="headers" :items="asistencias" class="elevation-1" density="comfortable">
+    <v-data-table
+      :headers="headers"
+      :items="asistencias"
+      :loading="loading"
+      class="elevation-1"
+      density="comfortable"
+    >
       <template #item.encargadosId="{ item }">
         <div>
           <v-chip
@@ -125,6 +131,8 @@ const form = ref({
   latitud: null,
   longitud: null,
 })
+
+const loading = ref(false)
 
 const categoria = [
   { label: 'Niños', value: 'Niños' },

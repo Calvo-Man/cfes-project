@@ -2,7 +2,7 @@
   <div class="menu-item" :class="{ opened: expanded }">
     <!-- Si 'to' no es null, renderiza <router-link>, de lo contrario, renderiza un <div> -->
     <router-link v-if="to" class="button" :to="to" v-show="showItems" style="height: 50px">
-      <div class="label" @click="toggleMenu() && CloseSidebar()">
+      <div class="label" @click="CloseSidebar()">
         <div class="left">
           <span v-if="icon" class="material-icons">{{ icon }}</span>
           <span class="text" v-if="showLabel">{{ label }}</span>
@@ -141,7 +141,9 @@ export default {
       }
     },
     CloseSidebar() {
-      this.$emit('CloseSidebar')
+      if (window.innerWidth < 1024) {
+        this.$emit('closeSidebar') // coincide con el listener del SideBar.vue
+      }
     },
   },
 }

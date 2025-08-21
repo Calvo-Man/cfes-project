@@ -1,8 +1,10 @@
 <template>
   <header class="navbar">
-    <div class="navbar-title">
-      <p>{{ route.name || '...' }}</p>
-    </div>
+    <transition name="fade-route" mode="out-in">
+      <div class="navbar-title" :key="route.name">
+        <p>{{ route.name || '...' }}</p>
+      </div>
+    </transition>
 
     <button class="logout-btn" @click="logout">
       <span class="material-icons">logout</span>
@@ -61,6 +63,22 @@ const logout = () => {
 }
 .logout-btn:hover {
   opacity: 0.8;
+}
+.fade-route-enter-active,
+.fade-route-leave-active {
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+.fade-route-enter-from,
+.fade-route-leave-to {
+  opacity: 0;
+  transform: translateY(-5px);
+}
+.fade-route-enter-to,
+.fade-route-leave-from {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* 🖥️ Cuando el ancho es mayor a 1024px, alineamos el texto a la izquierda */

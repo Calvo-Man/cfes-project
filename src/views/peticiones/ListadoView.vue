@@ -1,13 +1,28 @@
 <template>
-  <v-container>
+  <v-container class="py-6">
     <v-card class="pa-4">
-      <v-card-title> 📖 Lista de Peticiones de Oración </v-card-title>
+      <v-card-title class="text-h5 font-weight-bold">
+        📖 Lista de Peticiones de Oración
+      </v-card-title>
 
-      <v-data-table :headers="headers" :items="peticiones" :loading="loading" class="elevation-2">
+      <v-data-table
+        :headers="headers"
+        :items="peticiones"
+        :loading="loading"
+        class="elevation-2"
+        dense
+        :items-per-page="10"
+      >
         <template #item.estado="{ item }">
-          <v-chip :color="getEstadoColor(item.estado)" dark small>
+          <v-chip :color="getEstadoColor(item.estado)" dark small class="text-capitalize">
             {{ item.estado }}
           </v-chip>
+        </template>
+
+        <template #item.contenido="{ item }">
+          <span class="text-truncate" style="max-width: 200px">
+            {{ item.contenido }}
+          </span>
         </template>
 
         <template #item.acciones="{ item }">
@@ -21,16 +36,54 @@
     <!-- Dialogo para ver detalle -->
     <v-dialog v-model="dialog" max-width="500px">
       <v-card>
-        <v-card-title> ✨ Petición de {{ peticionSeleccionada?.nombre }} </v-card-title>
-        <v-card-text>
-          <p><strong>Categoría:</strong> {{ peticionSeleccionada?.categoria }}</p>
-          <p><strong>Teléfono:</strong> {{ peticionSeleccionada?.telefono || 'No registrado' }}</p>
-          <p><strong>Contenido:</strong></p>
-          <p>{{ peticionSeleccionada?.contenido }}</p>
-          <p><strong>Estado:</strong> {{ peticionSeleccionada?.estado }}</p>
+        <v-card-title class="text-h6 font-weight-bold">
+          ✨ Petición de {{ peticionSeleccionada?.nombre }}
+        </v-card-title>
+        <v-card-text class="pa-4">
+          <v-list dense>
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title class="font-weight-medium"> Categoría </v-list-item-title>
+                <v-list-item-subtitle>{{
+                  peticionSeleccionada?.categoria || 'General'
+                }}</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title class="font-weight-medium"> Teléfono </v-list-item-title>
+                <v-list-item-subtitle>{{
+                  peticionSeleccionada?.telefono || 'No registrado'
+                }}</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title class="font-weight-medium">Contenido</v-list-item-title>
+                <v-list-item-subtitle>{{ peticionSeleccionada?.contenido }}</v-list-item-subtitle>
+              </v-list-item-content>
+            </v-list-item>
+
+            <v-list-item>
+              <v-list-item-content>
+                <v-list-item-title class="font-weight-medium">Estado</v-list-item-title>
+                <v-chip
+                  :color="getEstadoColor(peticionSeleccionada?.estado)"
+                  dark
+                  small
+                  class="text-capitalize"
+                >
+                  {{ peticionSeleccionada?.estado }}
+                </v-chip>
+              </v-list-item-content>
+            </v-list-item>
+          </v-list>
         </v-card-text>
         <v-card-actions>
-          <v-btn text @click="dialog = false">Cerrar</v-btn>
+          <v-spacer></v-spacer>
+          <v-btn text color="primary" @click="dialog = false">Cerrar</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -74,11 +127,11 @@ const verPeticion = (item) => {
 const getEstadoColor = (estado) => {
   switch (estado) {
     case 'pendiente':
-      return 'orange'
+      return 'orange darken-2'
     case 'en proceso':
-      return 'blue'
+      return 'blue darken-2'
     case 'atendida':
-      return 'green'
+      return 'green darken-2'
     default:
       return 'grey'
   }

@@ -1,18 +1,21 @@
 <template>
-  <v-container class="py-4" style="max-width: 900px">
+  <v-container class="py-4 calendar-container" style="max-width: 950px">
     <v-row justify="center">
       <v-col cols="12">
-        <v-col cols="12" class="text-center bg-primary pa-0">
-          <h2 class="text-h5 font-weight-bold">Calendario General - {{ nombreMes }} {{ año }}</h2>
-        </v-col>
-        <div class="calendar-grid">
+        <!-- Encabezado del mes -->
+        <v-card flat class="text-center bg-primary text-white py-3 rounded-lg elevation-2 fade-in">
+          <h2 class="text-h5 font-weight-bold">{{ nombreMes.toUpperCase() }} {{ año }}</h2>
+        </v-card>
+
+        <!-- Grilla calendario -->
+        <div class="calendar-grid mt-4">
           <!-- Encabezados -->
           <div class="day-header" v-for="d in diasSemana" :key="d">{{ d }}</div>
 
-          <!-- Espacios vacíos según el día de inicio del mes -->
-          <div v-for="n in diaInicioMes" :key="'vacio' + n"></div>
+          <!-- Espacios vacíos -->
+          <div v-for="n in diaInicioMes" :key="'vacio' + n" class="empty-day"></div>
 
-          <!-- Días del mes -->
+          <!-- Días -->
           <div
             v-for="dia in diasEnMes"
             :key="'dia' + dia"
@@ -21,32 +24,45 @@
             :class="{ asignado: esDiaAsignado(dia), libre: !esDiaAsignado(dia) }"
           >
             <div class="dia-numero">{{ dia }}</div>
-            <div
-              class="asignacion"
-              v-for="evento in asignacionesPorFecha(claveFecha(dia))"
-              :key="evento.id"
-            >
-              <p class="name-event text-body-2">{{ evento.name }}</p>
-            </div>
+
+            <transition-group name="fade" tag="div">
+              <div
+                class="asignacion"
+                v-for="evento in asignacionesPorFecha(claveFecha(dia))"
+                :key="evento.id"
+              >
+                <v-chip size="x-small" color="white" text-color="black" class="mb-1">
+                  {{ evento.name }}
+                </v-chip>
+              </div>
+            </transition-group>
           </div>
         </div>
       </v-col>
 
       <!-- Modal eventos del día -->
-      <v-dialog v-model="showEventosDelDia" max-width="500">
-        <v-card>
+      <v-dialog v-model="showEventosDelDia" max-width="500" transition="dialog-bottom-transition">
+        <v-card class="elevation-3">
           <v-card-title class="font-weight-bold">
             Eventos para {{ fechaEvento }}
+            <v-spacer />
             <v-btn
-              variant="outlined"
+              variant="tonal"
+              size="small"
               v-if="userStore.user.rol !== 'servidor'"
               @click="showAgendar = true"
+              prepend-icon="mdi-plus"
               >Agregar</v-btn
             >
           </v-card-title>
+
           <v-card-text>
-            <v-list dense>
-              <v-list-item v-for="(evento, index) in eventosDelDiaSeleccionado" :key="index">
+            <v-list density="compact" v-if="eventosDelDiaSeleccionado.length > 0">
+              <v-list-item
+                v-for="(evento, index) in eventosDelDiaSeleccionado"
+                :key="index"
+                class="rounded-lg hoverable"
+              >
                 <v-list-item-content>
                   <v-list-item-title class="text-subtitle-1 font-weight-medium">{{
                     evento.name
@@ -55,19 +71,21 @@
                 </v-list-item-content>
               </v-list-item>
             </v-list>
+            <p v-else class="text-grey text-center">No hay eventos en este día</p>
           </v-card-text>
+
           <v-card-actions>
             <v-spacer />
-            <v-btn color="primary" @click="showEventosDelDia = false">Cerrar</v-btn>
+            <v-btn color="primary" variant="flat" @click="showEventosDelDia = false">Cerrar</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
 
-      <!-- Navegación -->
-      <v-col cols="12" class="text-center">
-        <v-btn @click="cambiarMes(-1)" color="primary" class="mx-2"> Anterior </v-btn>
-        <v-btn @click="cambiarMes(1)" color="primary"> Siguiente </v-btn>
-      </v-col>
+      <!-- Botones navegación -->
+      <div class="calendar-navigation">
+        <v-btn icon="mdi-chevron-left" color="primary" variant="elevated" @click="cambiarMes(-1)" />
+        <v-btn icon="mdi-chevron-right" color="primary" variant="elevated" @click="cambiarMes(1)" />
+      </div>
     </v-row>
   </v-container>
 
@@ -77,19 +95,25 @@
     v-if="userStore.user.rol !== 'servidor'"
     @update:modelValue="onDialogChange"
     max-width="600"
+    transition="scale-transition"
   >
     <v-card class="pa-3 elevation-3">
-      <h3 class="dialog-title">Agendar {{ fechaEvento }}</h3>
+      <h3 class="dialog-title mb-2">Agendar {{ fechaEvento }}</h3>
       <v-card-text>
         <v-form ref="form">
           <v-text-field label="Nombre de evento" v-model="events.name" required></v-text-field>
-          <v-text-field label="Descripción" v-model="events.description" required></v-text-field>
+          <v-textarea
+            label="Descripción"
+            v-model="events.description"
+            rows="3"
+            auto-grow
+          ></v-textarea>
         </v-form>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="red" @click="cerrarModal"> Cerrar </v-btn>
-        <v-btn color="primary" @click="crearEvento"> Agendar </v-btn>
+        <v-btn variant="tonal" color="red" @click="cerrarModal"> Cerrar </v-btn>
+        <v-btn variant="flat" color="primary" @click="crearEvento"> Agendar </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -238,37 +262,73 @@ function onDialogChange(val) {
 </script>
 
 <style scoped lang="scss">
+.calendar-container {
+  position: relative;
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 8px;
 }
+
 .day-header {
   font-weight: bold;
   text-align: center;
   color: var(--dark);
+  padding: 4px;
 }
+
 .calendar-day {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  min-height: 80px;
-  padding: 8px;
-  background-color: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  min-height: 90px;
+  padding: 6px;
+  background-color: #fafafa;
   cursor: pointer;
+  transition: all 0.25s ease;
 }
+
+.calendar-day:hover {
+  transform: scale(1.05);
+  background-color: #e3f2fd;
+}
+
 .calendar-day.asignado {
   background-color: var(--blue);
-  color: var(--light);
+  color: white;
 }
+
 .calendar-day.libre {
-  background-color: #f0f0f0;
-  opacity: 0.7;
+  background-color: #f5f5f596;
 }
+
 .dia-numero {
   font-weight: bold;
+  margin-bottom: 4px;
 }
+
 .asignacion {
-  font-size: 0.8rem;
-  margin-top: 4px;
+  font-size: 0.75rem;
+}
+
+.empty-day {
+  background-color: transparent;
+}
+
+.calendar-navigation {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

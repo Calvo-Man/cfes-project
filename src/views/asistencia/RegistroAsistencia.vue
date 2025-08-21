@@ -1,86 +1,135 @@
 <template>
   <v-row class="pa-4">
+    <!-- Formulario -->
     <v-col cols="12" md="6">
-      <v-card class="pa-4 elevation-3 mx-auto form-container">
-        <h2 class="text-h5 font-weight-bold mb-4">Registrar asistencia</h2>
+      <v-card class="pa-6 elevation-3 mx-auto form-container rounded-xl">
+        <h2 class="text-h5 font-weight-bold mb-4 d-flex align-center">📝 Registrar asistencia</h2>
         <v-form @submit.prevent="sendForm">
           <v-row dense>
             <v-col cols="12" md="6">
-              <v-text-field v-model="form.nombre" label="Nombre" required></v-text-field>
+              <v-text-field
+                v-model="form.nombre"
+                label="Nombre"
+                variant="outlined"
+                density="comfortable"
+                required
+              />
             </v-col>
 
             <v-col cols="12" md="6">
-              <v-text-field v-model="form.apellido" label="Apellido" required></v-text-field>
+              <v-text-field
+                v-model="form.apellido"
+                label="Apellido"
+                variant="outlined"
+                density="comfortable"
+                required
+              />
             </v-col>
 
             <v-col cols="12">
               <v-text-field
                 v-model="form.telefono"
-                label="Telefono"
+                label="Teléfono"
                 type="tel"
+                variant="outlined"
+                density="comfortable"
                 required
-              ></v-text-field>
+              />
             </v-col>
 
             <v-col cols="6">
-              <v-text-field v-model="form.carrera" label="Carrera" required></v-text-field>
+              <v-text-field
+                v-model="form.carrera"
+                label="Carrera"
+                variant="outlined"
+                density="comfortable"
+                required
+              />
             </v-col>
 
             <v-col cols="6">
-              <v-text-field v-model="form.calle" label="Calle" required></v-text-field>
+              <v-text-field
+                v-model="form.calle"
+                label="Calle"
+                variant="outlined"
+                density="comfortable"
+                required
+              />
             </v-col>
+
             <v-col cols="12">
-              <v-text-field v-model="form.direccion" label="Dirección completa" readonly />
+              <v-text-field
+                v-model="form.direccion"
+                label="Dirección completa"
+                variant="outlined"
+                density="comfortable"
+                readonly
+              />
             </v-col>
+
             <v-col cols="12">
               <v-text-field
                 v-model="form.barrio"
                 label="Barrio"
                 type="text"
+                variant="outlined"
+                density="comfortable"
                 required
-              ></v-text-field>
+              />
             </v-col>
+
             <v-col cols="12">
               <v-select
                 v-model="form.categoria"
                 :items="categoria"
-                label="Categoria"
+                label="Categoría"
+                variant="outlined"
+                density="comfortable"
                 item-value="value"
                 item-title="label"
               />
             </v-col>
+
             <v-col cols="12" class="text-right">
-              <v-btn color="primary" type="submit">Submit</v-btn>
+              <v-btn color="primary" type="submit" rounded="lg" elevation="2"> Guardar </v-btn>
             </v-col>
           </v-row>
         </v-form>
       </v-card>
     </v-col>
 
+    <!-- Mapa -->
     <v-col cols="12" md="6">
-      <div id="asistencia-map" class="map-container"></div>
+      <v-card class="elevation-2 rounded-xl overflow-hidden">
+        <div id="asistencia-map" class="map-container"></div>
+      </v-card>
     </v-col>
   </v-row>
 
-  <v-card class="pa-4 elevation-2 list-container">
-    <h2 class="text-h6 font-weight-bold mb-4">Listado de Asistencias</h2>
+  <!-- Tabla -->
+  <v-card class="pa-4 elevation-2 list-container rounded-xl">
+    <h2 class="text-h6 font-weight-bold mb-4">📋 Listado de Asistencias</h2>
 
     <v-data-table
       :headers="headers"
       :items="asistencias"
       :loading="loading"
-      class="elevation-1"
+      class="elevation-1 rounded-lg"
       density="comfortable"
+      hover
+      fixed-header
+      height="400px"
     >
       <template #item.encargadosId="{ item }">
         <div>
           <v-chip
             v-for="(encargados, index) in item.encargadosId"
             :key="index"
-            small
+            size="small"
             class="ma-1"
-            color="blue lighten-4"
-            text-color="blue darken-4"
+            color="blue-lighten-4"
+            text-color="blue-darken-4"
+            label
           >
             {{ encargados.name }} {{ encargados.apellido }}
           </v-chip>
@@ -88,26 +137,30 @@
       </template>
 
       <template #item.acciones="{ item }">
-        <v-btn icon class="mr-2" size="x-small" @click="editar(item)">
+        <v-btn icon class="mr-2" size="x-small" color="blue" variant="tonal" @click="editar(item)">
           <i class="material-icons icon-sm">edit</i>
         </v-btn>
-        <v-btn icon color="red" size="x-small" class="mr-2" @click="eliminar(item)">
+        <v-btn icon color="red" size="x-small" variant="tonal" @click="eliminar(item)">
           <i class="material-icons icon-sm">delete</i>
         </v-btn>
       </template>
     </v-data-table>
   </v-card>
+
+  <!-- Notificación -->
   <Notificacion ref="notificacionRef" />
+
+  <!-- Diálogo Eliminar -->
   <v-dialog v-model="dialogDelete" max-width="500">
-    <v-card>
-      <v-card-title class="text-h5"> Eliminar asistencia </v-card-title>
+    <v-card class="rounded-xl">
+      <v-card-title class="text-h5 font-weight-bold"> ⚠️ Eliminar asistencia </v-card-title>
       <v-card-text>
-        <p>¿Estas seguro de continuar?</p>
+        <p>¿Estás seguro de que deseas continuar?</p>
       </v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn color="green" variant="elevated" @click="dialogDelete = false"> Cancelar </v-btn>
-        <v-btn color="red" variant="elevated" @click="confirmDelete"> Continuar </v-btn>
+        <v-btn color="grey" variant="text" @click="dialogDelete = false"> Cancelar </v-btn>
+        <v-btn color="red" variant="elevated" @click="confirmDelete"> Eliminar </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -399,19 +452,22 @@ async function confirmDelete() {
 
 <style scoped lang="scss">
 .form-container {
-  width: 100%;
   background-color: var(--blur-light);
+  backdrop-filter: blur(6px);
 }
 .list-container {
-  width: 100%;
-  margin-top: 1rem;
   background-color: var(--grey);
+  margin-top: 1rem;
 }
 .icon-sm {
   font-size: 18px;
 }
 .map-container {
   height: 500px;
-  border-radius: 8px;
+  border-radius: 12px;
+}
+.v-data-table .v-data-table__tr:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  transition: background-color 0.2s ease-in-out;
 }
 </style>

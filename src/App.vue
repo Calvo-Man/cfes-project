@@ -34,7 +34,7 @@ const userStore = useUserStore()
   background-color: var(--blue);
 }
 .bg-blur {
-  background-color: var(--blur-light);
+  background-color: var(--blur-light) !important;
 }
 * {
   margin: 0;

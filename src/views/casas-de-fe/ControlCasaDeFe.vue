@@ -1,69 +1,101 @@
 <template>
-  <v-container v-if="isDesktop">
+  <v-row justify="center" class="mt-10">
+    <v-col cols="12" md="6" class="card-container text-center">
+      <v-card v-if="casas.length == 0">
+        <v-slide-y-transition>
+          <v-card color="primary" dark>
+            <v-card-title class="justify-center">
+              <v-icon class="mr-2">mdi-church</v-icon> No hay casas de fé registradas
+            </v-card-title>
+            <v-card-text>
+              Registra tú casa de fe y comienza a gestionarla.
+              <br />
+            </v-card-text>
+            <v-card-actions class="justify-center">
+              <v-btn to="/casas-de-fe/agregar" color="white" text>Registrar</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-slide-y-transition>
+      </v-card>
+    </v-col>
+  </v-row>
+  <v-container>
     <v-expansion-panels>
-      <v-expansion-panel v-for="(casa, index) in casas" :key="index" class="v-expansion-panel">
+      <v-expansion-panel
+        v-for="(casa, index) in casas"
+        :key="index"
+        class="mb-3 rounded-xl elevation-2"
+      >
+        <!-- Panel título -->
         <v-expansion-panel-title v-slot="{ expanded }">
-          <v-row no-gutters>
-            <v-col class="d-flex justify-start" cols="4">
-              <!-- <p class="text-body-1">{{ casa.nombre }}</p> -->
-              <v-chip>{{ casa.nombre }}</v-chip>
+          <v-row no-gutters class="align-center flex-wrap">
+            <!-- Nombre de la casa -->
+            <v-col cols="12" sm="4" class="d-flex align-center mb-2 mb-sm-0">
+              <v-icon color="primary" class="mr-2">mdi-home-city</v-icon>
+              <v-chip color="blue-darken-4" variant="outlined" label>{{ casa.nombre }}</v-chip>
             </v-col>
-            <v-col class="text-seconday" cols="8">
+
+            <v-col cols="12" sm="8">
               <v-fade-transition leave-absolute>
-                <span v-if="expanded" class="text-body-1 font-weight-bold"
-                  >Información de la casa de fe</span
-                >
-                <v-row v-else style="width: 100%" no-gutters>
-                  <v-col class="d-flex justify-start" cols="6">
-                    <ul>
-                      <li
-                        v-for="encargado in casa.encargadosId"
-                        :key="encargado.id"
-                        small
-                        class="ma-1"
-                        color="blue lighten-4"
-                      >
-                        {{ encargado.name }} {{ encargado.apellido }}
-                      </li>
-                    </ul>
+                <span v-if="expanded" class="text-body-1 font-weight-bold text-primary">
+                  Información de la Casa de Fe
+                </span>
+
+                <v-row v-else no-gutters class="align-center flex-wrap">
+                  <!-- Encargados -->
+                  <v-col cols="12" sm="6" class="mb-1">
+                    <v-chip
+                      v-for="encargado in casa.encargadosId"
+                      :key="encargado.id"
+                      class="ma-1"
+                      color="deep-purple-darken-4"
+                      label
+                      variant="outlined"
+                      size="small"
+                    >
+                      👤 {{ encargado.name }} {{ encargado.apellido }}
+                    </v-chip>
                   </v-col>
-                  <v-col class="d-flex justify-start" cols="6"
-                    ><p class="text-body-1 mr-1">
-                      Miembros:
-                      <v-chip color="blue " label small>{{ casa.miembros.length }}</v-chip>
-                    </p>
-                    <p class="text-body-1">
-                      Pendientes:
-                      <v-chip
-                        :color="casa.asistencias.length > 0 ? 'red lighten-4' : 'green lighten-4'"
-                        :text-color="
-                          casa.asistencias.length > 0 ? 'red darken-2' : 'green darken-2'
-                        "
-                        label
-                        small
-                      >
-                        {{ casa.asistencias.length }}
-                      </v-chip>
-                    </p>
+
+                  <!-- Miembros y pendientes -->
+                  <v-col cols="12" sm="6" class="d-flex flex-wrap">
+                    <v-chip color="primary" variant="outlined" size="small" class="mr-2 mb-1">
+                      👥 {{ casa.miembros.length }} miembros
+                    </v-chip>
+                    <v-chip
+                      :color="casa.asistencias.length > 0 ? 'red-darken-4' : 'green-darken-4'"
+                      :text-color="casa.asistencias.length > 0 ? 'red-darken-2' : 'green-darken-2'"
+                      label
+                      variant="outlined"
+                      size="small"
+                      class="mb-1"
+                    >
+                      🔔 {{ casa.asistencias.length }} pendientes
+                    </v-chip>
                   </v-col>
                 </v-row>
               </v-fade-transition>
             </v-col>
           </v-row>
         </v-expansion-panel-title>
+
+        <!-- Panel contenido -->
         <v-expansion-panel-text>
           <v-row>
+            <!-- Información de la casa -->
             <v-col cols="12" md="6">
-              <v-card class="pa-3 mb-4" elevation="2" min-height="100">
-                <h3 class="mb-2">📍 Información de la Casa</h3>
+              <v-card class="pa-3 mb-4 rounded-lg" elevation="2">
+                <h3 class="mb-2">📍 Información</h3>
                 <p><strong>Nombre:</strong> {{ casa.nombre }}</p>
                 <p>
-                  <strong>Direccion:</strong>
-                  <v-chip class="ma-1" color="blue lighten-4" label> Calle 12 #7-40 </v-chip>
+                  <strong>Dirección:</strong>
+                  <v-chip class="ma-1" color="blue-darken-4" label size="small">
+                    Calle 12 #7-40
+                  </v-chip>
                 </p>
                 <p>
                   <strong>Barrio:</strong>
-                  <v-chip class="ma-1" color="blue lighten-4" label>
+                  <v-chip class="ma-1" color="blue-darken-4" label size="small">
                     {{ casa.barrio }}
                   </v-chip>
                 </p>
@@ -72,13 +104,13 @@
 
             <!-- Encargados -->
             <v-col cols="12" md="6">
-              <v-card class="pa-3" elevation="2" min-height="120">
+              <v-card class="pa-3 mb-4 rounded-lg" elevation="2">
                 <h3 class="mb-2">👤 Encargados</h3>
                 <v-chip
                   v-for="encargado in casa.encargadosId"
                   :key="encargado.id"
                   class="ma-1"
-                  color="deep-purple lighten-4"
+                  color="deep-purple-darken-4"
                   label
                 >
                   {{ encargado.name }} {{ encargado.apellido }} - {{ encargado.rol }}
@@ -86,90 +118,67 @@
               </v-card>
             </v-col>
 
-            <!-- Asistencias -->
+            <!-- Miembros -->
             <v-col cols="12">
-              <v-card
-                class="pa-3 mb-4 content-person scrollable-nav"
-                elevation="2"
-                max-height="400"
-              >
-                <h3 class="mb-2">
-                  🧑‍🤝‍🧑 Miembros
+              <v-card class="pa-3 mb-4 rounded-lg" elevation="2" max-height="400">
+                <div class="d-flex justify-space-between align-center mb-2">
+                  <h3>🧑‍🤝‍🧑 Miembros</h3>
                   <v-btn
                     v-if="userStore.user.rol === 'pastor'"
                     variant="outlined"
                     @click="openDialog(casa.id)"
                     >Agregar</v-btn
                   >
-                </h3>
-                <v-list dense>
-                  <v-list-item v-for="asistencia in casa.miembros" :key="asistencia.id">
-                    <v-list-item-content>
-                      <v-list-item-title>
-                        <v-icon color="primary" small class="mr-1">mdi-account</v-icon>
-                        {{ asistencia.nombre }} {{ asistencia.apellido }}
-                        <v-icon color="primary" small class="mr-1">mdi-phone</v-icon>
-                        {{ asistencia.telefono }}
-                        <v-icon color="primary" small class="mr-1">mdi-home</v-icon>
-                        {{ asistencia.direccion }}
+                </div>
 
-                        <v-btn
-                          v-if="userStore.user.rol === 'pastor'"
-                          icon
-                          color="error"
-                          small
-                          class="mb-2"
-                          width="25"
-                          height="25"
-                          @click="openDialogDeleteMiembro(asistencia.id)"
-                          ><v-icon>mdi-close</v-icon></v-btn
-                        >
-                      </v-list-item-title>
-                    </v-list-item-content>
-                  </v-list-item>
-                </v-list>
+                <!-- Contenedor para scroll horizontal -->
+                <div style="overflow-x: auto">
+                  <v-list dense style="min-width: 600px">
+                    <!-- min-width para forzar scroll si es necesario -->
+                    <v-list-item
+                      v-for="miembro in casa.miembros"
+                      :key="miembro.id"
+                      class="rounded-lg"
+                    >
+                      <v-icon color="primary" small class="mr-1">mdi-account</v-icon>
+                      {{ miembro.nombre }} {{ miembro.apellido }}
+
+                      <v-icon small class="mr-1">mdi-phone</v-icon>
+                      {{ miembro.telefono }}
+
+                      <v-icon small class="mr-1">mdi-home</v-icon>
+                      {{ miembro.direccion }}
+                    </v-list-item>
+                  </v-list>
+                </div>
               </v-card>
             </v-col>
+
+            <!-- Asistencias -->
             <v-col cols="12">
-              <v-card class="pa-1 mb-4" elevation="2" max-height="400">
+              <v-card class="pa-3 mb-4 rounded-lg" elevation="2" max-height="400">
                 <h3 class="mb-2">🔔 Asistencias Pendientes</h3>
-                <v-list dense>
-                  <v-list-item v-for="asistencia in casa.asistencias" :key="asistencia.id">
-                    <v-list-item-content>
-                      <v-list-item-title>
-                        <v-icon color="primary" small class="mr-1">mdi-account</v-icon>
-                        {{ asistencia.nombre }} {{ asistencia.apellido }}
-                        <v-icon color="primary" small class="mr-1">mdi-phone</v-icon>
-                        {{ asistencia.telefono }}
-                        <v-icon color="primary" small class="mr-1">mdi-home</v-icon>
-                        {{ asistencia.direccion }}
-                        <v-btn
-                          v-if="userStore.user.rol === 'pastor'"
-                          icon
-                          color="success"
-                          small
-                          width="25"
-                          height="25"
-                          class="mr-2 mb-2"
-                          @click="openDialogAsistencia(asistencia.id, casa.id)"
-                        >
-                          <v-icon>mdi-check</v-icon>
-                        </v-btn>
-                        <v-btn
-                          v-if="userStore.user.rol === 'pastor'"
-                          icon
-                          color="error"
-                          small
-                          class="mb-2"
-                          width="25"
-                          height="25"
-                          @click="openDialogDeleteAsistencia(asistencia.id)"
-                          ><v-icon>mdi-close</v-icon></v-btn
-                        >
-                      </v-list-item-title>
-                    </v-list-item-content>
-                  </v-list-item>
-                </v-list>
+
+                <!-- Contenedor con scroll horizontal -->
+                <div style="overflow-x: auto">
+                  <v-list dense style="min-width: 700px">
+                    <!-- Ajusta el ancho mínimo según necesites -->
+                    <v-list-item
+                      v-for="asistencia in casa.asistencias"
+                      :key="asistencia.id"
+                      class="rounded-lg"
+                    >
+                      <v-icon color="primary" small class="mr-1">mdi-account</v-icon>
+                      {{ asistencia.nombre }} {{ asistencia.apellido }}
+
+                      <v-icon color="primary" small class="ml-2 mr-1">mdi-phone</v-icon>
+                      {{ asistencia.telefono }}
+
+                      <v-icon color="primary" small class="ml-2 mr-1">mdi-home</v-icon>
+                      {{ asistencia.direccion }}
+                    </v-list-item>
+                  </v-list>
+                </div>
               </v-card>
             </v-col>
           </v-row>
@@ -177,186 +186,6 @@
       </v-expansion-panel>
     </v-expansion-panels>
   </v-container>
-  <v-expansion-panels v-else>
-    <v-expansion-panel v-for="(casa, index) in casas" :key="index" class="v-expansion-panel">
-      <v-expansion-panel-title v-slot="{ expanded }">
-        <v-row no-gutters>
-          <v-col class="d-flex justify-start" cols="3">
-            <!-- <p class="text-body-1">{{ casa.nombre }}</p> -->
-            <v-chip>{{ casa.nombre }}</v-chip>
-          </v-col>
-          <v-col class="text-seconday" cols="8">
-            <v-fade-transition leave-absolute>
-              <span v-if="expanded" class="text-body-1 font-weight-bold"
-                >Información de la casa de fe</span
-              >
-              <v-row v-else style="width: 100%" no-gutters>
-                <v-col class="d-flex justify-start" cols="6">
-                  <ul>
-                    <p
-                      v-for="encargado in casa.encargadosId"
-                      :key="encargado.id"
-                      small
-                      class="ma-1"
-                      color="blue lighten-4"
-                    >
-                      {{ encargado.name }} {{ encargado.apellido }}
-                    </p>
-                  </ul>
-                </v-col>
-                <v-col class="d-flex justify-start" cols="4"
-                  ><p class="text-body-1 mr-1">
-                    Miembros: <v-chip color="blue " label small>{{ casa.miembros.length }}</v-chip>
-                  </p>
-                  <p class="text-body-1">
-                    Pendientes:
-                    <v-chip
-                      :color="casa.asistencias.length > 0 ? 'red lighten-4' : 'green lighten-4'"
-                      :text-color="casa.asistencias.length > 0 ? 'red darken-2' : 'green darken-2'"
-                      label
-                      small
-                    >
-                      {{ casa.asistencias.length }}
-                    </v-chip>
-                  </p>
-                </v-col>
-              </v-row>
-            </v-fade-transition>
-          </v-col>
-        </v-row>
-      </v-expansion-panel-title>
-      <v-expansion-panel-text>
-        <v-row>
-          <!-- Información general -->
-          <v-col cols="12" md="6">
-            <v-card class="pa-3 mb-4" elevation="2">
-              <h3 class="mb-2">📍 Información de la Casa</h3>
-              <p><strong>Nombre:</strong> {{ casa.nombre }}</p>
-              <p>
-                <strong>Direccion:</strong>
-                <v-chip class="ma-1" color="blue lighten-4" label> Calle 12 #7-40 </v-chip>
-              </p>
-              <p>
-                <strong>Barrio:</strong>
-                <v-chip class="ma-1" color="blue lighten-4" label>
-                  {{ casa.barrio }}
-                </v-chip>
-              </p>
-            </v-card>
-          </v-col>
-
-          <!-- Encargados -->
-          <v-col cols="12" md="6">
-            <v-card class="pa-3" elevation="2">
-              <h3 class="mb-2">👤 Encargados</h3>
-              <v-chip
-                v-for="encargado in casa.encargadosId"
-                :key="encargado.id"
-                class="ma-1"
-                color="deep-purple lighten-4"
-                label
-              >
-                {{ encargado.name }} {{ encargado.apellido }} - {{ encargado.rol }}
-              </v-chip>
-            </v-card>
-          </v-col>
-        </v-row>
-        <v-row>
-          <!-- Asistencias -->
-          <v-col cols="12" md="6">
-            <v-card class="pa-3 mb-4 content-perso scrollable-nav" elevation="2">
-              <h3 class="mb-2">
-                🧑‍🤝‍🧑 Miembros
-                <v-btn
-                  v-if="userStore.user.rol === 'pastor'"
-                  variant="outlined"
-                  @click="openDialog(casa.id)"
-                  >Agregar</v-btn
-                >
-              </h3>
-              <v-list dense>
-                <v-list-item v-for="asistencia in casa.miembros" :key="asistencia.id">
-                  <v-list-item-content>
-                    <v-list-item-title
-                      style="
-                        display: block;
-                        overflow-x: auto;
-                        white-space: nowrap;
-                        text-overflow: clip;
-                      "
-                    >
-                      <v-icon color="primary" small class="mr-1">mdi-account</v-icon>
-                      {{ asistencia.nombre }} {{ asistencia.apellido }}
-                      <v-icon color="primary" small class="mr-1">mdi-phone</v-icon>
-                      {{ asistencia.telefono }}
-                      <v-icon color="primary" small class="mr-1">mdi-home</v-icon>
-                      {{ asistencia.direccion }}
-
-                      <v-btn
-                        v-if="userStore.user.rol === 'pastor'"
-                        icon
-                        color="error"
-                        small
-                        width="25"
-                        height="25"
-                        class="mb-2"
-                        @click="openDialogDeleteMiembro(asistencia.id)"
-                        ><v-icon>mdi-close</v-icon></v-btn
-                      >
-                    </v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list>
-            </v-card>
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-card class="pa-3 mb-4 content-person" elevation="2">
-              <h3 class="mb-2">🔔 Asistencias Pendientes</h3>
-              <v-list dense>
-                <v-list-item v-for="asistencia in casa.asistencias" :key="asistencia.id">
-                  <v-list-item-content>
-                    <v-list-item-title
-                      style="display: block; overflow-x: auto; white-space: nowrap"
-                    >
-                      <v-icon color="primary" small class="mr-1">mdi-account</v-icon>
-                      {{ asistencia.nombre }} {{ asistencia.apellido }}
-                      <v-icon color="primary" small class="mr-1">mdi-phone</v-icon>
-                      {{ asistencia.telefono }}
-                      <v-icon color="primary" small class="mr-1">mdi-home</v-icon>
-                      {{ asistencia.direccion }}
-                      <v-btn
-                        v-if="userStore.user.rol === 'pastor'"
-                        icon
-                        color="success"
-                        small
-                        width="25"
-                        height="25"
-                        class="mr-2 mb-2"
-                        @click="openDialogAsistencia(asistencia.id, casa.id)"
-                      >
-                        <v-icon>mdi-check</v-icon>
-                      </v-btn>
-                      <v-btn
-                        v-if="userStore.user.rol === 'pastor'"
-                        icon
-                        color="error"
-                        small
-                        class="mb-2"
-                        width="25"
-                        height="25"
-                        @click="openDialogDeleteAsistencia(asistencia.id)"
-                        ><v-icon>mdi-close</v-icon></v-btn
-                      >
-                    </v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-              </v-list>
-            </v-card>
-          </v-col>
-        </v-row>
-      </v-expansion-panel-text>
-    </v-expansion-panel>
-  </v-expansion-panels>
   <v-dialog v-model="dialog" v-if="userStore.user.rol === 'pastor'" max-width="500">
     <v-card>
       <v-card-title>Registrar Miembro</v-card-title>

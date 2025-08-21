@@ -3,23 +3,47 @@
     <v-row class="mb-1">
       <!-- Formulario -->
       <v-col cols="12" md="6">
-        <v-card class="pa-6 elevation-3 form-container">
+        <v-card class="pa-6 elevation-3 form-container rounded-xl">
           <h2 class="text-h5 font-weight-bold mb-4">Agregar casa de fe</h2>
           <v-form @submit.prevent="sendForm">
             <v-row dense>
               <v-col cols="12">
-                <v-text-field v-model="form.nombre" label="Nombre de la casa de fe" required />
+                <v-text-field
+                  v-model="form.nombre"
+                  label="Nombre de la casa de fe"
+                  variant="outlined"
+                  density="comfortable"
+                  class="custom-input"
+                  required
+                />
               </v-col>
               <v-col cols="6">
-                <v-text-field v-model="form.carrera" label="Carrera" required></v-text-field>
+                <v-text-field
+                  v-model="form.carrera"
+                  label="Carrera"
+                  variant="outlined"
+                  density="comfortable"
+                  class="custom-input"
+                  required
+                />
               </v-col>
               <v-col cols="6">
-                <v-text-field v-model="form.calle" label="Calle" required></v-text-field>
+                <v-text-field
+                  v-model="form.calle"
+                  label="Calle"
+                  variant="outlined"
+                  density="comfortable"
+                  class="custom-input"
+                  required
+                />
               </v-col>
               <v-col cols="12">
                 <v-text-field
                   v-model="form.direccion"
                   label="Dirección completa"
+                  variant="outlined"
+                  density="comfortable"
+                  class="custom-input"
                   readonly
                   required
                 />
@@ -29,8 +53,11 @@
                   v-model="form.barrio"
                   label="Barrio"
                   type="text"
+                  variant="outlined"
+                  density="comfortable"
+                  class="custom-input"
                   required
-                ></v-text-field>
+                />
               </v-col>
               <v-col cols="12">
                 <v-select
@@ -39,20 +66,30 @@
                   item-value="value"
                   item-title="label"
                   label="Categoria de la casa de fe"
+                  variant="outlined"
+                  density="comfortable"
+                  class="custom-input"
                 />
               </v-col>
               <v-col cols="12">
-                <v-select
+                <!-- Encargados con búsqueda y selección múltiple -->
+                <v-autocomplete
                   v-model="form.encargadosId"
                   :items="encargados.miembros"
-                  item-value="id"
                   :item-title="(item) => `${item.name} ${item.apellido} - ${item.rol}`"
-                  label="Encargados"
+                  item-value="id"
+                  label="Seleccionar encargados"
                   multiple
+                  chips
+                  clearable
+                  variant="outlined"
+                  density="comfortable"
+                  class="custom-input"
+                  hide-selected
                 />
               </v-col>
               <v-col cols="12" class="text-right">
-                <v-btn color="primary" type="submit">Submit</v-btn>
+                <v-btn color="primary" type="submit" class="animated-btn">Submit</v-btn>
               </v-col>
             </v-row>
           </v-form>
@@ -61,44 +98,53 @@
 
       <!-- Mapa -->
       <v-col cols="12" md="6">
-        <div id="google-map" class="map-container"></div>
+        <div id="google-map" class="map-container shadow-sm rounded-xl"></div>
       </v-col>
     </v-row>
 
-    <v-card v-if="casas.length > 0" class="pa-4 elevation-2 list-container">
+    <!-- Listado -->
+    <v-card v-if="casas.length > 0" class="pa-4 elevation-2 list-container rounded-xl mt-6">
       <h2 class="text-h6 font-weight-bold mb-4">Listado de Casas de Fe</h2>
 
       <v-data-table
         :headers="headers"
         :items="casas"
         :loading="loading"
-        class="elevation-1"
+        class="elevation-1 custom-table"
         density="comfortable"
       >
         <template #item.encargadosId="{ item }">
           <div>
-            <v-chip
-              v-for="(encargados, index) in item.encargadosId"
-              :key="index"
-              small
-              class="ma-1"
-              color="blue lighten-4"
-              text-color="blue darken-4"
-            >
-              {{ encargados.name }} {{ encargados.apellido }}
-            </v-chip>
+            <v-fade-transition group>
+              <v-chip
+                v-for="(encargados, index) in item.encargadosId"
+                :key="index"
+                small
+                class="ma-1"
+                color="blue lighten-4"
+                text-color="blue darken-4"
+              >
+                {{ encargados.name }} {{ encargados.apellido }}
+              </v-chip>
+            </v-fade-transition>
           </div>
         </template>
 
         <template #item.acciones="{ item }">
-          <v-btn icon color="green" size="x-small" class="mr-2" @click="verCasa(item.id)">
+          <v-btn
+            icon
+            color="green"
+            size="x-small"
+            class="mr-2 animated-icon"
+            @click="verCasa(item.id)"
+          >
             <i class="material-icons icon-sm">visibility</i>
           </v-btn>
           <v-btn
             v-if="userStore.user.rol === 'pastor' || userStore.user.rol === 'administrador'"
             icon
             color="primary"
-            class="mr-2"
+            class="mr-2 animated-icon"
             size="x-small"
             @click="editar(item)"
           >
@@ -109,7 +155,7 @@
             icon
             color="red"
             size="x-small"
-            class="mr-2"
+            class="mr-2 animated-icon"
             @click="confirmDelete(item)"
           >
             <i class="material-icons icon-sm">delete</i>
@@ -120,12 +166,13 @@
   </div>
   <Notificacion ref="notificacionRef" />
 
+  <!-- Diálogo de confirmación -->
   <v-dialog
     v-model="dialogDelete"
     v-if="userStore.user.rol === 'pastor' || userStore.user.rol === 'administrador'"
     max-width="600"
   >
-    <v-card>
+    <v-card class="rounded-xl">
       <v-card-title class="text-h5"> Eliminar casa de fe </v-card-title>
       <v-card-text>
         <p>¿Estas seguro de continuar?</p>
@@ -470,21 +517,63 @@ function verCasa(id) {
 </script>
 
 <style scoped>
-.form-container {
-  width: 100%;
+.form-container,
+.list-container {
   background-color: var(--blur-light);
+  transition: transform 0.2s ease-in-out;
 }
+.form-container:hover,
+.list-container:hover {
+  transform: translateY(-2px);
+}
+
 .map-container {
   height: 500px;
-  border-radius: 8px;
+  border-radius: 12px;
+  transition: box-shadow 0.3s;
 }
+.map-container:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
 .icon-sm {
   font-size: 18px;
 }
-.list-container {
-  background-color: var(--blur-light);
-}
+
 .container-div {
   padding: 20px;
+}
+
+/* Animación en chips */
+.v-chip {
+  transition: all 0.3s ease;
+}
+.v-chip:hover {
+  transform: scale(1.05);
+}
+
+/* Animación en botones */
+.animated-btn {
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 8px 16px;
+}
+.animated-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Icon buttons animados */
+.animated-icon {
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+}
+.animated-icon:hover {
+  transform: scale(1.2);
+}
+
+/* Tabla con hover */
+.custom-table tbody tr:hover {
+  background-color: rgba(25, 118, 210, 0.08);
 }
 </style>

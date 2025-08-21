@@ -1,37 +1,52 @@
 <template>
+  <!-- Formulario de Registro -->
   <v-row v-if="esPastor" justify="center" align="center">
     <v-col cols="12">
-      <v-card class="pa-4 ma-4 mx-auto bg-blur" elevation="3" max-width="900">
-        <v-card-title class="text-h6 font-weight-bold">Registrar Servidor</v-card-title>
+      <v-card
+        class="pa-6 ma-4 mx-auto bg-blur"
+        elevation="4"
+        max-width="950"
+        rounded="xl"
+        transition="scale-transition"
+      >
+        <v-card-title class="text-h6 font-weight-bold"> Registrar Servidor </v-card-title>
+
         <v-form ref="form" v-model="valid" lazy-validation>
           <v-row>
+            <!-- Nombre -->
             <v-col cols="12" md="6">
               <v-text-field
                 label="Nombre"
                 v-model="miembro.name"
                 :rules="[rules.required]"
                 variant="outlined"
+                clearable
               />
             </v-col>
 
+            <!-- Apellido -->
             <v-col cols="12" md="6">
               <v-text-field
                 label="Apellido"
                 v-model="miembro.apellido"
                 :rules="[rules.required]"
                 variant="outlined"
+                clearable
               />
             </v-col>
 
+            <!-- Usuario -->
             <v-col cols="12" md="6">
               <v-text-field
                 label="Usuario"
                 v-model="miembro.user"
                 :rules="[rules.required]"
                 variant="outlined"
+                clearable
               />
             </v-col>
 
+            <!-- Password con icono dinámico -->
             <v-col cols="12" md="6">
               <v-text-field
                 label="Contraseña"
@@ -41,26 +56,33 @@
                 @click:append-inner="mostrarPassword = !mostrarPassword"
                 :rules="[rules.required]"
                 variant="outlined"
+                clearable
               />
             </v-col>
 
+            <!-- Teléfono -->
             <v-col cols="12" md="6">
               <v-text-field
                 label="Teléfono"
                 v-model="miembro.telefono"
                 :rules="[rules.required]"
                 variant="outlined"
+                clearable
               />
             </v-col>
+
+            <!-- Cédula -->
             <v-col cols="12" md="6">
               <v-text-field
                 label="Cédula"
                 v-model="miembro.cedula"
                 :rules="[rules.required]"
                 variant="outlined"
+                clearable
               />
             </v-col>
 
+            <!-- Rol -->
             <v-col cols="12" md="6">
               <v-select
                 label="Rol"
@@ -70,8 +92,11 @@
                 item-title="label"
                 item-value="value"
                 variant="outlined"
+                clearable
               />
             </v-col>
+
+            <!-- Cargo -->
             <v-col cols="12" md="6">
               <v-select
                 label="Cargo"
@@ -81,26 +106,33 @@
                 item-title="label"
                 item-value="value"
                 variant="outlined"
+                clearable
               />
             </v-col>
+
+            <!-- Botón firmar -->
             <v-col cols="12" class="text-center">
               <v-btn
                 color="primary"
                 :disabled="!valid"
                 class="mt-4"
                 @click="DialogFirmarConsetimiento"
+                rounded="lg"
+                v-ripple
               >
-                Firmar Consentimiento de voluntariado
+                Firmar Consentimiento de Voluntariado
               </v-btn>
             </v-col>
-            <v-dialog v-model="dialogFirma">
+
+            <!-- Modal Firma -->
+            <v-dialog v-model="dialogFirma" transition="dialog-transition" max-width="700">
               <FirmaPad
                 ref="firmaPad"
                 :nombre="miembro.name + ' ' + miembro.apellido"
                 :cedula="miembro.cedula || 'N/A'"
                 :actividad="'Voluntariado como ' + (miembro.cargo || '')"
                 :iglesia="'Centro de Fe y Esperanza San Pelayo'"
-                :direccion="'Dirección de la iglesia aquí'"
+                :direccion="'Carrera 7 calle 12, San Pelayo, Córdoba'"
                 :fecha="new Date().toISOString().split('T')[0]"
                 :lugar="'Sede principal'"
                 :ciudad="'San Pelayo'"
@@ -109,8 +141,17 @@
               />
             </v-dialog>
 
+            <!-- Botón Guardar -->
             <v-col cols="12" class="text-center">
-              <v-btn color="primary" :disabled="!Firmado" class="mt-4" @click="guardar">
+              <v-btn
+                color="success"
+                :loading="loading"
+                :disabled="!Firmado"
+                class="mt-4"
+                @click="guardar"
+                rounded="lg"
+                v-ripple
+              >
                 Guardar
               </v-btn>
             </v-col>
@@ -119,7 +160,9 @@
       </v-card>
     </v-col>
   </v-row>
-  <v-card class="pa-4 elevation-2 list-container bg-blur">
+
+  <!-- Listado -->
+  <v-card class="pa-4 elevation-3 list-container bg-blur mt-6" rounded="xl">
     <h2 class="text-h6 font-weight-bold mb-4">Listado de Servidores</h2>
 
     <v-data-table
@@ -128,69 +171,72 @@
       :loading="loading"
       class="elevation-1"
       density="comfortable"
+      hover
+      transition="fade-transition"
     >
+      <!-- Estado -->
       <template #item.activo="{ item }">
         <v-chip
           small
-          variant="outlined"
+          variant="elevated"
           :color="item.activo ? 'success' : 'error'"
-          label
           text-color="white"
-          class="ma-1 v-hover"
+          class="ma-1"
           @click="confirmDelete(item)"
         >
           {{ item.activo ? 'Activo' : 'Inactivo' }}
         </v-chip>
       </template>
+
+      <!-- Disponibilidad -->
       <template #item.disponibilidad_aseo="{ item }">
         <v-chip
           small
-          variant="outlined"
+          variant="elevated"
           :color="item.disponibilidad_aseo ? 'success' : 'error'"
-          label
           text-color="white"
-          class="ma-1 v-hover"
+          class="ma-1"
           @click="confirmDisponibilidad(item)"
         >
-          {{ item.disponibilidad_aseo ? 'Si' : 'No' }}
+          {{ item.disponibilidad_aseo ? 'Sí' : 'No' }}
         </v-chip>
       </template>
+
+      <!-- Acciones -->
       <template #item.acciones="{ item }">
-        <v-btn icon color="red" size="x-small" class="mr-2" @click="confirmDelete(item)">
-          <i class="material-icons icon-sm">delete</i>
+        <v-btn icon color="red" size="small" class="mr-2" v-ripple @click="confirmDelete(item)">
+          <v-icon>mdi-delete</v-icon>
         </v-btn>
       </template>
     </v-data-table>
   </v-card>
-  <Notificacion ref="notificacionRef" />
-  <v-dialog v-model="dialogDelete" max-width="900">
+
+  <!-- Diálogo eliminar -->
+  <v-dialog v-model="dialogDelete" transition="dialog-bottom-transition" max-width="600">
     <v-card>
-      <v-card-title class="text-h5">Cambiar Estado del Servidor</v-card-title>
-      <v-card-text>
-        <p>¿Estas seguro de continuar?</p>
-      </v-card-text>
+      <v-card-title class="text-h6">Cambiar Estado del Servidor</v-card-title>
+      <v-card-text>¿Estás seguro de continuar?</v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn color="green" variant="elevated" @click="dialogDelete = false"> Cancelar </v-btn>
-        <v-btn color="red" variant="elevated" @click="eliminar"> Continuar </v-btn>
+        <v-btn variant="tonal" color="grey" @click="dialogDelete = false">Cancelar</v-btn>
+        <v-btn color="red" @click="eliminar" :loading="loading">Continuar</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
-  <v-dialog v-model="dialogDisponibilidad" max-width="900">
+
+  <!-- Diálogo disponibilidad -->
+  <v-dialog v-model="dialogDisponibilidad" transition="dialog-bottom-transition" max-width="600">
     <v-card>
-      <v-card-title class="text-h5">Cambiar Disponibilidad de Aseo</v-card-title>
-      <v-card-text>
-        <p>¿Estas seguro de continuar?</p>
-      </v-card-text>
+      <v-card-title class="text-h6">Cambiar Disponibilidad de Aseo</v-card-title>
+      <v-card-text>¿Estás seguro de continuar?</v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn color="green" variant="elevated" @click="dialogDisponibilidad = false">
-          Cancelar
-        </v-btn>
-        <v-btn color="red" variant="elevated" @click="cambiarDisponibilidad"> Continuar </v-btn>
+        <v-btn variant="tonal" color="grey" @click="dialogDisponibilidad = false">Cancelar</v-btn>
+        <v-btn color="red" @click="cambiarDisponibilidad" :loading="loading">Continuar</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
+
   <Notificacion ref="notificacionRef" />
 </template>
 

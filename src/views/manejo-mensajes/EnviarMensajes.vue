@@ -1,6 +1,8 @@
 <template>
-  <v-card class="pa-4 mt-10">
-    <v-card-title>Enviar Mensaje</v-card-title>
+  <v-card class="pa-6 mt-10 elevation-3 rounded-xl mx-auto" max-width="600">
+    <!-- Título -->
+    <v-card-title class="text-h6 font-weight-bold"> ✉️ Enviar Mensaje </v-card-title>
+
     <v-card-text>
       <v-form ref="form" @submit.prevent="enviarMensaje">
         <!-- Campo de mensaje -->
@@ -10,13 +12,23 @@
           outlined
           rows="4"
           required
-        ></v-textarea>
+          prepend-inner-icon="mdi-message-text-outline"
+          :rules="[(v) => !!v || 'El mensaje es obligatorio']"
+        />
 
         <!-- Vista previa si detecta link -->
-        <div v-if="primerLink">
-          <small>Vista previa del link:</small>
-          <a :href="primerLink" target="_blank">{{ primerLink }}</a>
-        </div>
+        <v-sheet v-if="primerLink" class="mt-3 pa-2 rounded-lg" elevation="1" color="#f0f4ff">
+          <small class="text-subtitle-2 font-weight-medium">Vista previa del link:</small>
+          <div>
+            <a
+              :href="primerLink"
+              target="_blank"
+              class="text-blue-darken-2 text-decoration-underline"
+            >
+              {{ primerLink }}
+            </a>
+          </div>
+        </v-sheet>
 
         <!-- Selección de destinatarios -->
         <v-select
@@ -25,21 +37,40 @@
           label="Enviar a (Selecciona uno o varios)"
           multiple
           outlined
+          chips
+          clearable
+          persistent-hint
+          prepend-inner-icon="mdi-account-multiple-outline"
+          :menu-props="{ maxHeight: 200 }"
           required
-        ></v-select>
+          searchable
+          class="mt-4"
+        />
 
         <!-- Botón enviar -->
-        <v-btn class="mt-4" color="primary" type="submit" :loading="loading"> Enviar </v-btn>
+        <div class="d-flex justify-end mt-6">
+          <v-btn
+            color="primary"
+            type="submit"
+            :loading="loading"
+            class="px-6 py-2 rounded-lg text-white"
+            prepend-icon="mdi-send"
+            style="background: linear-gradient(135deg, #6a11cb, #2575fc)"
+          >
+            Enviar
+          </v-btn>
+        </div>
       </v-form>
     </v-card-text>
   </v-card>
+
+  <!-- Notificación -->
   <Notificacion ref="notificacionRef" />
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import api from '@/plugins/axios'
-import { computed } from 'vue'
 import Notificacion from '@/components/Notificacion.vue'
 
 const mensaje = ref({
@@ -49,7 +80,8 @@ const mensaje = ref({
 
 const notificacionRef = ref(null)
 
-const opcionesDestinatarios = ['pastores', 'administradores', 'lideres', 'servidores', 'asistentes']
+const opcionesDestinatarios = ['Pastores', 'Administradores', 'Líderes', 'Servidores', 'Asistentes']
+
 const loading = ref(false)
 
 const primerLink = computed(() => {
@@ -59,23 +91,22 @@ const primerLink = computed(() => {
 
 const enviarMensaje = async () => {
   if (!mensaje.value.contenido || mensaje.value.enviado_a.length === 0) {
-    alert('Por favor, completa todos los campos')
+    notificacionRef.value.mostrar('Por favor, completa todos los campos', 'warning')
     return
   }
 
   loading.value = true
   try {
-    // Ajusta la URL a tu endpoint en NestJS
     const response = await api.post('/manejo-de-mensajes/enviar-mensajes', mensaje.value)
     notificacionRef.value.mostrar(
-      `El mensaje sera enviado a ${response.data.total} destinatarios`,
+      `✅ El mensaje será enviado a ${response.data.total} destinatarios`,
       'success',
-    ) // 👈 aquí la notificación de update
+    )
     mensaje.value.contenido = ''
     mensaje.value.enviado_a = []
   } catch (error) {
     console.error(error)
-    notificacionRef.value.mostrar('Error al enviar los mensajes', 'error')
+    notificacionRef.value.mostrar('❌ Error al enviar los mensajes', 'error')
   } finally {
     loading.value = false
   }
@@ -84,7 +115,6 @@ const enviarMensaje = async () => {
 
 <style scoped>
 .v-card {
-  margin: auto;
-  background-color: var(--blur-light);
+  background: #ffffffda;
 }
 </style>

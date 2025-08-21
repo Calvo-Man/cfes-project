@@ -2,38 +2,49 @@
   <v-container class="py-4" style="max-width: 900px">
     <v-row justify="center">
       <v-col cols="12">
-        <v-col cols="12" class="text-center bg-primary pa-0">
-          <h2 class="text-h5 font-weight-bold">Calendario de Aseo - {{ nombreMes }} {{ año }}</h2>
+        <!-- Título -->
+        <v-col cols="12" class="text-center bg-primary pa-2 rounded-lg mb-4 elevation-2">
+          <h2 class="text-h5 font-weight-bold text-white">
+            Calendario de Aseo - {{ nombreMes }} {{ año }}
+          </h2>
         </v-col>
-        <div class="calendar-grid">
-          <!-- Encabezados -->
-          <div class="day-header" v-for="d in diasSemana" :key="d">{{ d }}</div>
 
-          <!-- Espacios vacíos según el día de inicio del mes -->
-          <div v-for="n in diaInicioMes" :key="'vacio' + n"></div>
+        <!-- Calendario con animación -->
+        <transition name="fade-slide" mode="out-in">
+          <div class="calendar-grid" :key="estado.mes + '-' + estado.año">
+            <!-- Encabezados -->
+            <div class="day-header" v-for="d in diasSemana" :key="d">{{ d }}</div>
 
-          <!-- Días del mes -->
-          <div
-            v-for="dia in diasEnMes"
-            :key="'dia' + dia"
-            class="calendar-day"
-            :class="{ asignado: esDiaAsignado(dia), libre: !esDiaAsignado(dia) }"
-          >
-            <div class="dia-numero">{{ dia }}</div>
+            <!-- Espacios vacíos -->
+            <div v-for="n in diaInicioMes" :key="'vacio' + n"></div>
+
+            <!-- Días del mes -->
             <div
-              class="asignacion font-weight-bold"
-              v-for="persona in asignacionesPorFecha(claveFecha(dia))"
-              :key="persona.id"
-              :class="{ 'resaltado-usuario': persona.id === userId }"
+              v-for="dia in diasEnMes"
+              :key="'dia' + dia"
+              class="calendar-day"
+              :class="{ asignado: esDiaAsignado(dia), libre: !esDiaAsignado(dia) }"
             >
-              {{ persona.name }} {{ persona.apellido }}
+              <div class="dia-numero">{{ dia }}</div>
+              <transition-group name="fade" tag="div">
+                <div
+                  v-for="persona in asignacionesPorFecha(claveFecha(dia))"
+                  :key="persona.id"
+                  class="asignaion font-weight-bold"
+                  :class="{ 'resaltado-usuario': persona.id === userId }"
+                >
+                  <v-chip size="small" color="white" text-color="black" class="mb-1">
+                    {{ persona.name }} {{ persona.apellido }}
+                  </v-chip>
+                </div>
+              </transition-group>
             </div>
           </div>
-        </div>
+        </transition>
       </v-col>
 
       <!-- Navegación -->
-      <v-col cols="12" class="text-center">
+      <v-col cols="12" class="text-center mt-4">
         <v-btn
           @click="cambiarMes(-1)"
           :disabled="
@@ -44,7 +55,9 @@
           "
           color="primary"
           class="mx-2"
+          variant="elevated"
         >
+          <v-icon start>mdi-chevron-left</v-icon>
           Anterior
         </v-btn>
 
@@ -57,14 +70,15 @@
             )
           "
           color="primary"
+          variant="elevated"
         >
           Siguiente
+          <v-icon end>mdi-chevron-right</v-icon>
         </v-btn>
       </v-col>
     </v-row>
   </v-container>
 </template>
-
 <script setup>
 //import { io } from 'socket.io-client'
 
@@ -141,71 +155,95 @@ async function obtenerAsignaciones() {
 onMounted(async () => {
   await obtenerAsignaciones()
 })
-//const mostrarPDF = ref(false)
-// const socket = io('http://localhost:3000') // Cambia al dominio real si es producción
-
-// socket.on('nuevo-horario', async () => {
-//   console.log('📢 Se generó un nuevo horario desde el backend')
-//   await obtenerAsignaciones()
-// })
 </script>
 
 <style scoped lang="scss">
+/* Grid calendario */
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-}
-.resaltado-usuario {
-  color: yellow; // Amarillo
-  font-weight: bold;
+  gap: 10px;
 }
 
+/* Cabecera días */
 .day-header {
   font-weight: bold;
   text-align: center;
   color: var(--dark);
 }
+
+/* Estilos de día */
 .calendar-day {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  min-height: 80px;
-  padding: 8px;
-  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  min-height: 90px;
+  padding: 6px;
+  background-color: #fdfdfd;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    transform: scale(1.04);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  }
 }
+
+/* Día asignado */
 .calendar-day.asignado {
   background-color: var(--blue);
   color: var(--light);
+  font-weight: 500;
 }
+
+/* Día libre */
 .calendar-day.libre {
   background-color: #f0f0f0;
-  opacity: 0.7;
+  opacity: 0.8;
 }
+
+/* Número de día */
 .dia-numero {
   font-weight: bold;
+  margin-bottom: 4px;
 }
+
+/* Nombres */
 .asignacion {
-  font-size: 0.8rem;
-  margin-top: 4px;
+  font-size: 0.85rem;
+  margin-top: 2px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.25);
 }
-.pdf-container {
-  max-width: 900px;
-  margin: 0 auto;
-  background-color: var(--grey);
-  position: relative;
-  z-index: 1;
 
-  .fondo-personalizado {
-    position: absolute;
-    top: 60%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: -1;
+/* Resaltar usuario conectado */
+.resaltado-usuario {
+  background: #ffeb3b;
+  color: #000;
+  font-weight: bold;
+  border: 1px solid #fbc02d;
+}
 
-    img {
-      height: auto;
-      opacity: 0.5;
-    }
-  }
+/* Animaciones */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.35s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(15px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-15px);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

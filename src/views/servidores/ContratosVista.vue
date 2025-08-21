@@ -18,9 +18,10 @@
           <v-img
             v-if="item.firma"
             :src="item.firma"
-            max-width="150"
-            height="60"
+            max-width="120"
+            max-height="50"
             class="firma"
+            alt="Firma del contrato"
             contain
             @click="verFirma(item.firma)"
           />
@@ -38,9 +39,29 @@
         <template #item.miembro="{ item }">
           {{ item.miembro?.name }} {{ item.miembro?.apellido }}
         </template>
+
+        <!-- Formatear fecha -->
+        <template #item.fecha="{ item }">
+          {{ formatFecha(item.fecha) }}
+        </template>
+
+        <!-- Acciones -->
+        <template #item.acciones="{ item }">
+          <v-btn size="small" variant="text" icon="mdi-eye" @click="verFirma(item.firma)" />
+          <v-btn size="small" variant="text" icon="mdi-pencil" @click="editarContrato(item)" />
+          <v-btn
+            size="small"
+            variant="text"
+            icon="mdi-delete"
+            color="red"
+            @click="eliminarContrato(item.id)"
+          />
+        </template>
       </v-data-table>
     </v-card>
   </v-container>
+
+  <!-- Modal para ver firma -->
   <v-dialog v-model="dialogFirma" max-width="600">
     <v-card>
       <v-card-title> Firma </v-card-title>
@@ -56,7 +77,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted } from 'vue'
 import api from '@/plugins/axios'
 
 const contratos = ref([])
@@ -66,18 +87,22 @@ const loading = ref(false)
 
 const headers = [
   { title: 'ID', value: 'id' },
-  { title: 'Miembro', value: 'miembro' }, // clave simple, slot personalizado se encarga
+  { title: 'Miembro', value: 'miembro' },
   { title: 'Fecha', value: 'fecha' },
   { title: 'Firma', value: 'firma' },
   { title: 'Vigente', value: 'vigente' },
+  { title: 'Acciones', value: 'acciones', sortable: false },
 ]
 
 onMounted(async () => {
   try {
+    loading.value = true
     const { data } = await api.get('/contratos')
     contratos.value = data
   } catch (err) {
     console.error('Error cargando contratos:', err)
+  } finally {
+    loading.value = false
   }
 })
 
@@ -85,11 +110,24 @@ function verFirma(valor) {
   firma.value = valor
   dialogFirma.value = true
 }
-</script>
-<style scoped>
-.firma-pad-container {
-  background-color: var(--grey);
+
+function formatFecha(fecha) {
+  if (!fecha) return 'Sin fecha'
+  return new Intl.DateTimeFormat('es-CO', { dateStyle: 'medium' }).format(new Date(fecha))
 }
+
+function editarContrato(item) {
+  console.log('Editar contrato:', item)
+  // Aquí abres un modal de edición o navegas a otra vista
+}
+
+function eliminarContrato(id) {
+  console.log('Eliminar contrato con ID:', id)
+  // Aquí llamas a tu API para eliminar
+}
+</script>
+
+<style scoped>
 .firma {
   cursor: pointer;
 }

@@ -1,22 +1,51 @@
 <template>
-  <v-container>
-    <v-card>
-      <v-card-title>Agregar Pregunta Teológica</v-card-title>
-      <v-card-text>
-        <v-form ref="form" @submit.prevent="enviarPregunta">
-          <v-text-field v-model="pregunta" label="Pregunta" required></v-text-field>
+  <v-container class="py-8">
+    <v-row justify="center">
+      <v-col cols="12" md="8">
+        <v-card class="pa-6 elevation-3 rounded-xl" style="background: #ffffffda">
+          <v-card-title class="text-h5 font-weight-bold"
+            >✍️ Agregar Pregunta Teológica</v-card-title
+          >
 
-          <v-textarea v-model="respuesta" label="Respuesta" rows="5" required></v-textarea>
-          <v-text-field v-model="fuente" label="Fuente (opcional)"></v-text-field>
+          <v-card-text>
+            <v-form ref="form" @submit.prevent="enviarPregunta">
+              <v-text-field
+                v-model="pregunta"
+                label="Pregunta"
+                outlined
+                required
+                :rules="[(v) => !!v || 'La pregunta es obligatoria']"
+              />
 
-          <v-btn color="primary" type="submit" :loading="cargando"> Guardar </v-btn>
+              <v-textarea
+                v-model="respuesta"
+                label="Respuesta"
+                rows="5"
+                outlined
+                required
+                :rules="[(v) => !!v || 'La respuesta es obligatoria']"
+              />
 
-          <v-alert v-if="mensaje" :type="mensaje.tipo" class="mt-4" border="left">
-            {{ mensaje.texto }}
-          </v-alert>
-        </v-form>
-      </v-card-text>
-    </v-card>
+              <v-text-field v-model="fuente" label="Fuente (opcional)" outlined class="mb-4" />
+
+              <v-btn
+                color="primary"
+                type="submit"
+                :loading="cargando"
+                class="px-6 py-2 rounded-lg text-white"
+                style="background: linear-gradient(135deg, #6a11cb, #2575fc)"
+              >
+                Guardar
+              </v-btn>
+
+              <v-alert v-if="mensaje" :type="mensaje.tipo" class="mt-4" border="left" prominent>
+                {{ mensaje.texto }}
+              </v-alert>
+            </v-form>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -38,7 +67,7 @@ const enviarPregunta = async () => {
 
   cargando.value = true
   try {
-    const res = await api.post('/teologia/agregar', {
+    await api.post('/teologia/agregar', {
       pregunta: pregunta.value,
       respuesta: respuesta.value,
       fuente: fuente.value || 'No proporcionada',
@@ -48,6 +77,11 @@ const enviarPregunta = async () => {
     pregunta.value = ''
     respuesta.value = ''
     fuente.value = ''
+
+    // Ocultar mensaje automáticamente después de 3 segundos
+    setTimeout(() => {
+      mensaje.value = null
+    }, 3000)
   } catch (e) {
     mensaje.value = { tipo: 'error', texto: 'Error al guardar la pregunta' }
     console.error(e)

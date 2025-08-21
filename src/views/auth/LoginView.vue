@@ -1,69 +1,70 @@
 <template>
-  <div>
-    <v-card class="mx-auto pa-12 pb-8 mt-12" elevation="8" max-width="448" rounded="lg">
+  <v-container class="d-flex justify-center align-center fill-height">
+    <v-card
+      class="pa-10 elevation-6 rounded-xl text-center"
+      style="max-width: 400px; background: #ffffffda"
+    >
+      <!-- Logo -->
       <img
         src="@/assets/centro-de-fe-removebg.png"
         width="120"
         alt="icono personalizado"
-        class="logo"
-        style="display: block; margin: 0 auto"
+        class="mx-auto mb-4"
       />
-      <div class="text-subtitle-1 text-medium-emphasis">Usuario</div>
+      <div class="text-h6 font-weight-medium mb-6">Iniciar Sesión</div>
 
-      <!-- Formulario de inicio de sesión -->
-      <form @submit.prevent="submit">
+      <!-- Formulario -->
+      <v-form @submit.prevent="submit">
         <v-text-field
           v-model="usuario"
           density="compact"
           placeholder="Usuario"
           prepend-inner-icon="mdi-account-outline"
           variant="outlined"
+          class="mb-4"
+          required
         ></v-text-field>
-
-        <div class="text-subtitle-1 text-medium-emphasis d-flex align-center justify-space-between">
-          Contraseña
-        </div>
 
         <v-text-field
           v-model="password"
           :append-inner-icon="visible ? 'mdi-eye-off' : 'mdi-eye'"
           :type="visible ? 'text' : 'password'"
           density="compact"
-          :rules="passwordRules"
-          placeholder="Introduce tu contraseña"
+          placeholder="Contraseña"
           prepend-inner-icon="mdi-lock-outline"
           variant="outlined"
           @click:append-inner="visible = !visible"
+          class="mb-2"
+          required
         ></v-text-field>
-        <span v-if="password_error" class="error-message">
-          <v-icon small color="red">mdi-alert-circle-outline</v-icon>
-          {{ password_error }}
-        </span>
+
+        <v-slide-y-transition>
+          <div v-if="password_error" class="error-message mb-2">
+            <v-icon small color="red">mdi-alert-circle-outline</v-icon>
+            {{ password_error }}
+          </div>
+        </v-slide-y-transition>
 
         <v-btn
           type="submit"
           :loading="loading"
-          class="mb-8"
-          color="blue"
-          size="large"
-          variant="tonal"
           block
+          class="mt-4 px-6 py-3 rounded-lg text-white"
+          style="background: linear-gradient(135deg, #6a11cb, #2575fc)"
         >
           Iniciar Sesión
         </v-btn>
-      </form>
+      </v-form>
 
-      <h5 class="text-disabled mt-4 text-center">
-        CENTRO DE FE Y ESPERANZA SAN PELAYO
-        <br />
-        San Pelayo, Córdoba, Colombia
-        <br />
+      <div class="text-subtitle-2 text-disabled mt-6">
+        CENTRO DE FE Y ESPERANZA SAN PELAYO <br />
+        San Pelayo, Córdoba, Colombia <br />
         Cra. 7 # 10-48
-      </h5>
+      </div>
     </v-card>
 
     <Notificacion ref="notificacionRef" />
-  </div>
+  </v-container>
 </template>
 
 <script setup>
@@ -77,59 +78,44 @@ const usuario = ref('')
 const password = ref('')
 const loading = ref(false)
 const password_error = ref('')
+const visible = ref(false)
 const notificacionRef = ref(null)
 
 const userStore = useUserStore()
 const router = useRouter()
-const visible = ref(false)
+
 const submit = async () => {
   loading.value = true
   password_error.value = ''
 
   try {
-    const response = await api
-      .post('/auth/login', {
-        user: usuario.value,
-        password: password.value,
-      })
-      .then()
+    const response = await api.post('/auth/login', {
+      user: usuario.value,
+      password: password.value,
+    })
 
     const { user, access_token } = response.data
-    notificacionRef.value.mostrar('Inicio de sesión exitoso', 'success') // 👈 aquí la notificación de update
+    notificacionRef.value.mostrar('Inicio de sesión exitoso', 'success')
 
-    // Redirigir al inicio tras un segundo
     setTimeout(() => {
-      userStore.login(user, access_token) // ✅ usa la acción de Pinia
+      userStore.login(user, access_token)
       router.push({ path: '/' })
     }, 1000)
   } catch (error) {
     password_error.value = error.response?.data?.message || 'Error de autenticación'
+  } finally {
+    loading.value = false
   }
-
-  loading.value = false
 }
 </script>
 
 <style scoped lang="scss">
-.bg-dark {
-  background-color: var(--dark);
-}
-
-.card-header {
-  background-color: var(--dark);
-  color: white;
-}
-
-.form-item {
-  justify-content: center;
-  align-items: center; /* Centra la imagen verticalmente */
-}
 .error-message {
   color: red;
   font-size: 0.9rem;
-  margin-top: 0px;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
 .error-message v-icon {
@@ -137,9 +123,9 @@ const submit = async () => {
 }
 
 @media (max-width: 600px) {
-  .form-container {
-    margin-left: 10px;
-    margin-right: 10px;
+  .v-card {
+    margin: 20px;
+    padding: 2rem;
   }
 }
 </style>

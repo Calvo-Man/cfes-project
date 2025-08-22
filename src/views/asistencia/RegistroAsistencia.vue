@@ -1,152 +1,159 @@
 <template>
-  <v-row class="pa-4">
-    <!-- Formulario -->
-    <v-col cols="12" md="6">
-      <v-card class="pa-6 elevation-3 mx-auto form-container rounded-xl">
-        <h2 class="text-h5 font-weight-bold mb-4 d-flex align-center">📝 Registrar asistencia</h2>
-        <v-form @submit.prevent="sendForm">
-          <v-row dense>
-            <v-col cols="12" md="6">
-              <v-text-field
-                v-model="form.nombre"
-                label="Nombre"
-                variant="outlined"
-                density="comfortable"
-                required
-              />
-            </v-col>
+  <v-container>
+    <v-row class="pa-4">
+      <!-- Formulario -->
+      <v-col cols="12" md="6">
+        <v-card class="pa-6 elevation-3 mx-auto form-container rounded-xl">
+          <h2 class="text-h5 font-weight-bold mb-4 d-flex align-center">📝 Registrar asistencia</h2>
+          <v-form @submit.prevent="sendForm">
+            <v-row dense>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="form.nombre"
+                  label="Nombre"
+                  variant="outlined"
+                  density="comfortable"
+                  required
+                />
+              </v-col>
 
-            <v-col cols="12" md="6">
-              <v-text-field
-                v-model="form.apellido"
-                label="Apellido"
-                variant="outlined"
-                density="comfortable"
-                required
-              />
-            </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="form.apellido"
+                  label="Apellido"
+                  variant="outlined"
+                  density="comfortable"
+                  required
+                />
+              </v-col>
 
-            <v-col cols="12">
-              <v-text-field
-                v-model="form.telefono"
-                label="Teléfono"
-                type="tel"
-                variant="outlined"
-                density="comfortable"
-                required
-              />
-            </v-col>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="form.telefono"
+                  label="Teléfono"
+                  type="tel"
+                  variant="outlined"
+                  density="comfortable"
+                  required
+                />
+              </v-col>
 
-            <v-col cols="6">
-              <v-text-field
-                v-model="form.carrera"
-                label="Carrera"
-                variant="outlined"
-                density="comfortable"
-                required
-              />
-            </v-col>
+              <v-col cols="6">
+                <v-text-field
+                  v-model="form.carrera"
+                  label="Carrera"
+                  variant="outlined"
+                  density="comfortable"
+                  required
+                />
+              </v-col>
 
-            <v-col cols="6">
-              <v-text-field
-                v-model="form.calle"
-                label="Calle"
-                variant="outlined"
-                density="comfortable"
-                required
-              />
-            </v-col>
+              <v-col cols="6">
+                <v-text-field
+                  v-model="form.calle"
+                  label="Calle"
+                  variant="outlined"
+                  density="comfortable"
+                  required
+                />
+              </v-col>
 
-            <v-col cols="12">
-              <v-text-field
-                v-model="form.direccion"
-                label="Dirección completa"
-                variant="outlined"
-                density="comfortable"
-                readonly
-              />
-            </v-col>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="form.direccion"
+                  label="Dirección completa"
+                  variant="outlined"
+                  density="comfortable"
+                  readonly
+                />
+              </v-col>
 
-            <v-col cols="12">
-              <v-text-field
-                v-model="form.barrio"
-                label="Barrio"
-                type="text"
-                variant="outlined"
-                density="comfortable"
-                required
-              />
-            </v-col>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="form.barrio"
+                  label="Barrio"
+                  type="text"
+                  variant="outlined"
+                  density="comfortable"
+                  required
+                />
+              </v-col>
 
-            <v-col cols="12">
-              <v-select
-                v-model="form.categoria"
-                :items="categoria"
-                label="Categoría"
-                variant="outlined"
-                density="comfortable"
-                item-value="value"
-                item-title="label"
-              />
-            </v-col>
+              <v-col cols="12">
+                <v-select
+                  v-model="form.categoria"
+                  :items="categoria"
+                  label="Categoría"
+                  variant="outlined"
+                  density="comfortable"
+                  item-value="value"
+                  item-title="label"
+                />
+              </v-col>
 
-            <v-col cols="12" class="text-right">
-              <v-btn color="primary" type="submit" rounded="lg" elevation="2"> Guardar </v-btn>
-            </v-col>
-          </v-row>
-        </v-form>
-      </v-card>
-    </v-col>
+              <v-col cols="12" class="text-right">
+                <v-btn color="primary" type="submit" rounded="lg" elevation="2"> Guardar </v-btn>
+              </v-col>
+            </v-row>
+          </v-form>
+        </v-card>
+      </v-col>
 
-    <!-- Mapa -->
-    <v-col cols="12" md="6">
-      <v-card class="elevation-2 rounded-xl overflow-hidden">
-        <div id="asistencia-map" class="map-container"></div>
-      </v-card>
-    </v-col>
-  </v-row>
+      <!-- Mapa -->
+      <v-col cols="12" md="6">
+        <v-card class="elevation-2 rounded-xl overflow-hidden">
+          <div id="asistencia-map" class="map-container"></div>
+        </v-card>
+      </v-col>
+    </v-row>
 
-  <!-- Tabla -->
-  <v-card class="pa-4 elevation-2 list-container rounded-xl">
-    <h2 class="text-h6 font-weight-bold mb-4">📋 Listado de Asistencias</h2>
+    <!-- Tabla -->
+    <!-- Tabla de Asistencias -->
+    <v-card class="pa-4 elevation-2 list-container rounded-xl mt-6">
+      <h2 class="text-h6 font-weight-bold mb-4">Listado de Asistencias</h2>
 
-    <v-data-table
-      :headers="headers"
-      :items="asistencias"
-      :loading="loading"
-      class="elevation-1 rounded-lg"
-      density="comfortable"
-      hover
-      fixed-header
-      height="400px"
-    >
-      <template #item.encargadosId="{ item }">
-        <div>
-          <v-chip
-            v-for="(encargados, index) in item.encargadosId"
-            :key="index"
-            size="small"
-            class="ma-1"
-            color="blue-lighten-4"
-            text-color="blue-darken-4"
-            label
+      <v-data-table
+        :headers="headersAsistencias"
+        :items="asistencias"
+        :loading="loading"
+        class="elevation-1 custom-table"
+        density="comfortable"
+      >
+        <!-- Columna: Acciones -->
+        <template #item.acciones="{ item }">
+          <v-btn
+            icon
+            color="green"
+            size="x-small"
+            class="mr-2 animated-icon"
+            @click="verAsistencia(item.id)"
           >
-            {{ encargados.name }} {{ encargados.apellido }}
-          </v-chip>
-        </div>
-      </template>
-
-      <template #item.acciones="{ item }">
-        <v-btn icon class="mr-2" size="x-small" color="blue" variant="tonal" @click="editar(item)">
-          <i class="material-icons icon-sm">edit</i>
-        </v-btn>
-        <v-btn icon color="red" size="x-small" variant="tonal" @click="eliminar(item)">
-          <i class="material-icons icon-sm">delete</i>
-        </v-btn>
-      </template>
-    </v-data-table>
-  </v-card>
-
+            <i class="material-icons icon-sm">visibility</i>
+          </v-btn>
+          <v-btn
+            v-if="userStore.user.rol === 'pastor' || userStore.user.rol === 'administrador'"
+            icon
+            color="primary"
+            size="x-small"
+            class="mr-2 animated-icon"
+            @click="editarAsistencia(item)"
+          >
+            <i class="material-icons icon-sm">edit</i>
+          </v-btn>
+          <v-btn
+            v-if="userStore.user.rol === 'pastor' || userStore.user.rol === 'administrador'"
+            icon
+            color="red"
+            size="x-small"
+            class="mr-2 animated-icon"
+            @click="confirmDelete(item)"
+          >
+            <i class="material-icons icon-sm">delete</i>
+          </v-btn>
+        </template>
+      </v-data-table>
+    </v-card>
+  </v-container>
   <!-- Notificación -->
   <Notificacion ref="notificacionRef" />
 
@@ -169,6 +176,7 @@
 <script setup>
 import { onMounted, ref, watch, onUnmounted, nextTick } from 'vue'
 import Notificacion from '@/components/Notificacion.vue'
+import { useUserStore } from '@/store/userStore'
 
 import api from '@/plugins/axios'
 
@@ -193,16 +201,19 @@ const categoria = [
   { label: 'Adultos', value: 'Adultos' },
 ]
 
-const headers = ref([
+const headersAsistencias = ref([
   { title: 'Nombre', value: 'nombre' },
   { title: 'Apellido', value: 'apellido' },
   { title: 'Telefono', value: 'telefono' },
+  { title: 'Categoria', value: 'categoria' },
   { title: 'Barrio', value: 'barrio' },
   { title: 'Direccion', value: 'direccion' },
   { title: 'Acciones', value: 'acciones', sortable: false },
 ])
 
 const asistencias = ref([])
+
+const userStore = useUserStore()
 const notificacionRef = ref(null)
 const casa_id = ref(null)
 const dialogDelete = ref(false)
@@ -394,7 +405,7 @@ async function submitForm() {
     await obtenerAsistencias()
   } catch (error) {
     console.error(error)
-    notificacionRef.value.mostrar('Error al registrar la asistencia', 'error')
+    notificacionRef.value.mostrar(error.response.data.message, 'error')
   }
 }
 
@@ -455,13 +466,7 @@ async function confirmDelete() {
   background-color: var(--blur-light);
   backdrop-filter: blur(6px);
 }
-.list-container {
-  background-color: var(--grey);
-  margin-top: 1rem;
-}
-.icon-sm {
-  font-size: 18px;
-}
+
 .map-container {
   height: 500px;
   border-radius: 12px;
@@ -469,5 +474,54 @@ async function confirmDelete() {
 .v-data-table .v-data-table__tr:hover {
   background-color: rgba(0, 0, 0, 0.04);
   transition: background-color 0.2s ease-in-out;
+}
+/* Contenedor general de las tablas */
+.list-container {
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.2s ease;
+}
+
+.list-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Estilos de la tabla */
+.custom-table {
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 0.9rem;
+}
+
+.custom-table thead {
+  background-color: #f5f7fa;
+  font-weight: 600;
+  color: #374151;
+}
+
+.custom-table tbody tr:hover {
+  background-color: #f0f9ff;
+  transition: background-color 0.2s ease;
+}
+
+/* Íconos de acción con animación */
+.animated-icon {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.animated-icon:hover {
+  transform: scale(1.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Tamaño más compacto para íconos */
+.icon-sm {
+  font-size: 18px;
 }
 </style>

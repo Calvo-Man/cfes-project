@@ -5,13 +5,13 @@
       <v-row justify="center" class="mb-6">
         <v-col cols="12" md="8" class="text-center">
           <v-scale-transition>
-            <h2 class="text-h5 font-weight-bold fade-in">
+            <h2 class="text-h5 font-weight-bold stagger-fade">
               {{ capitalizarPrimeraLetra(usuario?.rol) }} {{ usuario?.name }}
               {{ usuario?.apellido }}
             </h2>
           </v-scale-transition>
           <v-fade-transition>
-            <p class="text-subtitle-1 mt-2">
+            <p class="text-subtitle-1 mt-2 stagger-fade">
               <span class="font-weight-bold">Bienvenido a CFESConnect</span>, tu herramienta
               inteligente para mantenerte conectado con tu comunidad. Aquí podrás ver tus
               asignaciones de aseo, consultar actividades y eventos, acceder a tu casa de fe,
@@ -29,7 +29,13 @@
           <v-fade-transition>
             <v-card class="verse-card pa-4 elevation-3">
               <blockquote>
-                "{{ versiculoDelDia.texto }}"
+                <span
+                  class="typing-text"
+                  :style="{ '--chars': versiculoDelDia.texto.length }"
+                  :key="versiculoDelDia.texto"
+                >
+                  "{{ versiculoDelDia.texto }}"
+                </span>
                 <br />
                 <strong>{{ versiculoDelDia.referencia }}</strong>
               </blockquote>
@@ -53,12 +59,6 @@
               <p class="text-h5 font-weight-bold mb-0">{{ stat.value }} {{ stat.suffix }}</p>
             </v-card>
           </v-hover>
-        </v-col>
-      </v-row>
-      <!-- Asistencias Mensuales -->
-      <v-row justify="center" class="mb-10">
-        <v-col cols="12" md="10">
-          <AsistenciasMensuales :asistencias="asistenciasMensuales" />
         </v-col>
       </v-row>
 
@@ -96,9 +96,6 @@ import { ref, onMounted, computed } from 'vue'
 import { versiculos } from '@/assets/versiculos'
 import api from '@/plugins/axios'
 import { useUserStore } from '@/store/userStore'
-import AsistenciasMensuales from '@/components/AsistenciasMensuales.vue'
-
-const asistenciasMensuales = ref([]) // Para almacenar los datos del backend
 
 const userStore = useUserStore()
 const usuario = computed(() => userStore.user)
@@ -174,18 +171,16 @@ const versiculoDelDia = ref(versiculos[indice])
 
 onMounted(async () => {
   try {
-    const [eventos, asistencias, miembros, casas, asistenciasPorMes] = await Promise.all([
+    const [eventos, asistencias, miembros, casas] = await Promise.all([
       api.get('/eventos/count'),
       api.get('/asistencias/count'),
       api.get('/miembros/count'),
       api.get('/casas-de-fe/count'),
-      api.get('/asistencias/countAllPerMonth'), // Endpoint que devuelve los datos agrupados por mes
     ])
     estadisticas.value.eventos = eventos.data
     estadisticas.value.asistencias = asistencias.data
     estadisticas.value.miembros = miembros.data
     estadisticas.value.casas = casas.data
-    asistenciasMensuales.value = asistenciasPorMes.data
   } catch (error) {
     console.error('Error cargando estadísticas:', error)
   }
@@ -225,7 +220,7 @@ function itemGradient(color) {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .dashboard-container {
   border-radius: 20px;
   box-shadow: 0 14px 28px rgba(0, 0, 0, 0.15);
@@ -270,16 +265,50 @@ function itemGradient(color) {
 }
 
 /* Versículo estilo neumorphism */
+/* Estilo general de la card */
+/* Contenedor */
 .verse-card {
   border-radius: 20px;
   background: #f9f9f9;
   color: #4a148c;
   text-align: center;
-  font-style: italic;
   padding: 20px;
   box-shadow:
     4px 4px 12px rgba(0, 0, 0, 0.1),
     -4px -4px 12px rgba(255, 255, 255, 0.7);
+}
+
+/* Texto con animación de escritura */
+.typing-text {
+  display: inline-block;
+  font-family: 'Caveat', cursive;
+  white-space: pre-wrap; /* 👈 evita que salte de línea antes de tiempo */
+  overflow: hidden;
+  border-right: 3px solid #4a148c; /* cursor */
+  animation:
+    typing 3s steps(var(--chars), end),
+    blink 0.8s step-end infinite;
+}
+
+/* Ajusta el ancho progresivo */
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink {
+  0%,
+  50% {
+    border-color: #4a148c;
+  }
+  51%,
+  100% {
+    border-color: transparent;
+  }
 }
 
 /* Animaciones */
@@ -295,5 +324,53 @@ function itemGradient(color) {
     opacity: 1;
     transform: translateY(0);
   }
+}
+.stagger-fade {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: staggerFade 0.8s ease forwards;
+}
+@keyframes staggerFade {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.stagger-delay-1 {
+  animation-delay: 0.2s;
+}
+.stagger-delay-2 {
+  animation-delay: 0.4s;
+}
+.stagger-delay-3 {
+  animation-delay: 0.6s;
+}
+.quick-access-hover {
+  transform: translateY(-8px) scale(1.05);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
+}
+.stat-card .v-icon {
+  animation: bounceIn 0.6s ease;
+}
+@keyframes bounceIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.stat-card,
+.quick-access {
+  transition: all 0.3s ease-in-out;
+}
+.stat-card-hover,
+.quick-access-hover {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
 }
 </style>

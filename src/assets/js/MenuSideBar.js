@@ -21,6 +21,13 @@ export const MenuSideBar = [
     RequiresPastor: false,
   },
   {
+    label: 'Estadisticas',
+    icon: 'bar_chart',
+    to: '/estadisticas',
+    RequiresAdmin: false,
+    RequiresPastor: false,
+  },
+  {
     label: 'Cronogramas',
     icon: 'event',
 

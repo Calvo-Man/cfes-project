@@ -70,6 +70,11 @@ export const routes = [
         component: () => import('../views/casas-de-fe/ControlCasaDeFe.vue'),
       },
       {
+        path: 'estadisticas',
+        name: 'Estadisticas',
+        component: () => import('../views/estadisticas/EstadisticasView.vue'),
+      },
+      {
         path: 'realizar-peticiones',
         name: 'Realizar peticiones',
         component: () => import('../views/peticiones/PeticionesView.vue'),

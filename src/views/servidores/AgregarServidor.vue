@@ -305,11 +305,15 @@ const roles = [
   { label: 'Administrador', value: 'administrador' },
 ]
 const cargos = [
+  { label: 'Administrador', value: 'Administrador' },
+  { label: 'Intersecion', value: 'Intersección' },
   { label: 'Alabanza', value: 'Alabanza' },
   { label: 'Diacono', value: 'Diacono' },
-  { label: 'Administrador', value: 'Administrador' },
   { label: 'Red MIA', value: 'Red MIA' },
   { label: 'Jovenes', value: 'Jovenes' },
+  { label: 'Mujeres', value: 'Mujeres' },
+  { label: 'Hombres', value: 'Hombres' },
+  { label: 'Redes', value: 'Redes' },
   { label: 'Ninguno', value: 'Ninguno' },
 ]
 

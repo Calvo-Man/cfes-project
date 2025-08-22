@@ -55,6 +55,12 @@
           </v-hover>
         </v-col>
       </v-row>
+      <!-- Asistencias Mensuales -->
+      <v-row justify="center" class="mb-10">
+        <v-col cols="12" md="10">
+          <AsistenciasMensuales :asistencias="asistenciasMensuales" />
+        </v-col>
+      </v-row>
 
       <!-- Accesos rápidos -->
       <v-row justify="center" align="stretch">
@@ -90,6 +96,9 @@ import { ref, onMounted, computed } from 'vue'
 import { versiculos } from '@/assets/versiculos'
 import api from '@/plugins/axios'
 import { useUserStore } from '@/store/userStore'
+import AsistenciasMensuales from '@/components/AsistenciasMensuales.vue'
+
+const asistenciasMensuales = ref([]) // Para almacenar los datos del backend
 
 const userStore = useUserStore()
 const usuario = computed(() => userStore.user)
@@ -165,16 +174,18 @@ const versiculoDelDia = ref(versiculos[indice])
 
 onMounted(async () => {
   try {
-    const [eventos, asistencias, miembros, casas] = await Promise.all([
+    const [eventos, asistencias, miembros, casas, asistenciasPorMes] = await Promise.all([
       api.get('/eventos/count'),
       api.get('/asistencias/count'),
       api.get('/miembros/count'),
       api.get('/casas-de-fe/count'),
+      api.get('/asistencias/countAllPerMonth'), // Endpoint que devuelve los datos agrupados por mes
     ])
     estadisticas.value.eventos = eventos.data
     estadisticas.value.asistencias = asistencias.data
     estadisticas.value.miembros = miembros.data
     estadisticas.value.casas = casas.data
+    asistenciasMensuales.value = asistenciasPorMes.data
   } catch (error) {
     console.error('Error cargando estadísticas:', error)
   }

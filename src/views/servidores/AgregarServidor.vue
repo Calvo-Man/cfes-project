@@ -328,6 +328,7 @@ async function guardar() {
   const isValid = await form.value.validate()
   if (!isValid) return
   try {
+    loading.value = true
     await api.post('/miembros/create', miembro)
     notificacionRef.value.mostrar('Nuevo servidor registrado', 'success')
     await obtenerServidores()
@@ -336,6 +337,7 @@ async function guardar() {
     console.error('Error al registrar el servidor:', error)
     notificacionRef.value.mostrar('Error al registrar el servidor', 'error')
   }
+  loading.value = false
 }
 function DialogFirmarConsetimiento() {
   dialogFirma.value = true

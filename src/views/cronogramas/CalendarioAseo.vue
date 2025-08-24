@@ -218,8 +218,7 @@ onMounted(async () => {
 
 /* Resaltar usuario conectado */
 .resaltado-usuario {
-  background: #ffeb3b;
-  color: #000;
+  color: #fbc02d;
   font-weight: bold;
   border: 1px solid #fbc02d;
 }

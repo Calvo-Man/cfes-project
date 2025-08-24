@@ -136,7 +136,7 @@
             color="primary"
             size="x-small"
             class="mr-2 animated-icon"
-            @click="editarAsistencia(item)"
+            @click="DialogUpdate(item)"
           >
             <i class="material-icons icon-sm">edit</i>
           </v-btn>
@@ -156,6 +156,71 @@
   </v-container>
   <!-- Notificación -->
   <Notificacion ref="notificacionRef" />
+  <!-- Diálogo Actualizar-->
+  <v-dialog v-model="dialogUpdate" max-width="800">
+    <v-card class="pa-6 elevation-3 mx-auto form-container rounded-xl">
+      <h2 class="text-h5 font-weight-bold mb-4 d-flex align-center">📝 Registrar asistencia</h2>
+      <v-form @submit.prevent="updateForm">
+        <v-row dense>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="formUpdate.nombre"
+              label="Nombre"
+              variant="outlined"
+              density="comfortable"
+              required
+            />
+          </v-col>
+
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="formUpdate.apellido"
+              label="Apellido"
+              variant="outlined"
+              density="comfortable"
+              required
+            />
+          </v-col>
+
+          <v-col cols="12">
+            <v-text-field
+              v-model="formUpdate.telefono"
+              label="Teléfono"
+              type="tel"
+              variant="outlined"
+              density="comfortable"
+              required
+            />
+          </v-col>
+
+          <v-col cols="12">
+            <v-select
+              v-model="formUpdate.categoria"
+              :items="categoria"
+              label="Categoría"
+              variant="outlined"
+              density="comfortable"
+              item-value="value"
+              item-title="label"
+            />
+          </v-col>
+
+          <v-col cols="12" class="text-right">
+            <v-btn
+              color="success"
+              rounded="lg"
+              elevation="2"
+              @click="dialogUpdate = false"
+              class="mr-2"
+            >
+              Cancelar
+            </v-btn>
+            <v-btn color="primary" type="submit" rounded="lg" elevation="2"> Guardar </v-btn>
+          </v-col>
+        </v-row>
+      </v-form>
+    </v-card>
+  </v-dialog>
 
   <!-- Diálogo Eliminar -->
   <v-dialog v-model="dialogDelete" max-width="500">
@@ -193,12 +258,27 @@ const form = ref({
   longitud: null,
 })
 
+const formUpdate = ref({
+  id: null,
+  nombre: '',
+  apellido: '',
+  telefono: '',
+  //barrio: '',
+  //carrera: '',
+  //calle: '',
+  //direccion: '',
+  categoria: '',
+  //latitud: null,
+  //longitud: null,
+})
+
 const loading = ref(false)
 
 const categoria = [
   { label: 'Niños', value: 'Niños' },
   { label: 'Jovenes', value: 'Jovenes' },
-  { label: 'Adultos', value: 'Adultos' },
+  { label: 'Mujeres', value: 'Mujeres' },
+  { label: 'Hombres', value: 'Hombres' },
 ]
 
 const headersAsistencias = ref([
@@ -217,6 +297,7 @@ const userStore = useUserStore()
 const notificacionRef = ref(null)
 const casa_id = ref(null)
 const dialogDelete = ref(false)
+const dialogUpdate = ref(false)
 const ultimoCampoEscrito = ref('')
 let map = null
 let marker = null
@@ -390,6 +471,9 @@ async function obtenerDireccionPorCoordenadas(lat, lng) {
 const sendForm = () => {
   submitForm()
 }
+const updateForm = () => {
+  updateAsistencia()
+}
 
 async function submitForm() {
   try {
@@ -433,11 +517,21 @@ async function obtenerAsistencias() {
   }
 }
 
-async function editar(item) {
+function DialogUpdate(item) {
+  dialogUpdate.value = true
+  formUpdate.value.id = item.id
+  formUpdate.value.nombre = item.nombre
+  formUpdate.value.apellido = item.apellido
+  formUpdate.value.telefono = item.telefono
+  formUpdate.value.categoria = item.categoria
+}
+
+async function updateAsistencia() {
   try {
-    await api.put(`/asistencias/${item.id}`, item)
+    await api.patch(`/asistencias/${formUpdate.value.id}`, formUpdate.value)
     obtenerAsistencias()
     notificacionRef.value.mostrar('Asistencia actualizada', 'success') // 👈 aquí la notificación de update
+    dialogUpdate.value = false
   } catch (error) {
     console.error('Error al actualizar la asistencia:', error)
     notificacionRef.value.mostrar('Error al actualizar la asistencia', 'error')

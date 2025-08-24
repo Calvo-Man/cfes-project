@@ -126,7 +126,7 @@
             color="green"
             size="x-small"
             class="mr-2 animated-icon"
-            @click="verAsistencia(item.id)"
+            @click="verPosicion(item.id)"
           >
             <i class="material-icons icon-sm">visibility</i>
           </v-btn>
@@ -257,6 +257,7 @@ const form = ref({
   latitud: null,
   longitud: null,
 })
+let infoWindow = null
 
 const formUpdate = ref({
   id: null,
@@ -451,6 +452,50 @@ async function obtenerCoordenadasPorDireccion(direccion) {
       }
     })
   })
+}
+function verPosicion(id) {
+  const persona = asistencias.value.find((asistencia) => asistencia.id === id)
+  if (!persona || !map) return
+
+  const lat = parseFloat(persona.latitud)
+  const lng = parseFloat(persona.longitud)
+  const posicion = { lat, lng }
+
+  map.setCenter(posicion)
+  map.setZoom(16)
+  marker.setPosition(posicion)
+
+  if (!infoWindow) {
+    infoWindow = new google.maps.InfoWindow()
+  }
+  const url = `https://www.google.com/maps?q=${lat},${lng}`
+  infoWindow.setContent(`
+  <div style="min-width: 300px; max-width: 380px; font-family: 'Roboto', sans-serif; color: #2c3e50; padding: 8px;">
+    <h4 style="margin: 0 0 6px; font-size: 18px;">👤 ${persona.nombre}</h4>
+    <div style="margin-bottom: 8px;">
+      <p style="margin: 4px 0;"><strong>📍 Dirección:</strong> ${persona.direccion || 'No disponible'}</p>
+      <p style="margin: 4px 0;"><strong>👤 Categoria:</strong> ${persona.categoria}</p>
+    </div>
+
+    <a href="${url}" target="_blank"
+       style="
+         display: inline-block;
+         background-color: #1976d2;
+         color: white;
+         padding: 8px 14px;
+         text-decoration: none;
+         border-radius: 6px;
+         font-weight: 500;
+         transition: background-color 0.3s;
+       "
+       onmouseover="this.style.backgroundColor='#125ea2'"
+       onmouseout="this.style.backgroundColor='#1976d2'">
+      🌍 Ver en Google Maps
+    </a>
+  </div>
+`)
+
+  infoWindow.open(map, marker)
 }
 
 async function obtenerDireccionPorCoordenadas(lat, lng) {

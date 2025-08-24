@@ -34,6 +34,8 @@
         <v-select
           v-model="mensaje.enviado_a"
           :items="opcionesDestinatarios"
+          item-title="label"
+          item-value="value"
           label="Enviar a (Selecciona uno o varios)"
           multiple
           outlined
@@ -80,7 +82,16 @@ const mensaje = ref({
 
 const notificacionRef = ref(null)
 
-const opcionesDestinatarios = ['Pastores', 'Administradores', 'Líderes', 'Servidores', 'Asistentes']
+const opcionesDestinatarios = [
+  { label: 'Pastores', value: 'pastores' },
+  { label: 'Administradores', value: 'administradores' },
+  { label: 'Líderes', value: 'lideres' },
+  { label: 'Servidores', value: 'servidores' },
+  { label: 'Asistentes', value: 'Asistentes' },
+  { label: 'Jovenes', value: 'Jovenes' },
+  { label: 'Mujeres', value: 'Mujeres' },
+  { label: 'Hombres', value: 'Hombres' },
+]
 
 const loading = ref(false)
 

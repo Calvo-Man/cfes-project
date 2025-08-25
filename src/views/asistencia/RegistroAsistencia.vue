@@ -110,12 +110,26 @@
     <!-- Tabla -->
     <!-- Tabla de Asistencias -->
     <v-card class="pa-4 elevation-2 list-container rounded-xl mt-6">
-      <h2 class="text-h6 font-weight-bold mb-4">Listado de Asistencias</h2>
+      <div class="d-flex justify-space-between align-center mb-4">
+        <h2 class="text-h6 font-weight-bold">Listado de Asistencias</h2>
+      </div>
+      <!-- Buscador -->
+      <v-text-field
+        v-model="search"
+        label="Buscar asistencia..."
+        variant="outlined"
+        clearable
+        density="compact"
+        prepend-inner-icon="mdi-magnify"
+        hide-details
+        class="mb-4"
+      />
 
       <v-data-table
         :headers="headersAsistencias"
         :items="asistencias"
         :loading="loading"
+        :search="search"
         class="elevation-1 custom-table"
         density="comfortable"
       >
@@ -258,6 +272,7 @@ const form = ref({
   longitud: null,
 })
 let infoWindow = null
+const search = ref('')
 
 const formUpdate = ref({
   id: null,

@@ -99,7 +99,7 @@
 
               <!-- Cargo -->
               <v-col cols="12" md="6">
-                <v-select
+                <v-autocomplete
                   label="Cargo"
                   v-model="miembro.cargo"
                   :items="cargos"
@@ -164,12 +164,27 @@
 
     <!-- Listado -->
     <v-card class="pa-4 elevation-3 list-container bg-blur mt-6" rounded="xl">
-      <h2 class="text-h6 font-weight-bold mb-4">Listado de Servidores</h2>
+      <div class="d-flex justify-space-between align-center mb-4">
+        <h2 class="text-h6 font-weight-bold">Listado de Servidores</h2>
+      </div>
+
+      <!-- Buscador -->
+      <v-text-field
+        v-model="search"
+        label="Buscar servidor..."
+        variant="outlined"
+        density="compact"
+        clearable
+        class="mb-4"
+        hide-details
+        prepend-inner-icon="mdi-magnify"
+      />
 
       <v-data-table
         :headers="headers"
         :items="servidores"
         :loading="loading"
+        :search="search"
         class="elevation-1"
         density="comfortable"
         hover
@@ -260,7 +275,7 @@ const Firmado = ref(false)
 
 const userStore = useUserStore()
 const esPastor = ref(userStore.user?.rol === 'pastor' || userStore.user?.rol === 'administrador')
-
+const search = ref('')
 const miembro = reactive({
   name: '',
   apellido: '',

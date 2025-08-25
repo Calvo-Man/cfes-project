@@ -1,12 +1,27 @@
 <template>
   <v-container>
     <v-card class="pa-4 elevation-2 list-container bg-blur">
-      <h2 class="text-h6 font-weight-bold mb-4">Listado de Servidores</h2>
+      <div class="d-flex justify-space-between align-center mb-4">
+        <h2 class="text-h6 font-weight-bold">Listado de Servidores</h2>
+      </div>
+
+      <!-- Buscador -->
+      <v-text-field
+        v-model="search"
+        label="Buscar servidor..."
+        variant="outlined"
+        density="compact"
+        class="mb-4"
+        clearable
+        hide-details
+        prepend-inner-icon="mdi-magnify"
+      />
 
       <v-data-table
         :headers="headers"
         :items="servidores"
         :loading="loading"
+        :search="search"
         class="elevation-1 servidores-table"
         density="comfortable"
       >
@@ -72,7 +87,7 @@ import Notificacion from '@/components/Notificacion.vue'
 const notificacionRef = ref(null)
 const servidores = ref([])
 const loading = ref(false)
-
+const search = ref('')
 const headers = computed(() => [
   { title: 'Nombre', value: 'name' },
   { title: 'Apellido', value: 'apellido' },

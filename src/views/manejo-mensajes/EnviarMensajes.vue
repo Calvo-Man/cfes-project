@@ -30,22 +30,35 @@
           </div>
         </v-sheet>
 
-        <!-- Selección de destinatarios -->
-        <v-select
-          v-model="mensaje.enviado_a"
-          :items="opcionesDestinatarios"
+        <!-- Selección de destinatarios (Miembros) -->
+        <v-autocomplete
+          v-model="destinatariosMiembros"
+          :items="opcionesMiembros"
           item-title="label"
           item-value="value"
-          label="Enviar a (Selecciona uno o varios)"
+          label="Enviar a (Miembros)"
           multiple
           outlined
           chips
           clearable
-          persistent-hint
           prepend-inner-icon="mdi-account-multiple-outline"
           :menu-props="{ maxHeight: 200 }"
-          required
-          searchable
+          class="mt-4"
+        />
+
+        <!-- Selección de destinatarios (Asistentes) -->
+        <v-autocomplete
+          v-model="destinatariosAsistentes"
+          :items="opcionesAsistentes"
+          item-title="label"
+          item-value="value"
+          label="Enviar a (Asistentes)"
+          multiple
+          outlined
+          chips
+          clearable
+          prepend-inner-icon="mdi-account-group-outline"
+          :menu-props="{ maxHeight: 200 }"
           class="mt-4"
         />
 
@@ -77,18 +90,24 @@ import Notificacion from '@/components/Notificacion.vue'
 
 const mensaje = ref({
   contenido: '',
-  enviado_a: [],
+  enviado_a: [], // este será el que realmente se manda
 })
+
+const destinatariosMiembros = ref([])
+const destinatariosAsistentes = ref([])
 
 const notificacionRef = ref(null)
 
-const opcionesDestinatarios = [
+const opcionesMiembros = [
   { label: 'Pastores', value: 'pastores' },
   { label: 'Administradores', value: 'administradores' },
   { label: 'Líderes', value: 'lideres' },
   { label: 'Servidores', value: 'servidores' },
-  { label: 'Asistentes', value: 'Asistentes' },
-  { label: 'Jovenes', value: 'Jovenes' },
+]
+
+const opcionesAsistentes = [
+  { label: 'Todos', value: 'Asistentes' },
+  { label: 'Jóvenes', value: 'Jovenes' },
   { label: 'Mujeres', value: 'Mujeres' },
   { label: 'Hombres', value: 'Hombres' },
 ]
@@ -101,6 +120,9 @@ const primerLink = computed(() => {
 })
 
 const enviarMensaje = async () => {
+  // unimos seleccionados de los dos autocompletes
+  mensaje.value.enviado_a = [...destinatariosMiembros.value, ...destinatariosAsistentes.value]
+
   if (!mensaje.value.contenido || mensaje.value.enviado_a.length === 0) {
     notificacionRef.value.mostrar('Por favor, completa todos los campos', 'warning')
     return
@@ -115,6 +137,8 @@ const enviarMensaje = async () => {
     )
     mensaje.value.contenido = ''
     mensaje.value.enviado_a = []
+    destinatariosMiembros.value = []
+    destinatariosAsistentes.value = []
   } catch (error) {
     console.error(error)
     notificacionRef.value.mostrar('❌ Error al enviar los mensajes', 'error')

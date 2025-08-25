@@ -31,9 +31,13 @@
                   v-for="persona in asignacionesPorFecha(claveFecha(dia))"
                   :key="persona.id"
                   class="asignaion font-weight-bold"
-                  :class="{ 'resaltado-usuario': persona.id === userId }"
                 >
-                  <v-chip size="small" color="white" text-color="black" class="mb-1">
+                  <v-chip
+                    size="small"
+                    :color="persona.id === userId ? 'black' : 'white'"
+                    :variant="persona.id === userId ? 'elevated' : 'tonal'"
+                    class="mb-1"
+                  >
                     {{ persona.name }} {{ persona.apellido }}
                   </v-chip>
                 </div>
@@ -220,7 +224,8 @@ onMounted(async () => {
 .resaltado-usuario {
   color: #fbc02d;
   font-weight: bold;
-  border: 1px solid #fbc02d;
+  background-color: black;
+  border-radius: 6px;
 }
 
 /* Animaciones */

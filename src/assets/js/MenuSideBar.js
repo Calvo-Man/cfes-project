@@ -96,6 +96,13 @@ export const MenuSideBar = [
         RequiresAdmin: false,
         RequiresPastor: false,
       },
+      {
+        label: 'Asistencias recurrentes',
+        icon: '',
+        to: '/ver-asistencias/recurrente',
+        RequiresAdmin: false,
+        RequiresPastor: false,
+      },
     ],
   },
   {

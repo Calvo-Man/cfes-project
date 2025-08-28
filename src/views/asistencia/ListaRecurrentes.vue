@@ -1,117 +1,10 @@
 <template>
   <v-container>
-    <v-row class="pa-4">
-      <!-- Formulario -->
-      <v-col cols="12" md="6">
-        <v-card class="pa-6 elevation-3 mx-auto form-container rounded-xl">
-          <h2 class="text-h5 font-weight-bold mb-4 d-flex align-center">📝 Registrar asistencia</h2>
-          <v-form @submit.prevent="sendForm">
-            <v-row dense>
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.nombre"
-                  label="Nombre"
-                  variant="outlined"
-                  density="comfortable"
-                  required
-                />
-              </v-col>
-
-              <v-col cols="12" md="6">
-                <v-text-field
-                  v-model="form.apellido"
-                  label="Apellido"
-                  variant="outlined"
-                  density="comfortable"
-                  required
-                />
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  v-model="form.telefono"
-                  label="Teléfono"
-                  type="tel"
-                  variant="outlined"
-                  density="comfortable"
-                  required
-                />
-              </v-col>
-
-              <v-col cols="6">
-                <v-text-field
-                  v-model="form.carrera"
-                  label="Carrera"
-                  variant="outlined"
-                  density="comfortable"
-                  required
-                />
-              </v-col>
-
-              <v-col cols="6">
-                <v-text-field
-                  v-model="form.calle"
-                  label="Calle"
-                  variant="outlined"
-                  density="comfortable"
-                  required
-                />
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  v-model="form.direccion"
-                  label="Dirección completa"
-                  variant="outlined"
-                  density="comfortable"
-                  readonly
-                />
-              </v-col>
-
-              <v-col cols="12">
-                <v-text-field
-                  v-model="form.barrio"
-                  label="Barrio"
-                  type="text"
-                  variant="outlined"
-                  density="comfortable"
-                  required
-                />
-              </v-col>
-
-              <v-col cols="12">
-                <v-select
-                  v-model="form.categoria"
-                  :items="categoria"
-                  label="Categoría"
-                  variant="outlined"
-                  density="comfortable"
-                  item-value="value"
-                  item-title="label"
-                />
-              </v-col>
-
-              <v-col cols="12" class="text-right">
-                <v-btn color="primary" type="submit" rounded="lg" elevation="2"> Guardar </v-btn>
-              </v-col>
-            </v-row>
-          </v-form>
-        </v-card>
-      </v-col>
-
-      <!-- Mapa -->
-      <v-col cols="12" md="6">
-        <v-card class="elevation-2 rounded-xl overflow-hidden">
-          <div id="asistencia-map" class="map-container"></div>
-        </v-card>
-      </v-col>
-    </v-row>
-
     <!-- Tabla -->
     <!-- Tabla de Asistencias -->
-    <v-card class="pa-4 elevation-2 list-container rounded-xl mt-6">
+    <v-card class="pa-4 elevation-2 list-container rounded-xl">
       <div class="d-flex justify-space-between align-center mb-4">
-        <h2 class="text-h6 font-weight-bold">Listado de Nuevas Asistencias</h2>
+        <h2 class="text-h6 font-weight-bold">Listado de Asistencias Recurrentes</h2>
       </div>
       <!-- Buscador -->
       <v-text-field
@@ -179,6 +72,14 @@
         </template>
       </v-data-table>
     </v-card>
+    <v-row class="pa-4">
+      <!-- Mapa -->
+      <v-col cols="12">
+        <v-card class="elevation-2 rounded-xl overflow-hidden">
+          <div id="asistencia-map" class="map-container"></div>
+        </v-card>
+      </v-col>
+    </v-row>
   </v-container>
   <!-- Notificación -->
   <Notificacion ref="notificacionRef" />
@@ -265,7 +166,7 @@
   <v-dialog v-model="dialogRecurrente" max-width="500">
     <v-card class="rounded-xl">
       <v-card-title class="text-h5 font-weight-bold">
-        Actualizar asistencia a recurrente
+        Actualizar asistencia a no recurrente
       </v-card-title>
       <v-card-text>
         <p>¿Estás seguro de que deseas continuar?</p>
@@ -616,7 +517,7 @@ function limpiarForm() {
 
 async function obtenerAsistencias() {
   try {
-    const response = await api.get('/asistencias/findNoRecurrentes')
+    const response = await api.get('/asistencias/findRecurrentes')
     asistencias.value = response.data
   } catch (error) {
     console.error('Error al obtener las asistencias:', error)

@@ -175,10 +175,12 @@
         variant="outlined"
         density="compact"
         clearable
-        class="mb-4"
+        class="mb-"
         hide-details
         prepend-inner-icon="mdi-magnify"
       />
+
+      <v-divider class="mb-4"></v-divider>
 
       <v-data-table
         :headers="headers"

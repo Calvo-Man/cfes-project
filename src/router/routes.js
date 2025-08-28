@@ -60,6 +60,11 @@ export const routes = [
         component: () => import('../views/asistencia/RegistroAsistencia.vue'),
       },
       {
+        path: 'ver-asistencias/recurrente',
+        name: 'Listado de asistencia',
+        component: () => import('../views/asistencia/ListaRecurrentes.vue'),
+      },
+      {
         path: 'casas-de-fe/agregar',
         name: 'Registro de Casas de Fe',
         component: () => import('../views/casas-de-fe/AgregarCasaDeFe.vue'),

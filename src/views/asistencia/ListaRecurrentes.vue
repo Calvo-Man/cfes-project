@@ -240,6 +240,7 @@ const headersAsistencias = ref([
 ])
 
 const asistencias = ref([])
+let marcadoresExistentes = []
 
 const userStore = useUserStore()
 const notificacionRef = ref(null)

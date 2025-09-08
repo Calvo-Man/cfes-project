@@ -352,7 +352,7 @@ let debounceTimer = null
 
 onMounted(async () => {
   await obtenerAsistencias()
-
+  await renderMarcadores()
   const checkGoogleMaps = setInterval(async () => {
     if (window.google && window.google.maps) {
       await nextTick()
@@ -542,6 +542,20 @@ function verPosicion(id) {
 `)
 
   infoWindow.open(map, marker)
+}
+async function renderMarcadores() {
+  marcadoresExistentes.forEach((m) => m.setMap(null))
+  marcadoresExistentes = asistencias.value.map((asistencia) => {
+    return new google.maps.Marker({
+      position: {
+        lat: parseFloat(asistencia.latitud),
+        lng: parseFloat(asistencia.longitud),
+      },
+      map,
+      title: casa.nombre,
+      icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
+    })
+  })
 }
 async function confirmRecurrente() {
   try {

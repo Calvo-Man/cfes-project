@@ -454,7 +454,8 @@ async function renderMarcadores() {
         lng: parseFloat(asistencia.longitud),
       },
       map,
-      title: casa.nombre,
+      title: `${asistencia.nombre} ${asistencia.apellido}`,
+
       icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
     })
   })

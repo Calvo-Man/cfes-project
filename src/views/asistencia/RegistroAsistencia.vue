@@ -539,7 +539,6 @@ function verPosicion(id) {
 `)
 
   infoWindow.open(map, marker)
-  infoWindow.open(map, marker)
   // 👇 Desplazar suavemente hacia el mapa
   const mapElement = document.getElementById('asistencia-map')
   if (mapElement) {

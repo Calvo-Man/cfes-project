@@ -353,14 +353,10 @@ let debounceTimer = null
 
 onMounted(async () => {
   await obtenerAsistencias()
+
+  await initMap()
+
   await renderMarcadores()
-  const checkGoogleMaps = setInterval(async () => {
-    if (window.google && window.google.maps) {
-      await nextTick()
-      initMap()
-      clearInterval(checkGoogleMaps)
-    }
-  }, 100)
 })
 
 onUnmounted(() => {
@@ -543,6 +539,12 @@ function verPosicion(id) {
 `)
 
   infoWindow.open(map, marker)
+  infoWindow.open(map, marker)
+  // 👇 Desplazar suavemente hacia el mapa
+  const mapElement = document.getElementById('asistencia-map')
+  if (mapElement) {
+    mapElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 }
 async function renderMarcadores() {
   marcadoresExistentes.forEach((m) => m.setMap(null))

@@ -254,14 +254,8 @@ let debounceTimer = null
 
 onMounted(async () => {
   await obtenerAsistencias()
+  await initMap()
   await renderMarcadores()
-  const checkGoogleMaps = setInterval(async () => {
-    if (window.google && window.google.maps) {
-      await nextTick()
-      initMap()
-      clearInterval(checkGoogleMaps)
-    }
-  }, 100)
 })
 
 onUnmounted(() => {
@@ -404,7 +398,6 @@ async function obtenerCoordenadasPorDireccion(direccion) {
 function verPosicion(id) {
   const persona = asistencias.value.find((asistencia) => asistencia.id === id)
   if (!persona || !map) return
-
   const lat = parseFloat(persona.latitud)
   const lng = parseFloat(persona.longitud)
   const posicion = { lat, lng }
@@ -444,22 +437,59 @@ function verPosicion(id) {
 `)
 
   infoWindow.open(map, marker)
+  // 👇 Desplazar suavemente hacia el mapa
+  const mapElement = document.getElementById('asistencia-map')
+  if (mapElement) {
+    mapElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 }
 async function renderMarcadores() {
+  // Limpia los anteriores
   marcadoresExistentes.forEach((m) => m.setMap(null))
-  marcadoresExistentes = asistencias.value.map((asistencia) => {
-    return new google.maps.Marker({
+  marcadoresExistentes = []
+
+  if (!map || asistencias.value.length === 0) return
+
+  const bounds = new google.maps.LatLngBounds()
+
+  asistencias.value.forEach((asistencia) => {
+    if (!asistencia.latitud || !asistencia.longitud) return
+
+    const marker = new google.maps.Marker({
       position: {
         lat: parseFloat(asistencia.latitud),
         lng: parseFloat(asistencia.longitud),
       },
       map,
       title: `${asistencia.nombre} ${asistencia.apellido}`,
-
       icon: 'http://maps.google.com/mapfiles/ms/icons/green-dot.png',
     })
+
+    // Click para ver info
+    marker.addListener('click', () => {
+      if (!infoWindow) infoWindow = new google.maps.InfoWindow()
+      const url = `https://www.google.com/maps?q=${asistencia.latitud},${asistencia.longitud}`
+      infoWindow.setContent(`
+        <div style="min-width: 250px;">
+          <h4>${asistencia.nombre} ${asistencia.apellido}</h4>
+          <p><b>📍 Dirección:</b> ${asistencia.direccion || 'No disponible'}</p>
+          <p><b>👥 Categoría:</b> ${asistencia.categoria}</p>
+          <a href="${url}" target="_blank">🌍 Ver en Google Maps</a>
+        </div>
+      `)
+      infoWindow.open(map, marker)
+    })
+
+    marcadoresExistentes.push(marker)
+    bounds.extend(marker.getPosition())
   })
+
+  // Ajustar vista al conjunto de marcadores
+  if (!bounds.isEmpty()) {
+    map.fitBounds(bounds)
+  }
 }
+
 async function confirmRecurrente() {
   try {
     const response = await api.patch(`/asistencias/setRecurrente/${form.value.id}`)
@@ -535,9 +565,11 @@ async function obtenerAsistencias() {
   try {
     const response = await api.get('/asistencias/findRecurrentes')
     asistencias.value = response.data
+    await nextTick()
+    renderMarcadores()
   } catch (error) {
     console.error('Error al obtener las asistencias:', error)
-    notificacionRef.value.mostrar('Error al obtener las asistencias', 'error') // 👈 aquí la notificación de update
+    notificacionRef.value.mostrar('Error al obtener las asistencias', 'error')
   }
 }
 

@@ -1,15 +1,14 @@
 <script setup>
 import { useUserStore } from '@/store/userStore'
 import SideBar from '@/components/SideBarw.vue'
-import RouterViews from './views/RouterViews.vue'
 import { Analytics } from '@vercel/analytics/vue'
 
 const userStore = useUserStore()
 </script>
 
 <template>
-  <Analytics />
   <div class="app">
+    <Analytics />
     <SideBar v-if="userStore.isAuthenticated" />
     <v-app style="background: var(--grey)" class="scrollable-nav container">
       <div class="fondo-personalizado">

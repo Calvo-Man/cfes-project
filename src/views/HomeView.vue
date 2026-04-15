@@ -12,12 +12,11 @@
           </v-scale-transition>
           <v-fade-transition>
             <p class="text-subtitle-1 mt-2 stagger-fade">
-              <span class="font-weight-bold">Bienvenido a CFESConnect</span>, tu herramienta
-              inteligente para mantenerte conectado con tu comunidad. Aquí podrás ver tus
-              asignaciones de aseo, consultar actividades y eventos, acceder a tu casa de fe,
-              recibir notificaciones importantes por WhatsApp, y hasta hacer preguntas a nuestro
-              asistente virtual sobre temas de la iglesia. Todo pensado para que tu participación
-              sea más sencilla y organizada.
+              <span class="font-weight-bold">Bienvenido a CFESConnect</span>, CFESConnect no es solo
+              un sistema, es un asistente automático para la iglesia. Gestiona miembros, asigna
+              aseos, notifica por WhatsApp, conecta asistentes con casas de fe y mantiene todo
+              funcionando sin intervención manual. Menos trabajo operativo, más enfoque en lo
+              importante.
             </p>
           </v-fade-transition>
         </v-col>

@@ -15,7 +15,9 @@ onMounted(() => {
   // Solo los administradores pueden ver y conectarse al socket
   if (userStore.user?.rol !== 'administrador' && userStore.user?.rol !== 'pastor') return
 
-  socket = io('http://169.58.8.63')
+  socket = io(import.meta.env.VITE_SOCKET_URL, {
+  transports: ['websocket'],
+})
 
   socket.on('whatsapp:status', (data) => {
     estado.value = data.status

@@ -1,25 +1,28 @@
-// Este componente muestra el estado de la conexión con WhatsApp y el QR para escanear -
-WhatsappStatus.vue
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { io } from 'socket.io-client'
+import { useUserStore } from '@/store/userStore'
+
+const userStore = useUserStore()
 
 const estado = ref('DISCONNECTED')
 const qr = ref(null)
 const dialog = ref(false)
 
-let socket
+let socket = null
 
 onMounted(() => {
-  if (!socket) {
-    socket = io('http://localhost:3000')
-  }
+  // Solo los administradores pueden ver y conectarse al socket
+  if (userStore.user?.rol !== 'administrador' && userStore.user?.rol !== 'pastor') return
+
+  socket = io('http://localhost:3000')
 
   socket.on('whatsapp:status', (data) => {
     estado.value = data.status
     qr.value = data.qr
   })
 })
+
 onUnmounted(() => {
   socket?.disconnect()
 })
@@ -38,39 +41,41 @@ const getText = () => {
 </script>
 
 <template>
-  <!-- 🔘 Botón flotante -->
-  <button class="whatsapp-btn" :style="{ background: getColor() }" @click="dialog = true">
-    📱
-  </button>
+  <template v-if="userStore.user?.rol === 'administrador' || userStore.user?.rol === 'pastor'">
+    <!-- 🔘 Botón flotante -->
+    <button class="whatsapp-btn" :style="{ background: getColor() }" @click="dialog = true">
+      📱
+    </button>
 
-  <!-- 🪟 Dialog -->
-  <div v-if="dialog" class="dialog-backdrop" @click.self="dialog = false">
-    <div class="dialog">
-      <h3>Estado WhatsApp</h3>
+    <!-- 🪟 Dialog -->
+    <div v-if="dialog" class="dialog-backdrop" @click.self="dialog = false">
+      <div class="dialog">
+        <h3>Estado WhatsApp</h3>
 
-      <p>
-        <strong>{{ getText() }}</strong>
-      </p>
+        <p>
+          <strong>{{ getText() }}</strong>
+        </p>
 
-      <!-- QR -->
-      <div v-if="estado === 'QR_READY' && qr">
-        <img :src="qr" alt="QR WhatsApp" />
-        <p>Escanea este código con tu WhatsApp</p>
+        <!-- QR -->
+        <div v-if="estado === 'QR_READY' && qr">
+          <img :src="qr" alt="QR WhatsApp" />
+          <p>Escanea este código con tu WhatsApp</p>
+        </div>
+
+        <!-- Conectado -->
+        <div v-else-if="estado === 'READY'">
+          <p>✅ Todo está funcionando correctamente</p>
+        </div>
+
+        <!-- Desconectado -->
+        <div v-else>
+          <p>❌ Bot desconectado</p>
+        </div>
+
+        <button @click="dialog = false">Cerrar</button>
       </div>
-
-      <!-- Conectado -->
-      <div v-else-if="estado === 'READY'">
-        <p>✅ Todo está funcionando correctamente</p>
-      </div>
-
-      <!-- Desconectado -->
-      <div v-else>
-        <p>❌ Bot desconectado</p>
-      </div>
-
-      <button @click="dialog = false">Cerrar</button>
     </div>
-  </div>
+  </template>
 </template>
 
 <style scoped>
@@ -86,6 +91,7 @@ const getText = () => {
   color: white;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
 }
 
 .dialog-backdrop {
@@ -98,6 +104,7 @@ const getText = () => {
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 10000;
 }
 
 .dialog {
@@ -105,10 +112,15 @@ const getText = () => {
   padding: 20px;
   border-radius: 10px;
   text-align: center;
+  min-width: 320px;
 }
 
 img {
   width: 250px;
   margin-top: 10px;
+}
+
+button {
+  margin-top: 15px;
 }
 </style>

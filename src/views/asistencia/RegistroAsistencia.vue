@@ -172,7 +172,7 @@
             color="red"
             size="x-small"
             class="mr-2 animated-icon"
-            @click="confirmDelete(item)"
+            @click="eliminar(item)"
           >
             <i class="material-icons icon-sm">delete</i>
           </v-btn>

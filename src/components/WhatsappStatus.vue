@@ -15,7 +15,7 @@ onMounted(() => {
   // Solo los administradores pueden ver y conectarse al socket
   if (userStore.user?.rol !== 'administrador' && userStore.user?.rol !== 'pastor') return
 
-  socket = io('http://localhost:3000')
+  socket = io('http://169.58.8.63')
 
   socket.on('whatsapp:status', (data) => {
     estado.value = data.status

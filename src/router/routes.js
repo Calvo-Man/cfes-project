@@ -8,6 +8,11 @@ export const routes = [
     component: () => import('../views/auth/LoginView.vue'),
   },
   {
+    path: '/login-admin',
+    name: 'LoginAdmin',
+    component: () => import('../views/auth/LoginAdmin.vue'),
+  },
+  {
     path: '/',
     component: RouterViews,
     meta: { requiresAuth: true },
@@ -17,10 +22,18 @@ export const routes = [
         name: 'Pagina principal',
         component: () => import('../views/HomeView.vue'),
       },
+
       {
         path: '/perfil',
         name: 'Perfil',
         component: () => import('../views/servidores/PerfilView.vue'),
+      },
+      {
+        path: 'registrar-iglesia',
+        name: 'Registrar iglesia',
+        component: () => import('../views/iglesias/RegistrarIglesia.vue'),
+        meta: { requiresAdmin: true, requiresPastor: true },
+  
       },
       {
         path: 'mi-casa-de-fe',

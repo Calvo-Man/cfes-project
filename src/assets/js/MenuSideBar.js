@@ -14,6 +14,29 @@ export const MenuSideBar = [
     RequiresPastor: false,
   },
   {
+    label: 'Iglesias',
+    icon: 'church',
+    RequiresAdmin: false,
+    RequiresPastor: false,
+
+    children: [
+      {
+        label: 'Registrar iglesia',
+        icon: '',
+        to: '/registrar-iglesia',
+        RequiresAdmin: true,
+        RequiresPastor: true,
+      },
+      {
+        label: 'Ver iglesias',
+        icon: '',
+        to: '/ver-iglesias',
+        RequiresAdmin: false,
+        RequiresPastor: false,
+      },
+    ],
+  },
+  {
     label: 'Mi casa de fe',
     icon: 'volunteer_activism',
     to: '/mi-casa-de-fe',

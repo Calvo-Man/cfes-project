@@ -24,6 +24,27 @@ export const routes = [
       },
 
       {
+        path: 'cafeteria',
+        name: 'Cafetería',
+        component: () => import('../views/cafeteria/DashboardCafeteria.vue'),
+      },
+      {
+        path: 'cafeteria/ventas',
+        name: 'Ventas',
+        component: () => import('../views/cafeteria/ventas/VentasView.vue'),
+      },
+      {
+        path: 'cafeteria/productos',
+        name: 'Productos',
+        component: () => import('../views/cafeteria/productos/ProductosView.vue'),
+      },
+      {
+        path: 'cafeteria/caja',
+        name: 'Caja',
+        component: () => import('../views/cafeteria/caja/CajaView.vue'),
+      },
+
+      {
         path: '/perfil',
         name: 'Perfil',
         component: () => import('../views/servidores/PerfilView.vue'),
@@ -33,7 +54,6 @@ export const routes = [
         name: 'Registrar iglesia',
         component: () => import('../views/iglesias/RegistrarIglesia.vue'),
         meta: { requiresAdmin: true, requiresPastor: true },
-  
       },
       {
         path: 'mi-casa-de-fe',

@@ -63,6 +63,20 @@ export const MenuSideBar = [
       RequiresPastor: false,
     },
     {
+      label: 'Categorias',
+      icon: '',
+      to: '/cafeteria/categorias',
+      RequiresAdmin: false,
+      RequiresPastor: false,
+    },
+    {
+      label: 'Inventario',
+      icon: '',
+      to: '/cafeteria/inventario',
+      RequiresAdmin: false,
+      RequiresPastor: false,
+    },
+    {
       label: 'Proveedores',
       icon: '',
       to: '/cafeteria/proveedores',

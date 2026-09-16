@@ -16,7 +16,7 @@
         color="primary"
         variant="outlined"
         prepend-icon="mdi-history"
-        @click="mostrarHistorial = true"
+        @click="abrirHistorial"
       >
         Historial
       </v-btn>

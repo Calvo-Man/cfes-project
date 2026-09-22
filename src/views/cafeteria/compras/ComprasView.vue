@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import axios from '@/plugins/axios'
 
 // ─────────────────────────────────────────────
@@ -37,6 +37,7 @@ const anularDialog = ref(false)
 const compraSeleccionada = ref(null)
 const detalleCompra = ref(null)
 
+
 const formulario = ref({
   proveedorId: null,
   numeroFactura: '',
@@ -45,7 +46,14 @@ const formulario = ref({
   estadoPago: 'PAGADO',
   metodoPago: 'EFECTIVO',
   detalles: [],
+  montoPagado: 0,
 })
+
+
+
+
+
+
 
 // ─────────────────────────────────────────────
 // PRODUCTO TEMPORAL
@@ -78,10 +86,10 @@ const estadosPago = [
     title: 'Pendiente',
     value: 'PENDIENTE',
   },
-    {
-        title: 'Parcial',
-        value: 'PARCIAL',
-    }
+  {
+    title: 'Parcial',
+    value: 'PARCIAL',
+  }
 ]
 
 const metodosPago = [
@@ -219,6 +227,53 @@ const subtotalForm = computed(() => {
     0,
   )
 })
+
+watch(
+  () => formulario.value.estadoPago,
+  (nuevoEstado) => {
+    if (nuevoEstado === 'PENDIENTE') {
+      formulario.value.montoPagado = 0
+      return
+    }
+
+    if (
+      nuevoEstado === 'PAGADO' &&
+      totalForm.value > 0
+    ) {
+      formulario.value.montoPagado =
+        totalForm.value
+
+      return
+    }
+
+    if (
+      nuevoEstado === 'PARCIAL' &&
+      formulario.value.montoPagado <= 0
+    ) {
+      formulario.value.montoPagado = 0
+    }
+  },
+)
+
+watch(
+  () => totalForm.value,
+  (nuevoTotal) => {
+    if (
+      formulario.value.montoPagado >
+      nuevoTotal
+    ) {
+      formulario.value.montoPagado =
+        nuevoTotal
+    }
+
+    if (
+      formulario.value.estadoPago === 'PAGADO'
+    ) {
+      formulario.value.montoPagado =
+        nuevoTotal
+    }
+  },
+)
 
 // ─────────────────────────────────────────────
 // CARGAR DATOS
@@ -514,6 +569,8 @@ async function guardarCompra() {
 
       metodoPago:
         form.metodoPago,
+      montoPagado:
+        Number(form.montoPagado) || 0,
 
       descuento,
 
@@ -764,447 +821,350 @@ onMounted(() => {
 <template>
   <div class="compras-page">
 
-<!-- HEADER -->
+    <!-- HEADER -->
 
-<div class="page-header">
+    <div class="page-header">
 
-  <div>
+      <div>
 
-    <div class="eyebrow">
-      CAFETERÍA
-    </div>
-
-    <h1>
-      Compras
-    </h1>
-
-    <p>
-      Gestiona las compras y abastecimiento
-      de la cafetería
-    </p>
-
-  </div>
-
-  <div class="header-actions">
-
-    <v-btn
-      variant="outlined"
-      prepend-icon="mdi-refresh"
-      :loading="loading"
-      @click="cargarTodo"
-    >
-      Actualizar
-    </v-btn>
-
-    <v-btn
-      color="primary"
-      prepend-icon="mdi-cart-plus"
-      @click="abrirNuevaCompra"
-    >
-      Nueva compra
-    </v-btn>
-
-  </div>
-
-</div>
-
-<!-- RESUMEN -->
-
-<div class="summary-grid">
-
-  <div class="summary-card">
-
-    <div class="summary-icon">
-      <v-icon
-        icon="mdi-cart-outline"
-      />
-    </div>
-
-    <div>
-      <span>
-        Compras
-      </span>
-
-      <strong>
-        {{ totalCompras }}
-      </strong>
-    </div>
-
-  </div>
-
-  <div class="summary-card">
-
-    <div
-      class="summary-icon success-icon"
-    >
-      <v-icon
-        icon="mdi-check-circle-outline"
-      />
-    </div>
-
-    <div>
-      <span>
-        Confirmadas
-      </span>
-
-      <strong>
-        {{ comprasConfirmadas }}
-      </strong>
-    </div>
-
-  </div>
-
-  <div class="summary-card">
-
-    <div
-      class="summary-icon warning-icon"
-    >
-      <v-icon
-        icon="mdi-clock-outline"
-      />
-    </div>
-
-    <div>
-      <span>
-        Pagos pendientes
-      </span>
-
-      <strong>
-        {{ comprasPendientes }}
-      </strong>
-    </div>
-
-  </div>
-
-  <div class="summary-card">
-
-    <div
-      class="summary-icon money-icon"
-    >
-      <v-icon
-        icon="mdi-cash-multiple"
-      />
-    </div>
-
-    <div>
-      <span>
-        Total comprado
-      </span>
-
-      <strong>
-        {{ formatoMoneda(totalComprado) }}
-      </strong>
-    </div>
-
-  </div>
-
-</div>
-
-<!-- TABLA -->
-
-<v-card
-  class="main-card"
-  elevation="0"
->
-
-  <div class="card-header">
-
-    <div>
-
-      <h2>
-        Historial de compras
-      </h2>
-
-      <p>
-        Registro de compras realizadas a proveedores
-      </p>
-
-    </div>
-
-  </div>
-
-  <div class="filters">
-
-    <v-text-field
-      v-model="search"
-      label="Buscar compra"
-      placeholder="Número, factura o proveedor..."
-      prepend-inner-icon="mdi-magnify"
-      variant="outlined"
-      density="comfortable"
-      hide-details
-      clearable
-    />
-
-    <v-select
-      v-model="estadoFiltro"
-      :items="estadosCompra"
-      item-title="title"
-      item-value="value"
-      label="Estado"
-      variant="outlined"
-      density="comfortable"
-      hide-details
-    />
-
-    <v-select
-      v-model="pagoFiltro"
-      :items="[
-        {
-          title: 'Todos los pagos',
-          value: 'TODOS',
-        },
-        ...estadosPago,
-      ]"
-      item-title="title"
-      item-value="value"
-      label="Pago"
-      variant="outlined"
-      density="comfortable"
-      hide-details
-    />
-
-  </div>
-
-  <v-data-table
-    :headers="[
-      {
-        title: 'Compra',
-        key: 'numeroCompra',
-      },
-      {
-        title: 'Fecha',
-        key: 'fechaCompra',
-      },
-      {
-        title: 'Proveedor',
-        key: 'proveedor',
-      },
-      {
-        title: 'Factura',
-        key: 'numeroFactura',
-      },
-      {
-        title: 'Total',
-        key: 'total',
-        align: 'end',
-      },
-      {
-        title: 'Pago',
-        key: 'estadoPago',
-      },
-      {
-        title: 'Estado',
-        key: 'estado',
-      },
-      {
-        title: 'Acciones',
-        key: 'acciones',
-        sortable: false,
-        align: 'end',
-      },
-    ]"
-    :items="comprasFiltradas"
-    :loading="loading"
-    item-value="id"
-    hover
-    class="purchases-table"
-  >
-
-    <template
-      #item.numeroCompra="{ item }"
-    >
-
-      <div class="purchase-number">
-
-        <strong>
-          {{ item.numeroCompra }}
-        </strong>
-
-        <span>
-          {{ textoMetodoPago(item.metodoPago) }}
-        </span>
-
-      </div>
-
-    </template>
-
-    <template
-      #item.fechaCompra="{ item }"
-    >
-      {{ formatoFecha(item.fechaCompra) }}
-    </template>
-
-    <template
-      #item.proveedor="{ item }"
-    >
-
-      <div class="provider-cell">
-
-        <div class="provider-avatar">
-          {{
-            nombreProveedor(item)
-              .charAt(0)
-              .toUpperCase()
-          }}
+        <div class="eyebrow">
+          CAFETERÍA
         </div>
 
-        <strong>
-          {{ nombreProveedor(item) }}
-        </strong>
+        <h1>
+          Compras
+        </h1>
+
+        <p>
+          Gestiona las compras y abastecimiento
+          de la cafetería
+        </p>
 
       </div>
 
-    </template>
+      <div class="header-actions">
 
-    <template
-      #item.numeroFactura="{ item }"
-    >
-      {{ item.numeroFactura || '-' }}
-    </template>
+        <v-btn variant="outlined" prepend-icon="mdi-refresh" :loading="loading" @click="cargarTodo">
+          Actualizar
+        </v-btn>
 
-    <template #item.total="{ item }">
+        <v-btn color="primary" prepend-icon="mdi-cart-plus" @click="abrirNuevaCompra">
+          Nueva compra
+        </v-btn>
 
-      <strong class="total-value">
-        {{ formatoMoneda(item.total) }}
-      </strong>
+      </div>
 
-    </template>
+    </div>
 
-    <template
-      #item.estadoPago="{ item }"
-    >
+    <!-- RESUMEN -->
 
-      <v-chip
-        :color="
-          colorEstadoPago(
+    <div class="summary-grid">
+
+      <div class="summary-card">
+
+        <div class="summary-icon">
+          <v-icon icon="mdi-cart-outline" />
+        </div>
+
+        <div>
+          <span>
+            Compras
+          </span>
+
+          <strong>
+            {{ totalCompras }}
+          </strong>
+        </div>
+
+      </div>
+
+      <div class="summary-card">
+
+        <div class="summary-icon success-icon">
+          <v-icon icon="mdi-check-circle-outline" />
+        </div>
+
+        <div>
+          <span>
+            Confirmadas
+          </span>
+
+          <strong>
+            {{ comprasConfirmadas }}
+          </strong>
+        </div>
+
+      </div>
+
+      <div class="summary-card">
+
+        <div class="summary-icon warning-icon">
+          <v-icon icon="mdi-clock-outline" />
+        </div>
+
+        <div>
+          <span>
+            Pagos pendientes
+          </span>
+
+          <strong>
+            {{ comprasPendientes }}
+          </strong>
+        </div>
+
+      </div>
+
+      <div class="summary-card">
+
+        <div class="summary-icon money-icon">
+          <v-icon icon="mdi-cash-multiple" />
+        </div>
+
+        <div>
+          <span>
+            Total comprado
+          </span>
+
+          <strong>
+            {{ formatoMoneda(totalComprado) }}
+          </strong>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- TABLA -->
+
+    <v-card class="main-card" elevation="0">
+
+      <div class="card-header">
+
+        <div>
+
+          <h2>
+            Historial de compras
+          </h2>
+
+          <p>
+            Registro de compras realizadas a proveedores
+          </p>
+
+        </div>
+
+      </div>
+
+      <div class="filters">
+
+        <v-text-field v-model="search" label="Buscar compra" placeholder="Número, factura o proveedor..."
+          prepend-inner-icon="mdi-magnify" variant="outlined" density="comfortable" hide-details clearable />
+
+        <v-select v-model="estadoFiltro" :items="estadosCompra" item-title="title" item-value="value" label="Estado"
+          variant="outlined" density="comfortable" hide-details />
+
+        <v-select v-model="pagoFiltro" :items="[
+          {
+            title: 'Todos los pagos',
+            value: 'TODOS',
+          },
+          ...estadosPago,
+        ]" item-title="title" item-value="value" label="Pago" variant="outlined" density="comfortable" hide-details />
+
+      </div>
+
+      <v-data-table :headers="[
+        {
+          title: 'Compra',
+          key: 'numeroCompra',
+        },
+        {
+          title: 'Fecha',
+          key: 'fechaCompra',
+        },
+        {
+          title: 'Proveedor',
+          key: 'proveedor',
+        },
+        {
+          title: 'Factura',
+          key: 'numeroFactura',
+        },
+        {
+          title: 'Total',
+          key: 'total',
+          align: 'end',
+        },
+        {
+          title: 'Pago',
+          key: 'estadoPago',
+        },
+        {
+          title: 'Estado',
+          key: 'estado',
+        },
+        {
+          title: 'Acciones',
+          key: 'acciones',
+          sortable: false,
+          align: 'end',
+        },
+      ]" :items="comprasFiltradas" :loading="loading" item-value="id" hover class="purchases-table">
+
+        <template #item.numeroCompra="{ item }">
+
+          <div class="purchase-number">
+
+            <strong>
+              {{ item.numeroCompra }}
+            </strong>
+
+            <span>
+              {{ textoMetodoPago(item.metodoPago) }}
+            </span>
+
+          </div>
+
+        </template>
+
+        <template #item.fechaCompra="{ item }">
+          {{ formatoFecha(item.fechaCompra) }}
+        </template>
+
+        <template #item.proveedor="{ item }">
+
+          <div class="provider-cell">
+
+            <div class="provider-avatar">
+              {{
+                nombreProveedor(item)
+                  .charAt(0)
+                  .toUpperCase()
+              }}
+            </div>
+
+            <strong>
+              {{ nombreProveedor(item) }}
+            </strong>
+
+          </div>
+
+        </template>
+
+        <template #item.numeroFactura="{ item }">
+          {{ item.numeroFactura || '-' }}
+        </template>
+
+        <template #item.total="{ item }">
+
+          <strong class="total-value">
+            {{ formatoMoneda(item.total) }}
+          </strong>
+
+        </template>
+
+        <template #item.estadoPago="{ item }">
+
+          <v-chip :color="colorEstadoPago(
             item.estadoPago,
           )
-        "
-        size="small"
-        variant="tonal"
-      >
-        {{
-          textoEstadoPago(
-            item.estadoPago,
-          )
-        }}
-      </v-chip>
+            " size="small" variant="tonal">
+            {{
+              textoEstadoPago(
+                item.estadoPago,
+              )
+            }}
+          </v-chip>
 
-    </template>
+        </template>
 
-    <template #item.estado="{ item }">
+        <template #item.estado="{ item }">
 
-      <v-chip
-        :color="
-          colorEstadoCompra(
+          <v-chip :color="colorEstadoCompra(
             item.estado,
           )
-        "
-        size="small"
-        variant="tonal"
-      >
-        {{
-          textoEstadoCompra(
-            item.estado,
-          )
-        }}
-      </v-chip>
+            " size="small" variant="tonal">
+            {{
+              textoEstadoCompra(
+                item.estado,
+              )
+            }}
+          </v-chip>
 
-    </template>
+        </template>
 
-    <template
-      #item.acciones="{ item }"
-    >
+        <template #item.acciones="{ item }">
 
-      <div class="actions">
+          <div class="actions">
 
-        <v-tooltip text="Ver detalle">
+            <v-tooltip text="Ver detalle">
 
-          <template #activator="{ props }">
+              <template #activator="{ props }">
 
-            <v-btn
-              v-bind="props"
-              icon="mdi-eye-outline"
-              variant="text"
-              size="small"
-              @click="
-                abrirDetalle(item)
-              "
-            />
+                <v-btn v-bind="props" icon="mdi-eye-outline" variant="text" size="small" @click="
+                  abrirDetalle(item)
+                  " />
 
-          </template>
+              </template>
 
-        </v-tooltip>
+            </v-tooltip>
 
-        <v-tooltip
-          v-if="
-            item.estado ===
-            'CONFIRMADA'
-          "
-          text="Anular compra"
-        >
+            <v-tooltip v-if="
+              item.estado ===
+              'CONFIRMADA'
+            " text="Anular compra">
 
-          <template #activator="{ props }">
+              <template #activator="{ props }">
 
-            <v-btn
-              v-bind="props"
-              icon="mdi-close-circle-outline"
-              variant="text"
-              color="error"
-              size="small"
-              @click="
-                abrirAnular(item)
-              "
-            />
+                <v-btn v-bind="props" icon="mdi-close-circle-outline" variant="text" color="error" size="small" @click="
+                  abrirAnular(item)
+                  " />
 
-          </template>
+              </template>
 
-        </v-tooltip>
+            </v-tooltip>
 
-      </div>
+          </div>
 
-    </template>
+        </template>
 
-    <template #no-data>
+        <template #no-data>
 
-      <div class="empty-state">
+          <div class="empty-state">
 
-        <v-icon
-          icon="mdi-cart-outline"
-          size="44"
-        />
+            <v-icon icon="mdi-cart-outline" size="44" />
 
-        <strong>
-          No hay compras
-        </strong>
+            <strong>
+              No hay compras
+            </strong>
 
-        <span>
-          No se encontraron compras con
-          los filtros actuales.
-        </span>
+            <span>
+              No se encontraron compras con
+              los filtros actuales.
+            </span>
 
-      </div>
+          </div>
 
-    </template>
+        </template>
 
-  </v-data-table>
+      </v-data-table>
 
-</v-card>
+    </v-card>
 
-<!-- DIALOG NUEVA COMPRA -->
+    <!-- DIALOG NUEVA COMPRA -->
 
+    
 <v-dialog
   v-model="compraDialog"
   max-width="1050"
   persistent
 >
-
   <v-card>
 
-    <v-card-title
-      class="dialog-title"
-    >
+    <!-- =========================
+         HEADER
+    ========================== -->
+
+    <v-card-title class="dialog-title">
 
       <div>
 
@@ -1234,14 +1194,15 @@ onMounted(() => {
     <v-card-text>
 
       <v-form
-        @submit.prevent="
-          guardarCompra
-        "
+        @submit.prevent="guardarCompra"
       >
 
-        <!-- DATOS GENERALES -->
+        <!-- =========================
+             DATOS GENERALES
+        ========================== -->
 
         <div class="section-title">
+
           <div class="section-icon">
             <v-icon
               icon="mdi-file-document-outline"
@@ -1249,17 +1210,22 @@ onMounted(() => {
           </div>
 
           <div>
+
             <strong>
               Información de la compra
             </strong>
 
             <span>
-              Datos generales y forma de pago
+              Datos generales de la compra
             </span>
+
           </div>
+
         </div>
 
         <v-row>
+
+          <!-- PROVEEDOR -->
 
           <v-col
             cols="12"
@@ -1287,6 +1253,8 @@ onMounted(() => {
 
           </v-col>
 
+          <!-- FACTURA -->
+
           <v-col
             cols="12"
             md="6"
@@ -1309,91 +1277,27 @@ onMounted(() => {
 
           </v-col>
 
-          <v-col
-            cols="12"
-            md="4"
-          >
-
-            <v-select
-              v-model="
-                formulario.estadoPago
-              "
-              :items="estadosPago"
-              item-title="title"
-              item-value="value"
-              label="Estado del pago *"
-              prepend-inner-icon="
-                mdi-cash-check
-              "
-              variant="outlined"
-              :disabled="loadingForm"
-              hide-details="auto"
-            />
-
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="4"
-          >
-
-            <v-select
-              v-model="
-                formulario.metodoPago
-              "
-              :items="metodosPago"
-              item-title="title"
-              item-value="value"
-              label="Método de pago *"
-              prepend-inner-icon="
-                mdi-credit-card-outline
-              "
-              variant="outlined"
-              :disabled="loadingForm"
-              hide-details="auto"
-            />
-
-          </v-col>
-
-          <v-col
-            cols="12"
-            md="4"
-          >
-
-            <v-text-field
-              v-model.number="
-                formulario.descuento
-              "
-              label="Descuento"
-              type="number"
-              min="0"
-              step="100"
-              prepend-inner-icon="
-                mdi-tag-outline
-              "
-              prefix="$"
-              variant="outlined"
-              :disabled="loadingForm"
-              hide-details="auto"
-            />
-
-          </v-col>
-
         </v-row>
 
-        <!-- PRODUCTOS -->
+
+        <!-- =========================
+             PRODUCTOS
+        ========================== -->
 
         <div
           class="section-title product-section-title"
         >
 
           <div class="section-icon">
+
             <v-icon
               icon="mdi-package-variant"
             />
+
           </div>
 
           <div>
+
             <strong>
               Productos
             </strong>
@@ -1402,15 +1306,19 @@ onMounted(() => {
               Agrega los productos incluidos
               en la compra
             </span>
+
           </div>
 
         </div>
 
+
+        <!-- AGREGAR PRODUCTO -->
+
         <div class="add-product-box">
 
-          <v-row
-            align="center"
-          >
+          <v-row align="center">
+
+            <!-- PRODUCTO -->
 
             <v-col
               cols="12"
@@ -1443,6 +1351,9 @@ onMounted(() => {
 
             </v-col>
 
+
+            <!-- CANTIDAD -->
+
             <v-col
               cols="12"
               sm="6"
@@ -1468,6 +1379,9 @@ onMounted(() => {
               />
 
             </v-col>
+
+
+            <!-- PRECIO -->
 
             <v-col
               cols="12"
@@ -1496,6 +1410,9 @@ onMounted(() => {
 
             </v-col>
 
+
+            <!-- AGREGAR -->
+
             <v-col
               cols="12"
               md="2"
@@ -1522,7 +1439,10 @@ onMounted(() => {
 
         </div>
 
-        <!-- DETALLES -->
+
+        <!-- =========================
+             DETALLES
+        ========================== -->
 
         <div
           v-if="
@@ -1530,6 +1450,8 @@ onMounted(() => {
           "
           class="details-table"
         >
+
+          <!-- HEADER -->
 
           <div class="details-header">
 
@@ -1554,6 +1476,9 @@ onMounted(() => {
 
           </div>
 
+
+          <!-- FILAS -->
+
           <div
             v-for="(
               detalle,
@@ -1565,14 +1490,18 @@ onMounted(() => {
             class="detail-row"
           >
 
+            <!-- PRODUCTO -->
+
             <div class="detail-product">
 
               <div class="mini-product-icon">
+
                 <v-icon
                   icon="
                     mdi-package-variant
                   "
                 />
+
               </div>
 
               <div>
@@ -1595,6 +1524,9 @@ onMounted(() => {
               </div>
 
             </div>
+
+
+            <!-- CANTIDAD -->
 
             <div>
 
@@ -1619,6 +1551,9 @@ onMounted(() => {
               />
 
             </div>
+
+
+            <!-- PRECIO -->
 
             <div>
 
@@ -1645,7 +1580,12 @@ onMounted(() => {
 
             </div>
 
-            <div class="detail-subtotal">
+
+            <!-- SUBTOTAL -->
+
+            <div
+              class="detail-subtotal"
+            >
 
               {{
                 formatoMoneda(
@@ -1655,10 +1595,17 @@ onMounted(() => {
 
             </div>
 
-            <div class="detail-remove">
+
+            <!-- ELIMINAR -->
+
+            <div
+              class="detail-remove"
+            >
 
               <v-btn
-                icon="mdi-delete-outline"
+                icon="
+                  mdi-delete-outline
+                "
                 variant="text"
                 color="error"
                 size="small"
@@ -1675,6 +1622,9 @@ onMounted(() => {
           </div>
 
         </div>
+
+
+        <!-- SIN PRODUCTOS -->
 
         <div
           v-else
@@ -1693,7 +1643,10 @@ onMounted(() => {
 
         </div>
 
-        <!-- TOTALES -->
+
+        <!-- =========================
+             TOTALES
+        ========================== -->
 
         <div class="purchase-total">
 
@@ -1713,6 +1666,7 @@ onMounted(() => {
 
           </div>
 
+
           <div>
 
             <span>
@@ -1728,6 +1682,7 @@ onMounted(() => {
             </strong>
 
           </div>
+
 
           <div class="grand-total">
 
@@ -1747,30 +1702,283 @@ onMounted(() => {
 
         </div>
 
-        <!-- OBSERVACIONES -->
+
+        <!-- =========================
+             DESCUENTO
+        ========================== -->
+
+        <div class="discount-section">
+
+          <v-text-field
+            v-model.number="
+              formulario.descuento
+            "
+            label="Descuento aplicado"
+            type="number"
+            min="0"
+            :max="subtotalForm"
+            step="100"
+            prepend-inner-icon="
+              mdi-tag-outline
+            "
+            prefix="$"
+            variant="outlined"
+            :disabled="
+              loadingForm
+            "
+            hide-details="auto"
+          />
+
+        </div>
+
+
+        <!-- =========================
+             INFORMACIÓN DEL PAGO
+        ========================== -->
+
+        <div
+          class="
+            section-title
+            payment-section-title
+          "
+        >
+
+          <div class="section-icon">
+
+            <v-icon
+              icon="mdi-cash-multiple"
+            />
+
+          </div>
+
+          <div>
+
+            <strong>
+              Información del pago
+            </strong>
+
+            <span>
+              Registra cuánto se pagó de esta compra
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <!-- RESUMEN DEL PAGO -->
+
+        <div
+          class="
+            purchase-payment-summary
+          "
+        >
+
+          <div>
+
+            <span>
+              Total de la compra
+            </span>
+
+            <strong>
+              {{
+                formatoMoneda(
+                  totalForm,
+                )
+              }}
+            </strong>
+
+          </div>
+
+
+          <div>
+
+            <span>
+              Monto pagado
+            </span>
+
+            <strong
+              class="text-success"
+            >
+              {{
+                formatoMoneda(
+                  formulario.montoPagado,
+                )
+              }}
+            </strong>
+
+          </div>
+
+
+          <div
+            class="
+              pending-payment
+            "
+          >
+
+            <span>
+              Saldo pendiente
+            </span>
+
+            <strong>
+
+              {{
+                formatoMoneda(
+                  Math.max(
+                    0,
+                    totalForm -
+                      Number(
+                        formulario.montoPagado ||
+                        0
+                      ),
+                  ),
+                )
+              }}
+
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <!-- ESTADO + MÉTODO + MONTO -->
+
+        <v-row class="mt-4">
+
+          <!-- ESTADO -->
+
+          <v-col
+            cols="12"
+            md="4"
+          >
+
+            <v-select
+              v-model="
+                formulario.estadoPago
+              "
+              :items="
+                estadosPago
+              "
+              item-title="title"
+              item-value="value"
+              label="Estado del pago *"
+              prepend-inner-icon="
+                mdi-cash-check
+              "
+              variant="outlined"
+              :disabled="
+                loadingForm
+              "
+              hide-details="auto"
+            />
+
+          </v-col>
+
+
+          <!-- MÉTODO -->
+
+          <v-col
+            cols="12"
+            md="4"
+          >
+
+            <v-select
+              v-model="
+                formulario.metodoPago
+              "
+              :items="
+                metodosPago
+              "
+              item-title="title"
+              item-value="value"
+              label="Método de pago *"
+              prepend-inner-icon="
+                mdi-credit-card-outline
+              "
+              variant="outlined"
+              :disabled="
+                loadingForm ||
+                formulario.estadoPago ===
+                  'PENDIENTE'
+              "
+              hide-details="auto"
+            />
+
+          </v-col>
+
+
+          <!-- MONTO PAGADO -->
+
+          <v-col
+            cols="12"
+            md="4"
+          >
+
+            <v-text-field
+              v-model.number="
+                formulario.montoPagado
+              "
+              label="Monto pagado"
+              type="number"
+              min="0"
+              :max="totalForm"
+              step="100"
+              prepend-inner-icon="
+                mdi-cash-multiple
+              "
+              prefix="$"
+              variant="outlined"
+              :disabled="
+                loadingForm ||
+                formulario.estadoPago !==
+                  'PARCIAL'
+              "
+              hide-details="auto"
+            />
+
+          </v-col>
+
+        </v-row>
+
+
+        <!-- =========================
+             OBSERVACIONES
+        ========================== -->
 
         <v-textarea
           v-model="
             formulario.observaciones
           "
           label="Observaciones"
-          placeholder="Notas adicionales de la compra..."
+          placeholder="
+            Notas adicionales de la compra...
+          "
           prepend-inner-icon="
             mdi-note-text-outline
           "
           variant="outlined"
           rows="2"
           maxlength="1000"
-          :disabled="loadingForm"
+          :disabled="
+            loadingForm
+          "
           hide-details="auto"
           class="mt-5"
         />
+
+
+        <!-- =========================
+             ACCIONES
+        ========================== -->
 
         <div class="dialog-actions">
 
           <v-btn
             variant="text"
-            :disabled="loadingForm"
+            :disabled="
+              loadingForm
+            "
             @click="
               compraDialog = false
             "
@@ -1782,7 +1990,9 @@ onMounted(() => {
             color="primary"
             type="submit"
             prepend-icon="mdi-check"
-            :loading="loadingForm"
+            :loading="
+              loadingForm
+            "
           >
             Registrar compra
           </v-btn>
@@ -1797,450 +2007,384 @@ onMounted(() => {
 
 </v-dialog>
 
-<!-- DIALOG DETALLE -->
 
-<v-dialog
-  v-model="detalleDialog"
-  max-width="900"
->
 
-  <v-card>
+    <!-- DIALOG DETALLE -->
 
-    <v-card-title
-      class="dialog-title"
-    >
+    <v-dialog v-model="detalleDialog" max-width="900">
 
-      <div>
+      <v-card>
 
-        <span>
-          DETALLE DE COMPRA
-        </span>
-
-        <h2>
-          {{
-            detalleCompra
-              ?.numeroCompra ||
-            'Compra'
-          }}
-        </h2>
-
-      </div>
-
-      <v-btn
-        icon="mdi-close"
-        variant="text"
-        @click="
-          detalleDialog = false
-        "
-      />
-
-    </v-card-title>
-
-    <v-divider />
-
-    <v-card-text>
-
-      <div
-        v-if="loadingDetalle"
-        class="loading-container"
-      >
-
-        <v-progress-circular
-          indeterminate
-          size="42"
-        />
-
-      </div>
-
-      <template
-        v-else-if="detalleCompra"
-      >
-
-        <div class="detail-summary">
+        <v-card-title class="dialog-title">
 
           <div>
 
             <span>
-              Proveedor
+              DETALLE DE COMPRA
             </span>
 
-            <strong>
+            <h2>
               {{
-                nombreProveedor(
-                  detalleCompra,
-                )
+                detalleCompra
+                  ?.numeroCompra ||
+                'Compra'
               }}
-            </strong>
+            </h2>
 
           </div>
 
-          <div>
+          <v-btn icon="mdi-close" variant="text" @click="
+            detalleDialog = false
+            " />
 
-            <span>
-              Fecha
-            </span>
+        </v-card-title>
 
-            <strong>
-              {{
-                formatoFecha(
-                  detalleCompra
-                    .fechaCompra,
-                )
-              }}
-            </strong>
+        <v-divider />
+
+        <v-card-text>
+
+          <div v-if="loadingDetalle" class="loading-container">
+
+            <v-progress-circular indeterminate size="42" />
 
           </div>
 
-          <div>
+          <template v-else-if="detalleCompra">
 
-            <span>
-              Estado
-            </span>
+            <div class="detail-summary">
 
-            <v-chip
-              :color="
-                colorEstadoCompra(
+              <div>
+
+                <span>
+                  Proveedor
+                </span>
+
+                <strong>
+                  {{
+                    nombreProveedor(
+                      detalleCompra,
+                    )
+                  }}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  Fecha
+                </span>
+
+                <strong>
+                  {{
+                    formatoFecha(
+                      detalleCompra
+                        .fechaCompra,
+                    )
+                  }}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  Estado
+                </span>
+
+                <v-chip :color="colorEstadoCompra(
                   detalleCompra.estado,
                 )
-              "
-              size="small"
-              variant="tonal"
-            >
-              {{
-                textoEstadoCompra(
-                  detalleCompra.estado,
-                )
-              }}
-            </v-chip>
+                  " size="small" variant="tonal">
+                  {{
+                    textoEstadoCompra(
+                      detalleCompra.estado,
+                    )
+                  }}
+                </v-chip>
 
-          </div>
+              </div>
 
-          <div>
+              <div>
 
-            <span>
-              Pago
-            </span>
+                <span>
+                  Pago
+                </span>
 
-            <v-chip
-              :color="
-                colorEstadoPago(
+                <v-chip :color="colorEstadoPago(
                   detalleCompra
                     .estadoPago,
                 )
-              "
-              size="small"
-              variant="tonal"
-            >
-              {{
-                textoEstadoPago(
-                  detalleCompra
-                    .estadoPago,
-                )
-              }}
-            </v-chip>
+                  " size="small" variant="tonal">
+                  {{
+                    textoEstadoPago(
+                      detalleCompra
+                        .estadoPago,
+                    )
+                  }}
+                </v-chip>
 
-          </div>
-
-        </div>
-
-        <div
-          v-if="
-            detalleCompra.numeroFactura
-          "
-          class="invoice-info"
-        >
-
-          <v-icon
-            icon="
-              mdi-receipt-text-outline
-            "
-            size="18"
-          />
-
-          <span>
-            Factura:
-          </span>
-
-          <strong>
-            {{
-              detalleCompra
-                .numeroFactura
-            }}
-          </strong>
-
-        </div>
-
-        <div class="detail-list">
-
-          <div class="detail-list-header">
-
-            <span>
-              Producto
-            </span>
-
-            <span>
-              Cantidad
-            </span>
-
-            <span>
-              Precio
-            </span>
-
-            <span>
-              Subtotal
-            </span>
-
-          </div>
-
-          <div
-            v-for="detalle in
-              detalleCompra.detalles"
-            :key="detalle.id"
-            class="detail-list-row"
-          >
-
-            <div>
-
-              <strong>
-                {{
-                  detalle.producto
-                    ?.nombre ||
-                  '-'
-                }}
-              </strong>
-
-              <span>
-                {{
-                  detalle.producto
-                    ?.unidad ||
-                  ''
-                }}
-              </span>
+              </div>
 
             </div>
 
-            <span>
-              {{
-                formatoCantidad(
-                  detalle.cantidad,
-                )
-              }}
-            </span>
+            <div v-if="
+              detalleCompra.numeroFactura
+            " class="invoice-info">
 
-            <span>
-              {{
-                formatoMoneda(
-                  detalle.precioCompra,
-                )
-              }}
-            </span>
+              <v-icon icon="
+              mdi-receipt-text-outline
+            " size="18" />
 
-            <strong>
-              {{
-                formatoMoneda(
-                  detalle.subtotal,
-                )
-              }}
-            </strong>
+              <span>
+                Factura:
+              </span>
+
+              <strong>
+                {{
+                  detalleCompra
+                    .numeroFactura
+                }}
+              </strong>
+
+            </div>
+
+            <div class="detail-list">
+
+              <div class="detail-list-header">
+
+                <span>
+                  Producto
+                </span>
+
+                <span>
+                  Cantidad
+                </span>
+
+                <span>
+                  Precio
+                </span>
+
+                <span>
+                  Subtotal
+                </span>
+
+              </div>
+
+              <div v-for="detalle in
+                detalleCompra.detalles" :key="detalle.id" class="detail-list-row">
+
+                <div>
+
+                  <strong>
+                    {{
+                      detalle.producto
+                        ?.nombre ||
+                      '-'
+                    }}
+                  </strong>
+
+                  <span>
+                    {{
+                      detalle.producto
+                        ?.unidad ||
+                      ''
+                    }}
+                  </span>
+
+                </div>
+
+                <span>
+                  {{
+                    formatoCantidad(
+                      detalle.cantidad,
+                    )
+                  }}
+                </span>
+
+                <span>
+                  {{
+                    formatoMoneda(
+                      detalle.precioCompra,
+                    )
+                  }}
+                </span>
+
+                <strong>
+                  {{
+                    formatoMoneda(
+                      detalle.subtotal,
+                    )
+                  }}
+                </strong>
+
+              </div>
+
+            </div>
+
+            <div class="detail-totals">
+
+              <div>
+
+                <span>
+                  Subtotal
+                </span>
+
+                <strong>
+                  {{
+                    formatoMoneda(
+                      detalleCompra.subtotal,
+                    )
+                  }}
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  Descuento
+                </span>
+
+                <strong>
+                  {{
+                    formatoMoneda(
+                      detalleCompra.descuento,
+                    )
+                  }}
+                </strong>
+
+              </div>
+
+              <div class="detail-grand-total">
+
+                <span>
+                  Total
+                </span>
+
+                <strong>
+                  {{
+                    formatoMoneda(
+                      detalleCompra.total,
+                    )
+                  }}
+                </strong>
+
+              </div>
+
+            </div>
+
+            <div v-if="
+              detalleCompra.observaciones
+            " class="observation-box">
+
+              <span>
+                Observaciones
+              </span>
+
+              <p>
+                {{
+                  detalleCompra
+                    .observaciones
+                }}
+              </p>
+
+            </div>
+
+          </template>
+
+        </v-card-text>
+
+      </v-card>
+
+    </v-dialog>
+
+    <!-- DIALOG ANULAR -->
+
+    <v-dialog v-model="anularDialog" max-width="480">
+
+      <v-card>
+
+        <v-card-title class="confirm-title">
+
+          <div class="confirm-icon">
+
+            <v-icon icon="mdi-alert-outline" />
 
           </div>
-
-        </div>
-
-        <div class="detail-totals">
 
           <div>
 
-            <span>
-              Subtotal
-            </span>
+            <h2>
+              Anular compra
+            </h2>
 
-            <strong>
-              {{
-                formatoMoneda(
-                  detalleCompra.subtotal,
-                )
-              }}
-            </strong>
+            <p>
+              Esta acción revertirá el inventario
+              y, si corresponde, el movimiento de caja.
+            </p>
 
           </div>
 
-          <div>
+        </v-card-title>
 
-            <span>
-              Descuento
-            </span>
+        <v-card-text>
 
-            <strong>
-              {{
-                formatoMoneda(
-                  detalleCompra.descuento,
-                )
-              }}
-            </strong>
+          <p class="confirm-text">
 
-          </div>
-
-          <div class="detail-grand-total">
-
-            <span>
-              Total
-            </span>
+            ¿Deseas anular la compra
 
             <strong>
               {{
-                formatoMoneda(
-                  detalleCompra.total,
-                )
+                compraSeleccionada
+                  ?.numeroCompra
               }}
-            </strong>
+            </strong>?
 
-          </div>
-
-        </div>
-
-        <div
-          v-if="
-            detalleCompra.observaciones
-          "
-          class="observation-box"
-        >
-
-          <span>
-            Observaciones
-          </span>
-
-          <p>
-            {{
-              detalleCompra
-                .observaciones
-            }}
           </p>
 
-        </div>
+          <v-alert type="warning" variant="tonal">
+            Los productos de esta compra serán
+            descontados nuevamente del inventario.
+
+          </v-alert>
+
+        </v-card-text>
+
+        <v-card-actions class="confirm-actions">
+
+          <v-btn variant="text" :disabled="loadingForm" @click="cerrarAnular">
+            Cancelar
+          </v-btn>
+
+          <v-btn color="error" prepend-icon="
+          mdi-close-circle-outline
+        " :loading="loadingForm" @click="anularCompra">
+            Anular compra
+          </v-btn>
+
+        </v-card-actions>
+
+      </v-card>
+
+    </v-dialog>
+
+    <!-- SNACKBAR -->
+
+    <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3500">
+
+      {{ snackbarMessage }}
+
+      <template #actions>
+
+        <v-btn variant="text" @click="snackbar = false">
+          Cerrar
+        </v-btn>
 
       </template>
 
-    </v-card-text>
-
-  </v-card>
-
-</v-dialog>
-
-<!-- DIALOG ANULAR -->
-
-<v-dialog
-  v-model="anularDialog"
-  max-width="480"
->
-
-  <v-card>
-
-    <v-card-title
-      class="confirm-title"
-    >
-
-      <div class="confirm-icon">
-
-        <v-icon
-          icon="mdi-alert-outline"
-        />
-
-      </div>
-
-      <div>
-
-        <h2>
-          Anular compra
-        </h2>
-
-        <p>
-          Esta acción revertirá el inventario
-          y, si corresponde, el movimiento de caja.
-        </p>
-
-      </div>
-
-    </v-card-title>
-
-    <v-card-text>
-
-      <p class="confirm-text">
-
-        ¿Deseas anular la compra
-
-        <strong>
-          {{
-            compraSeleccionada
-              ?.numeroCompra
-          }}
-        </strong>?
-
-      </p>
-
-      <v-alert
-        type="warning"
-        variant="tonal"
-      >
-        Los productos de esta compra serán
-        descontados nuevamente del inventario.
-
-      </v-alert>
-
-    </v-card-text>
-
-    <v-card-actions
-      class="confirm-actions"
-    >
-
-      <v-btn
-        variant="text"
-        :disabled="loadingForm"
-        @click="cerrarAnular"
-      >
-        Cancelar
-      </v-btn>
-
-      <v-btn
-        color="error"
-        prepend-icon="
-          mdi-close-circle-outline
-        "
-        :loading="loadingForm"
-        @click="anularCompra"
-      >
-        Anular compra
-      </v-btn>
-
-    </v-card-actions>
-
-  </v-card>
-
-</v-dialog>
-
-<!-- SNACKBAR -->
-
-<v-snackbar
-  v-model="snackbar"
-  :color="snackbarColor"
-  timeout="3500"
->
-
-  {{ snackbarMessage }}
-
-  <template #actions>
-
-    <v-btn
-      variant="text"
-      @click="snackbar = false"
-    >
-      Cerrar
-    </v-btn>
-
-  </template>
-
-</v-snackbar>
-```
+    </v-snackbar>
+    ```
 
   </div>
 </template>
@@ -2310,8 +2454,7 @@ onMounted(() => {
 .summary-card:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 10px 30px
-    rgba(30, 50, 80, 0.07);
+    0 10px 30px rgba(30, 50, 80, 0.07);
 }
 
 .summary-card span {
@@ -2549,7 +2692,7 @@ onMounted(() => {
   gap: 10px;
 }
 
-.detail-product > div:last-child {
+.detail-product>div:last-child {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -2608,7 +2751,7 @@ onMounted(() => {
   gap: 28px;
 }
 
-.purchase-total > div {
+.purchase-total>div {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -2657,7 +2800,7 @@ onMounted(() => {
   margin-bottom: 18px;
 }
 
-.detail-summary > div {
+.detail-summary>div {
   padding: 14px;
   background: #f7f9fc;
   border-radius: 10px;
@@ -2721,7 +2864,7 @@ onMounted(() => {
   color: #566174;
 }
 
-.detail-list-row > div {
+.detail-list-row>div {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -2743,7 +2886,7 @@ onMounted(() => {
   margin-top: 18px;
 }
 
-.detail-totals > div {
+.detail-totals>div {
   display: flex;
   flex-direction: column;
   align-items: flex-end;

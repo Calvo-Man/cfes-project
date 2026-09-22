@@ -33,6 +33,11 @@ export const routes = [
         name: 'Compras',
         component: () => import('../views/cafeteria/compras/ComprasView.vue'),
       },
+      {
+        path: 'cafeteria/pago-proveedores',
+        name: 'Pagos a proveedores',
+        component: () => import('../views/cafeteria/compras/PagosProveedoresView.vue'),
+      },
       
       {
         path: 'cafeteria/ventas',

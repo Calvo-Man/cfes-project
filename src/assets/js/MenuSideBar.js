@@ -49,6 +49,13 @@ export const MenuSideBar = [
       RequiresPastor: false,
     },
     {
+      label: 'Pagos a proveedores',
+      icon: '',
+      to: '/cafeteria/pago-proveedores',
+      RequiresAdmin: false,
+      RequiresPastor: false,
+    },
+    {
       label: 'Caja',
       icon: '',
       to: '/cafeteria/caja',

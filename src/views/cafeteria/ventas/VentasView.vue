@@ -1135,11 +1135,21 @@ const registrarVenta = async () => {
     clienteSeleccionado.value = null
 
     // aquí puedes mostrar snackbar de éxito
+    mostrarMensaje(
+      `Venta registrada correctamente. Total: ${formatoMoneda(response.data.total)}`,
+      'success',
+    )
+
 
   } catch (error) {
     console.error('Error registrando venta:', error)
 
     // aquí manejamos el mensaje del backend
+    mostrarMensaje(
+      error.response?.data?.message ||
+      'No se pudo registrar la venta.',
+      'error'
+    )
   } finally {
     guardandoVenta.value = false
   }

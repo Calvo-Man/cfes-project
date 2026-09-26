@@ -45,6 +45,11 @@ export const routes = [
         component: () => import('../views/cafeteria/ventas/VentasView.vue'),
       },
       {
+        path:'cafeteria/cuentas-por-cobrar',
+        name: 'Cuentas por cobrar',
+        component: () => import('../views/cafeteria/ventas/CuentasPorCobrarView.vue'),
+      },
+      {
         path: 'cafeteria/productos',
         name: 'Productos',
         component: () => import('../views/cafeteria/productos/ProductosView.vue'),

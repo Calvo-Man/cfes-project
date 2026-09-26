@@ -49,6 +49,13 @@ export const MenuSideBar = [
       RequiresPastor: false,
     },
     {
+      label: 'Cuentas por cobrar',
+      icon: '',
+      to: '/cafeteria/cuentas-por-cobrar',
+      RequiresAdmin: false,
+      RequiresPastor: false,
+    },
+    {
       label: 'Pagos a proveedores',
       icon: '',
       to: '/cafeteria/pago-proveedores',

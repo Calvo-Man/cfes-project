@@ -29,7 +29,7 @@ export const routes = [
         component: () => import('../views/cafeteria/DashboardCafeteria.vue'),
       },
       {
-        path:'cafeteria/compras',
+        path: 'cafeteria/compras',
         name: 'Compras',
         component: () => import('../views/cafeteria/compras/ComprasView.vue'),
       },
@@ -38,14 +38,20 @@ export const routes = [
         name: 'Pagos a proveedores',
         component: () => import('../views/cafeteria/compras/PagosProveedoresView.vue'),
       },
-      
+
       {
         path: 'cafeteria/ventas',
         name: 'Ventas',
         component: () => import('../views/cafeteria/ventas/VentasView.vue'),
       },
       {
-        path:'cafeteria/cuentas-por-cobrar',
+        path: 'cafeteria/cuentas',
+        name: 'Cuentas',
+        component: () => import('../views/cafeteria/cuentas/CuentasView.vue'),
+      },
+
+      {
+        path: 'cafeteria/cuentas-por-cobrar',
         name: 'Cuentas por cobrar',
         component: () => import('../views/cafeteria/ventas/CuentasPorCobrarView.vue'),
       },
@@ -65,7 +71,7 @@ export const routes = [
         component: () => import('../views/cafeteria/inventario/InventarioView.vue'),
       },
       {
-        path:'cafeteria/proveedores',
+        path: 'cafeteria/proveedores',
         name: 'Proveedores',
         component: () => import('../views/cafeteria/proveedores/ProveedoresView.vue'),
       },

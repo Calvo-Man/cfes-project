@@ -1,10 +1,11 @@
+
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import axios from '@/plugins/axios'
 
-// ─────────────────────────────────────────────
-// DATOS
-// ─────────────────────────────────────────────
+/* =========================================================
+   ESTADO
+========================================================= */
 
 const compras = ref([])
 const proveedores = ref([])
@@ -14,50 +15,41 @@ const loading = ref(false)
 const loadingForm = ref(false)
 const loadingDetalle = ref(false)
 
-// ─────────────────────────────────────────────
-// FILTROS
-// ─────────────────────────────────────────────
-
 const search = ref('')
 const estadoFiltro = ref('TODOS')
 const pagoFiltro = ref('TODOS')
-
-// ─────────────────────────────────────────────
-// DIALOGS
-// ─────────────────────────────────────────────
 
 const compraDialog = ref(false)
 const detalleDialog = ref(false)
 const anularDialog = ref(false)
 
-// ─────────────────────────────────────────────
-// ESTADO FORMULARIO
-// ─────────────────────────────────────────────
-
 const compraSeleccionada = ref(null)
 const detalleCompra = ref(null)
 
+/* =========================================================
+   FORMULARIO COMPRA
+========================================================= */
 
-const formulario = ref({
-  proveedorId: null,
-  numeroFactura: '',
-  observaciones: '',
-  descuento: 0,
-  estadoPago: 'PAGADO',
-  metodoPago: 'EFECTIVO',
-  detalles: [],
-  montoPagado: 0,
-})
+const formulario = ref(formularioInicial())
 
+function formularioInicial() {
+  return {
+    proveedorId: null,
+    numeroFactura: '',
+    observaciones: '',
+    descuento: 0,
 
+    estadoPago: 'PAGADO',
+    metodoPago: 'EFECTIVO',
+    montoPagado: 0,
 
+    detalles: [],
+  }
+}
 
-
-
-
-// ─────────────────────────────────────────────
-// PRODUCTO TEMPORAL
-// ─────────────────────────────────────────────
+/* =========================================================
+   NUEVO DETALLE
+========================================================= */
 
 const nuevoDetalle = ref({
   productoId: null,
@@ -65,95 +57,71 @@ const nuevoDetalle = ref({
   precioCompra: 0,
 })
 
-// ─────────────────────────────────────────────
-// SNACKBAR
-// ─────────────────────────────────────────────
+/* =========================================================
+   SNACKBAR
+========================================================= */
 
 const snackbar = ref(false)
 const snackbarMessage = ref('')
 const snackbarColor = ref('success')
 
-// ─────────────────────────────────────────────
-// OPCIONES
-// ─────────────────────────────────────────────
+function mostrarMensaje(message, color = 'success') {
+  snackbarMessage.value = message
+  snackbarColor.value = color
+  snackbar.value = true
+}
+
+/* =========================================================
+   OPCIONES
+========================================================= */
 
 const estadosPago = [
-  {
-    title: 'Pagado',
-    value: 'PAGADO',
-  },
-  {
-    title: 'Pendiente',
-    value: 'PENDIENTE',
-  },
-  {
-    title: 'Parcial',
-    value: 'PARCIAL',
-  }
+  { title: 'Pagado', value: 'PAGADO' },
+  { title: 'Pendiente', value: 'PENDIENTE' },
+  { title: 'Parcial', value: 'PARCIAL' },
 ]
 
 const metodosPago = [
-  {
-    title: 'Efectivo',
-    value: 'EFECTIVO',
-  },
-  {
-    title: 'Transferencia',
-    value: 'TRANSFERENCIA',
-  },
-  {
-    title: 'Tarjeta',
-    value: 'TARJETA',
-  },
+  { title: 'Efectivo', value: 'EFECTIVO' },
+  { title: 'Nequi', value: 'NEQUI' },
+  { title: 'Daviplata', value: 'DAVIPLATA' },
+  { title: 'Transferencia', value: 'TRANSFERENCIA' },
+  { title: 'Tarjeta', value: 'TARJETA' },
+  { title: 'Crédito / Fiado', value: 'CREDITO' },
 ]
 
 const estadosCompra = [
-  {
-    title: 'Todas',
-    value: 'TODOS',
-  },
-  {
-    title: 'Confirmadas',
-    value: 'CONFIRMADA',
-  },
-  {
-    title: 'Anuladas',
-    value: 'ANULADA',
-  },
+  { title: 'Todas', value: 'TODOS' },
+  { title: 'Confirmadas', value: 'CONFIRMADA' },
+  { title: 'Anuladas', value: 'ANULADA' },
 ]
 
-// ─────────────────────────────────────────────
-// COMPUTED
-// ─────────────────────────────────────────────
+/* =========================================================
+   COMPUTED
+========================================================= */
 
 const proveedoresActivos = computed(() => {
-  return proveedores.value.filter(
-    (proveedor) => proveedor.activo,
-  )
+  return proveedores.value.filter((proveedor) => proveedor.activo !== false)
 })
 
 const productosActivos = computed(() => {
-  return productos.value.filter(
-    (producto) => producto.activo,
-  )
+  return productos.value.filter((producto) => producto.activo !== false)
 })
 
 const comprasFiltradas = computed(() => {
-  const texto = search.value
-    .trim()
-    .toLowerCase()
+  const texto = search.value.trim().toLowerCase()
 
   return compras.value.filter((compra) => {
-    const coincideBusqueda =
+    const coincideTexto =
       !texto ||
-      compra.numeroCompra
-        ?.toLowerCase()
+      String(compra.numeroCompra || '')
+        .toLowerCase()
         .includes(texto) ||
-      compra.numeroFactura
-        ?.toLowerCase()
+      String(compra.numeroFactura || '')
+        .toLowerCase()
         .includes(texto) ||
-      compra.proveedor?.nombre
-        ?.toLowerCase()
+      String(compra.proveedor?.nombre || '')
+        .toLowerCase()
         .includes(texto)
 
     const coincideEstado =
@@ -164,93 +132,104 @@ const comprasFiltradas = computed(() => {
       pagoFiltro.value === 'TODOS' ||
       compra.estadoPago === pagoFiltro.value
 
-    return (
-      coincideBusqueda &&
-      coincideEstado &&
-      coincidePago
-    )
+    return coincideTexto && coincideEstado && coincidePago
   })
 })
 
-const totalCompras = computed(() => {
-  return compras.value.length
-})
+const totalCompras = computed(() => compras.value.length)
 
 const comprasConfirmadas = computed(() => {
   return compras.value.filter(
-    (compra) =>
-      compra.estado === 'CONFIRMADA',
+    (compra) => compra.estado === 'CONFIRMADA',
   ).length
 })
 
 const comprasPendientes = computed(() => {
   return compras.value.filter(
     (compra) =>
-      compra.estadoPago === 'PENDIENTE' &&
-      compra.estado !== 'ANULADA',
+      compra.estadoPago === 'PENDIENTE' ||
+      compra.estadoPago === 'PARCIAL',
   ).length
 })
 
 const totalComprado = computed(() => {
   return compras.value
-    .filter(
-      (compra) =>
-        compra.estado !== 'ANULADA',
-    )
-    .reduce(
-      (total, compra) =>
-        total + Number(compra.total || 0),
-      0,
-    )
-})
-
-const totalForm = computed(() => {
-  const subtotal = formulario.value.detalles.reduce(
-    (total, detalle) =>
-      total + Number(detalle.subtotal || 0),
-    0,
-  )
-
-  const descuento =
-    Number(formulario.value.descuento) || 0
-
-  return Math.max(
-    0,
-    subtotal - descuento,
-  )
+    .filter((compra) => compra.estado !== 'ANULADA')
+    .reduce((total, compra) => {
+      return total + Number(compra.total || 0)
+    }, 0)
 })
 
 const subtotalForm = computed(() => {
-  return formulario.value.detalles.reduce(
-    (total, detalle) =>
-      total + Number(detalle.subtotal || 0),
-    0,
+  return formulario.value.detalles.reduce((total, detalle) => {
+    const cantidad = Number(detalle.cantidad) || 0
+    const precio = Number(detalle.precioCompra) || 0
+
+    return total + cantidad * precio
+  }, 0)
+})
+
+const totalForm = computed(() => {
+  const subtotal = subtotalForm.value
+  const descuento = Number(formulario.value.descuento) || 0
+
+  return Math.max(0, subtotal - descuento)
+})
+
+const saldoPendienteForm = computed(() => {
+  const total = totalForm.value
+  const pagado = Number(formulario.value.montoPagado) || 0
+
+  return Math.max(0, total - pagado)
+})
+
+const productoSeleccionado = computed(() => {
+  if (!nuevoDetalle.value.productoId) {
+    return null
+  }
+
+  return productos.value.find(
+    (producto) =>
+      producto.id === Number(nuevoDetalle.value.productoId),
   )
 })
+
+/* =========================================================
+   WATCHERS
+========================================================= */
 
 watch(
   () => formulario.value.estadoPago,
   (nuevoEstado) => {
     if (nuevoEstado === 'PENDIENTE') {
       formulario.value.montoPagado = 0
+      formulario.value.metodoPago = 'CREDITO'
       return
     }
 
-    if (
-      nuevoEstado === 'PAGADO' &&
-      totalForm.value > 0
-    ) {
-      formulario.value.montoPagado =
-        totalForm.value
+    if (nuevoEstado === 'PAGADO') {
+      if (totalForm.value > 0) {
+        formulario.value.montoPagado = totalForm.value
+      }
+
+      if (formulario.value.metodoPago === 'CREDITO') {
+        formulario.value.metodoPago = 'EFECTIVO'
+      }
 
       return
     }
 
-    if (
-      nuevoEstado === 'PARCIAL' &&
-      formulario.value.montoPagado <= 0
-    ) {
-      formulario.value.montoPagado = 0
+    if (nuevoEstado === 'PARCIAL') {
+      if (
+        formulario.value.montoPagado <= 0 ||
+        formulario.value.montoPagado >= totalForm.value
+      ) {
+        formulario.value.montoPagado = 0
+      }
+
+      if (formulario.value.metodoPago === 'CREDITO') {
+        formulario.value.metodoPago = 'EFECTIVO'
+      }
     }
   },
 )
@@ -258,40 +237,51 @@ watch(
 watch(
   () => totalForm.value,
   (nuevoTotal) => {
-    if (
-      formulario.value.montoPagado >
-      nuevoTotal
-    ) {
-      formulario.value.montoPagado =
-        nuevoTotal
+    if (formulario.value.estadoPago === 'PAGADO') {
+      formulario.value.montoPagado = nuevoTotal
+      return
     }
 
     if (
-      formulario.value.estadoPago === 'PAGADO'
+      Number(formulario.value.montoPagado) > nuevoTotal
     ) {
-      formulario.value.montoPagado =
-        nuevoTotal
+      formulario.value.montoPagado = nuevoTotal
     }
   },
 )
 
-// ─────────────────────────────────────────────
-// CARGAR DATOS
-// ─────────────────────────────────────────────
+/*
+ * Crédito significa que NO entra dinero todavía.
+ * El pago posterior se registra desde la vista de
+ * cuentas por pagar.
+ */
+watch(
+  () => formulario.value.metodoPago,
+  (nuevoMetodo) => {
+    if (nuevoMetodo === 'CREDITO') {
+      formulario.value.estadoPago = 'PENDIENTE'
+      formulario.value.montoPagado = 0
+    }
+  },
+)
+
+/* =========================================================
+   CARGAR INFORMACIÓN
+========================================================= */
 
 async function cargarCompras() {
   loading.value = true
 
   try {
     const response = await axios.get('/compras')
-
-    compras.value = Array.isArray(response.data)
-      ? response.data
-      : []
+    compras.value = response.data
   } catch (error) {
-    mostrarError(
-      error,
-      'No se pudieron cargar las compras',
+    console.error(error)
+
+    mostrarMensaje(
+      error.response?.data?.message ||
+        'No se pudieron cargar las compras',
+      'error',
     )
   } finally {
     loading.value = false
@@ -300,34 +290,30 @@ async function cargarCompras() {
 
 async function cargarProveedores() {
   try {
-    const response = await axios.get(
-      '/proveedor/activos',
-    )
-
-    proveedores.value = Array.isArray(response.data)
-      ? response.data
-      : []
+    const response = await axios.get('/proveedor')
+    proveedores.value = response.data
   } catch (error) {
-    mostrarError(
-      error,
-      'No se pudieron cargar los proveedores',
+    console.error(error)
+
+    mostrarMensaje(
+      error.response?.data?.message ||
+        'No se pudieron cargar los proveedores',
+      'error',
     )
   }
 }
 
 async function cargarProductos() {
   try {
-    const response = await axios.get(
-      '/producto/activos',
-    )
-
-    productos.value = Array.isArray(response.data)
-      ? response.data
-      : []
+    const response = await axios.get('/producto')
+    productos.value = response.data
   } catch (error) {
-    mostrarError(
-      error,
-      'No se pudieron cargar los productos',
+    console.error(error)
+
+    mostrarMensaje(
+      error.response?.data?.message ||
+        'No se pudieron cargar los productos',
+      'error',
     )
   }
 }
@@ -340,21 +326,9 @@ async function cargarTodo() {
   ])
 }
 
-// ─────────────────────────────────────────────
-// FORMULARIO
-// ─────────────────────────────────────────────
-
-function formularioInicial() {
-  return {
-    proveedorId: null,
-    numeroFactura: '',
-    observaciones: '',
-    descuento: 0,
-    estadoPago: 'PAGADO',
-    metodoPago: 'EFECTIVO',
-    detalles: [],
-  }
-}
+/* =========================================================
+   DIALOG NUEVA COMPRA
+========================================================= */
 
 function abrirNuevaCompra() {
   formulario.value = formularioInicial()
@@ -368,50 +342,51 @@ function abrirNuevaCompra() {
   compraDialog.value = true
 }
 
-// ─────────────────────────────────────────────
-// PRODUCTOS
-// ─────────────────────────────────────────────
+function cerrarCompraDialog() {
+  if (loadingForm.value) return
 
-function productoSeleccionado() {
-  return productos.value.find(
-    (producto) =>
-      producto.id ===
-      Number(nuevoDetalle.value.productoId),
-  )
+  compraDialog.value = false
+  formulario.value = formularioInicial()
+
+  nuevoDetalle.value = {
+    productoId: null,
+    cantidad: 1,
+    precioCompra: 0,
+  }
 }
 
-function actualizarPrecioProducto() {
-  const producto = productoSeleccionado()
+/* =========================================================
+   PRODUCTOS
+========================================================= */
 
-  if (!producto) {
+function actualizarPrecioProducto() {
+  if (!productoSeleccionado.value) {
     nuevoDetalle.value.precioCompra = 0
     return
   }
 
-  const precio =
-    Number(producto.precioCompra) || 0
-
-  nuevoDetalle.value.precioCompra = precio
+  /*
+   * Usa el precio de compra registrado en el producto
+   * si existe.
+   */
+  nuevoDetalle.value.precioCompra = Number(
+    productoSeleccionado.value.precioCompra ||
+      productoSeleccionado.value.costo ||
+      0,
+  )
 }
 
 function agregarDetalle() {
-  const producto = productoSeleccionado()
+  const productoId = Number(nuevoDetalle.value.productoId)
+  const cantidad = Number(nuevoDetalle.value.cantidad)
+  const precioCompra = Number(nuevoDetalle.value.precioCompra)
 
-  if (!producto) {
-    mostrarMensaje(
-      'Selecciona un producto',
-      'warning',
-    )
+  if (!productoId) {
+    mostrarMensaje('Selecciona un producto', 'warning')
     return
   }
 
-  const cantidad =
-    Number(nuevoDetalle.value.cantidad)
-
-  const precio =
-    Number(nuevoDetalle.value.precioCompra)
-
-  if (!cantidad || cantidad <= 0) {
+  if (cantidad <= 0) {
     mostrarMensaje(
       'La cantidad debe ser mayor que cero',
       'warning',
@@ -419,7 +394,7 @@ function agregarDetalle() {
     return
   }
 
-  if (precio < 0) {
+  if (precioCompra < 0) {
     mostrarMensaje(
       'El precio de compra no puede ser negativo',
       'warning',
@@ -427,32 +402,34 @@ function agregarDetalle() {
     return
   }
 
-  const existente =
-    formulario.value.detalles.find(
-      (detalle) =>
-        detalle.productoId === producto.id,
-    )
+  const producto = productos.value.find(
+    (item) => item.id === productoId,
+  )
+
+  if (!producto) {
+    mostrarMensaje('Producto no encontrado', 'error')
+    return
+  }
+
+  const existente = formulario.value.detalles.find(
+    (detalle) =>
+      Number(detalle.productoId) === productoId,
+  )
 
   if (existente) {
     existente.cantidad =
-      Number(existente.cantidad) +
-      cantidad
+      Number(existente.cantidad) + cantidad
 
-    existente.subtotal =
-      Number(existente.cantidad) *
-      Number(existente.precioCompra)
+    existente.precioCompra = precioCompra
 
-    mostrarMensaje(
-      'Se actualizó la cantidad del producto',
-      'success',
-    )
+    actualizarSubtotal(existente)
   } else {
     formulario.value.detalles.push({
-      productoId: producto.id,
+      productoId,
       producto,
       cantidad,
-      precioCompra: precio,
-      subtotal: cantidad * precio,
+      precioCompra,
+      subtotal: cantidad * precioCompra,
     })
   }
 
@@ -464,21 +441,18 @@ function agregarDetalle() {
 }
 
 function eliminarDetalle(index) {
-  formulario.value.detalles.splice(
-    index,
-    1,
-  )
+  formulario.value.detalles.splice(index, 1)
 }
 
 function actualizarSubtotal(detalle) {
   detalle.subtotal =
-    Number(detalle.cantidad || 0) *
-    Number(detalle.precioCompra || 0)
+    (Number(detalle.cantidad) || 0) *
+    (Number(detalle.precioCompra) || 0)
 }
 
-// ─────────────────────────────────────────────
-// GUARDAR COMPRA
-// ─────────────────────────────────────────────
+/* =========================================================
+   GUARDAR COMPRA
+========================================================= */
 
 async function guardarCompra() {
   const form = formulario.value
@@ -493,7 +467,7 @@ async function guardarCompra() {
 
   if (!form.estadoPago) {
     mostrarMensaje(
-      'Selecciona el estado de pago',
+      'Selecciona el estado del pago',
       'warning',
     )
     return
@@ -515,8 +489,9 @@ async function guardarCompra() {
     return
   }
 
-  const descuento =
-    Number(form.descuento) || 0
+  const descuento = Number(form.descuento) || 0
+  const total = Number(totalForm.value)
+  const montoPagado = Number(form.montoPagado) || 0
 
   if (descuento < 0) {
     mostrarMensaje(
@@ -528,17 +503,14 @@ async function guardarCompra() {
 
   if (descuento > subtotalForm.value) {
     mostrarMensaje(
-      'El descuento no puede ser mayor al subtotal',
+      'El descuento no puede superar el subtotal',
       'warning',
     )
     return
   }
 
   for (const detalle of form.detalles) {
-    if (
-      !detalle.cantidad ||
-      Number(detalle.cantidad) <= 0
-    ) {
+    if (Number(detalle.cantidad) <= 0) {
       mostrarMensaje(
         'Todas las cantidades deben ser mayores que cero',
         'warning',
@@ -546,9 +518,7 @@ async function guardarCompra() {
       return
     }
 
-    if (
-      Number(detalle.precioCompra) < 0
-    ) {
+    if (Number(detalle.precioCompra) < 0) {
       mostrarMensaje(
         'Los precios de compra no pueden ser negativos',
         'warning',
@@ -557,52 +527,119 @@ async function guardarCompra() {
     }
   }
 
+  /*
+   * =======================================================
+   * REGLAS DEL PAGO INICIAL
+   * =======================================================
+   */
+
+  if (
+    form.estadoPago === 'PENDIENTE' &&
+    form.metodoPago !== 'CREDITO'
+  ) {
+    form.metodoPago = 'CREDITO'
+  }
+
+  if (
+    form.estadoPago !== 'PENDIENTE' &&
+    form.metodoPago === 'CREDITO'
+  ) {
+    mostrarMensaje(
+      'Una compra con crédito debe quedar pendiente',
+      'warning',
+    )
+    return
+  }
+
+  if (montoPagado < 0) {
+    mostrarMensaje(
+      'El monto pagado no puede ser negativo',
+      'warning',
+    )
+    return
+  }
+
+  if (montoPagado > total) {
+    mostrarMensaje(
+      'El monto pagado no puede superar el total',
+      'warning',
+    )
+    return
+  }
+
+  if (
+    form.estadoPago === 'PAGADO' &&
+    montoPagado !== total
+  ) {
+    mostrarMensaje(
+      'Una compra pagada debe tener el monto total',
+      'warning',
+    )
+    return
+  }
+
+  if (
+    form.estadoPago === 'PENDIENTE' &&
+    montoPagado !== 0
+  ) {
+    mostrarMensaje(
+      'Una compra pendiente no puede tener un pago inicial',
+      'warning',
+    )
+    return
+  }
+
+  if (
+    form.estadoPago === 'PARCIAL' &&
+    (montoPagado <= 0 || montoPagado >= total)
+  ) {
+    mostrarMensaje(
+      'Una compra parcial debe tener un pago inicial menor al total',
+      'warning',
+    )
+    return
+  }
+
+  if (total <= 0) {
+    mostrarMensaje(
+      'El total de la compra debe ser mayor que cero',
+      'warning',
+    )
+    return
+  }
+
   loadingForm.value = true
 
   try {
     const payload = {
-      proveedorId:
-        Number(form.proveedorId),
+      proveedorId: Number(form.proveedorId),
 
-      estadoPago:
-        form.estadoPago,
-
-      metodoPago:
-        form.metodoPago,
-      montoPagado:
-        Number(form.montoPagado) || 0,
+      estadoPago: form.estadoPago,
+      metodoPago: form.metodoPago,
+      montoPagado,
 
       descuento,
 
-      detalles:
-        form.detalles.map((detalle) => ({
-          productoId:
-            Number(detalle.productoId),
-
-          cantidad:
-            Number(detalle.cantidad),
-
-          precioCompra:
-            Number(detalle.precioCompra),
-        })),
+      detalles: form.detalles.map((detalle) => ({
+        productoId: Number(detalle.productoId),
+        cantidad: Number(detalle.cantidad),
+        precioCompra: Number(detalle.precioCompra),
+      })),
     }
 
-    if (form.numeroFactura.trim()) {
+    if (form.numeroFactura?.trim()) {
       payload.numeroFactura =
         form.numeroFactura.trim()
     }
 
-    if (form.observaciones.trim()) {
+    if (form.observaciones?.trim()) {
       payload.observaciones =
         form.observaciones.trim()
     }
 
-    await axios.post(
-      '/compras',
-      payload,
-    )
+    await axios.post('/compras', payload)
 
-    compraDialog.value = false
+    cerrarCompraDialog()
 
     mostrarMensaje(
       'Compra registrada correctamente',
@@ -611,18 +648,21 @@ async function guardarCompra() {
 
     await cargarTodo()
   } catch (error) {
-    mostrarError(
-      error,
-      'No se pudo registrar la compra',
+    console.error(error)
+
+    mostrarMensaje(
+      error.response?.data?.message ||
+        'No se pudo registrar la compra',
+      'error',
     )
   } finally {
     loadingForm.value = false
   }
 }
 
-// ─────────────────────────────────────────────
-// DETALLE
-// ─────────────────────────────────────────────
+/* =========================================================
+   DETALLE
+========================================================= */
 
 async function abrirDetalle(compra) {
   detalleDialog.value = true
@@ -636,20 +676,30 @@ async function abrirDetalle(compra) {
 
     detalleCompra.value = response.data
   } catch (error) {
-    mostrarError(
-      error,
-      'No se pudo cargar el detalle',
-    )
+    console.error(error)
 
     detalleDialog.value = false
+
+    mostrarMensaje(
+      error.response?.data?.message ||
+        'No se pudo cargar el detalle de la compra',
+      'error',
+    )
   } finally {
     loadingDetalle.value = false
   }
 }
 
-// ─────────────────────────────────────────────
-// ANULAR
-// ─────────────────────────────────────────────
+function cerrarDetalle() {
+  if (loadingDetalle.value) return
+
+  detalleDialog.value = false
+  detalleCompra.value = null
+}
+
+/* =========================================================
+   ANULAR COMPRA
+========================================================= */
 
 function abrirAnular(compra) {
   compraSeleccionada.value = compra
@@ -657,17 +707,14 @@ function abrirAnular(compra) {
 }
 
 function cerrarAnular() {
-  if (loadingForm.value) {
-    return
-  }
+  if (loadingForm.value) return
 
   anularDialog.value = false
+  compraSeleccionada.value = null
 }
 
 async function anularCompra() {
-  if (!compraSeleccionada.value) {
-    return
-  }
+  if (!compraSeleccionada.value) return
 
   loadingForm.value = true
 
@@ -676,7 +723,7 @@ async function anularCompra() {
       `/compras/${compraSeleccionada.value.id}/anular`,
     )
 
-    anularDialog.value = false
+    cerrarAnular()
 
     mostrarMensaje(
       'Compra anulada correctamente',
@@ -685,67 +732,37 @@ async function anularCompra() {
 
     await cargarTodo()
   } catch (error) {
-    mostrarError(
-      error,
-      'No se pudo anular la compra',
+    console.error(error)
+
+    mostrarMensaje(
+      error.response?.data?.message ||
+        'No se pudo anular la compra',
+      'error',
     )
   } finally {
     loadingForm.value = false
   }
 }
 
-// ─────────────────────────────────────────────
-// FORMATO
-// ─────────────────────────────────────────────
+/* =========================================================
+   FORMATO
+========================================================= */
 
-function formatoMoneda(valor) {
-  return Number(valor || 0).toLocaleString(
-    'es-CO',
-    {
-      style: 'currency',
-      currency: 'COP',
-      maximumFractionDigits: 0,
-    },
-  )
+function formatearMoneda(valor) {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  }).format(Number(valor) || 0)
 }
 
-function formatoFecha(fecha) {
-  if (!fecha) {
-    return '-'
-  }
+function formatearFecha(fecha) {
+  if (!fecha) return '-'
 
-  return new Date(fecha).toLocaleDateString(
-    'es-CO',
-    {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    },
-  )
-}
-
-function formatoCantidad(valor) {
-  return Number(valor || 0).toLocaleString(
-    'es-CO',
-    {
-      maximumFractionDigits: 3,
-    },
-  )
-}
-
-function textoEstadoCompra(estado) {
-  const estados = {
-    CONFIRMADA: 'Confirmada',
-    ANULADA: 'Anulada',
-  }
-
-  return estados[estado] || estado
-}
-
-function colorEstadoCompra(estado) {
-  return estado === 'CONFIRMADA'
-    ? 'success'
-    : 'error'
+  return new Intl.DateTimeFormat('es-CO', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(fecha))
 }
 
 function textoEstadoPago(estado) {
@@ -755,63 +772,64 @@ function textoEstadoPago(estado) {
     PARCIAL: 'Parcial',
   }
 
-  return estados[estado] || estado
+  return estados[estado] || estado || '-'
 }
 
 function colorEstadoPago(estado) {
-  return estado === 'PAGADA'
-    ? 'success'
-    : 'warning'
+  const colores = {
+    PAGADO: 'success',
+    PARCIAL: 'warning',
+    PENDIENTE: 'error',
+  }
+
+  return colores[estado] || 'default'
 }
 
 function textoMetodoPago(metodo) {
   const metodos = {
     EFECTIVO: 'Efectivo',
+    NEQUI: 'Nequi',
+    DAVIPLATA: 'Daviplata',
     TRANSFERENCIA: 'Transferencia',
     TARJETA: 'Tarjeta',
+    CREDITO: 'Crédito / Fiado',
   }
 
-  return metodos[metodo] || metodo
+  return metodos[metodo] || metodo || '-'
 }
 
-function nombreProveedor(compra) {
+function colorEstadoCompra(estado) {
+  return estado === 'ANULADA'
+    ? 'error'
+    : 'success'
+}
+
+function textoEstadoCompra(estado) {
+  return estado === 'ANULADA'
+    ? 'Anulada'
+    : 'Confirmada'
+}
+
+function inicialProveedor(proveedor) {
+  const nombre = proveedor?.nombre || 'P'
+
+  return nombre
+    .trim()
+    .charAt(0)
+    .toUpperCase()
+}
+
+function nombreProducto(detalle) {
   return (
-    compra?.proveedor?.nombre ||
-    'Sin proveedor'
+    detalle.producto?.nombre ||
+    detalle.producto?.nombreProducto ||
+    `Producto #${detalle.productoId}`
   )
 }
 
-// ─────────────────────────────────────────────
-// SNACKBAR
-// ─────────────────────────────────────────────
-
-function mostrarMensaje(
-  mensaje,
-  color = 'success',
-) {
-  snackbarMessage.value = mensaje
-  snackbarColor.value = color
-  snackbar.value = true
-}
-
-function mostrarError(error, mensaje) {
-  console.error(error)
-
-  const mensajeBackend =
-    error?.response?.data?.message
-
-  snackbarMessage.value =
-    Array.isArray(mensajeBackend)
-      ? mensajeBackend.join(', ')
-      : mensajeBackend || mensaje
-
-  snackbarColor.value = 'error'
-  snackbar.value = true
-}
-
-// ─────────────────────────────────────────────
-// INICIO
-// ─────────────────────────────────────────────
+/* =========================================================
+   INICIO
+========================================================= */
 
 onMounted(() => {
   cargarTodo()
@@ -821,199 +839,193 @@ onMounted(() => {
 <template>
   <div class="compras-page">
 
-    <!-- HEADER -->
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
 
     <div class="page-header">
-
       <div>
-
-        <div class="eyebrow">
+        <div class="breadcrumb">
           CAFETERÍA
+          <span>/</span>
+          COMPRAS
         </div>
 
-        <h1>
-          Compras
-        </h1>
+        <h1>Compras</h1>
 
         <p>
-          Gestiona las compras y abastecimiento
-          de la cafetería
+          Control de compras, proveedores e inventario
         </p>
-
       </div>
 
       <div class="header-actions">
+        <v-btn
+          icon="mdi-refresh"
+          variant="tonal"
+          :loading="loading"
+          @click="cargarTodo"
+        />
 
-        <v-btn variant="outlined" prepend-icon="mdi-refresh" :loading="loading" @click="cargarTodo">
-          Actualizar
-        </v-btn>
-
-        <v-btn color="primary" prepend-icon="mdi-cart-plus" @click="abrirNuevaCompra">
+        <v-btn
+          color="primary"
+          prepend-icon="mdi-cart-plus"
+          @click="abrirNuevaCompra"
+        >
           Nueva compra
         </v-btn>
-
       </div>
-
     </div>
 
-    <!-- RESUMEN -->
+    <!-- =====================================================
+         RESUMEN
+    ====================================================== -->
 
     <div class="summary-grid">
 
       <div class="summary-card">
-
-        <div class="summary-icon">
-          <v-icon icon="mdi-cart-outline" />
+        <div class="summary-icon blue">
+          <v-icon>mdi-cart-outline</v-icon>
         </div>
 
         <div>
-          <span>
-            Compras
-          </span>
-
-          <strong>
-            {{ totalCompras }}
-          </strong>
+          <span>Total compras</span>
+          <strong>{{ totalCompras }}</strong>
         </div>
-
       </div>
 
       <div class="summary-card">
-
-        <div class="summary-icon success-icon">
-          <v-icon icon="mdi-check-circle-outline" />
+        <div class="summary-icon green">
+          <v-icon>mdi-check-circle-outline</v-icon>
         </div>
 
         <div>
-          <span>
-            Confirmadas
-          </span>
-
-          <strong>
-            {{ comprasConfirmadas }}
-          </strong>
+          <span>Confirmadas</span>
+          <strong>{{ comprasConfirmadas }}</strong>
         </div>
-
       </div>
 
       <div class="summary-card">
-
-        <div class="summary-icon warning-icon">
-          <v-icon icon="mdi-clock-outline" />
+        <div class="summary-icon orange">
+          <v-icon>mdi-clock-outline</v-icon>
         </div>
 
         <div>
-          <span>
-            Pagos pendientes
-          </span>
-
-          <strong>
-            {{ comprasPendientes }}
-          </strong>
+          <span>Pagos pendientes</span>
+          <strong>{{ comprasPendientes }}</strong>
         </div>
-
       </div>
 
       <div class="summary-card">
-
-        <div class="summary-icon money-icon">
-          <v-icon icon="mdi-cash-multiple" />
+        <div class="summary-icon purple">
+          <v-icon>mdi-cash-multiple</v-icon>
         </div>
 
         <div>
-          <span>
-            Total comprado
-          </span>
-
-          <strong>
-            {{ formatoMoneda(totalComprado) }}
-          </strong>
+          <span>Total comprado</span>
+          <strong>{{ formatearMoneda(totalComprado) }}</strong>
         </div>
-
       </div>
 
     </div>
 
-    <!-- TABLA -->
+    <!-- =====================================================
+         TABLA
+    ====================================================== -->
 
     <v-card class="main-card" elevation="0">
 
-      <div class="card-header">
-
-        <div>
-
-          <h2>
-            Historial de compras
-          </h2>
-
-          <p>
-            Registro de compras realizadas a proveedores
-          </p>
-
-        </div>
-
-      </div>
-
       <div class="filters">
 
-        <v-text-field v-model="search" label="Buscar compra" placeholder="Número, factura o proveedor..."
-          prepend-inner-icon="mdi-magnify" variant="outlined" density="comfortable" hide-details clearable />
+        <v-text-field
+          v-model="search"
+          prepend-inner-icon="mdi-magnify"
+          label="Buscar compra, factura o proveedor"
+          variant="outlined"
+          density="comfortable"
+          hide-details
+          clearable
+        />
 
-        <v-select v-model="estadoFiltro" :items="estadosCompra" item-title="title" item-value="value" label="Estado"
-          variant="outlined" density="comfortable" hide-details />
+        <v-select
+          v-model="estadoFiltro"
+          :items="estadosCompra"
+          label="Estado"
+          variant="outlined"
+          density="comfortable"
+          hide-details
+        />
 
-        <v-select v-model="pagoFiltro" :items="[
-          {
-            title: 'Todos los pagos',
-            value: 'TODOS',
-          },
-          ...estadosPago,
-        ]" item-title="title" item-value="value" label="Pago" variant="outlined" density="comfortable" hide-details />
+        <v-select
+          v-model="pagoFiltro"
+          :items="[
+            { title: 'Todos los pagos', value: 'TODOS' },
+            ...estadosPago,
+          ]"
+          label="Pago"
+          variant="outlined"
+          density="comfortable"
+          hide-details
+        />
 
       </div>
 
-      <v-data-table :headers="[
-        {
-          title: 'Compra',
-          key: 'numeroCompra',
-        },
-        {
-          title: 'Fecha',
-          key: 'fechaCompra',
-        },
-        {
-          title: 'Proveedor',
-          key: 'proveedor',
-        },
-        {
-          title: 'Factura',
-          key: 'numeroFactura',
-        },
-        {
-          title: 'Total',
-          key: 'total',
-          align: 'end',
-        },
-        {
-          title: 'Pago',
-          key: 'estadoPago',
-        },
-        {
-          title: 'Estado',
-          key: 'estado',
-        },
-        {
-          title: 'Acciones',
-          key: 'acciones',
-          sortable: false,
-          align: 'end',
-        },
-      ]" :items="comprasFiltradas" :loading="loading" item-value="id" hover class="purchases-table">
+      <v-divider />
+
+      <v-data-table
+        :headers="[
+          {
+            title: 'Compra',
+            key: 'numeroCompra',
+            sortable: true,
+          },
+          {
+            title: 'Fecha',
+            key: 'createdAt',
+            sortable: true,
+          },
+          {
+            title: 'Proveedor',
+            key: 'proveedor',
+            sortable: false,
+          },
+          {
+            title: 'Factura',
+            key: 'numeroFactura',
+            sortable: false,
+          },
+          {
+            title: 'Total',
+            key: 'total',
+            sortable: true,
+            align: 'end',
+          },
+          {
+            title: 'Pago',
+            key: 'estadoPago',
+            sortable: false,
+          },
+          {
+            title: 'Estado',
+            key: 'estado',
+            sortable: false,
+          },
+          {
+            title: 'Acciones',
+            key: 'acciones',
+            sortable: false,
+            align: 'center',
+          },
+        ]"
+        :items="comprasFiltradas"
+        :loading="loading"
+        item-value="id"
+        class="purchases-table"
+      >
+
+        <!-- COMPRA -->
 
         <template #item.numeroCompra="{ item }">
-
           <div class="purchase-number">
-
             <strong>
               {{ item.numeroCompra }}
             </strong>
@@ -1021,1407 +1033,1065 @@ onMounted(() => {
             <span>
               {{ textoMetodoPago(item.metodoPago) }}
             </span>
-
           </div>
-
         </template>
 
-        <template #item.fechaCompra="{ item }">
-          {{ formatoFecha(item.fechaCompra) }}
+        <!-- FECHA -->
+
+        <template #item.createdAt="{ item }">
+          <span class="date-text">
+            {{ formatearFecha(item.createdAt) }}
+          </span>
         </template>
+
+        <!-- PROVEEDOR -->
 
         <template #item.proveedor="{ item }">
-
           <div class="provider-cell">
 
-            <div class="provider-avatar">
-              {{
-                nombreProveedor(item)
-                  .charAt(0)
-                  .toUpperCase()
-              }}
+            <v-avatar
+              size="36"
+              color="primary"
+              variant="tonal"
+            >
+              <span>
+                {{ inicialProveedor(item.proveedor) }}
+              </span>
+            </v-avatar>
+
+            <div>
+              <strong>
+                {{ item.proveedor?.nombre || 'Sin proveedor' }}
+              </strong>
+
+              <span>
+                {{ item.proveedor?.telefono || '' }}
+              </span>
             </div>
 
-            <strong>
-              {{ nombreProveedor(item) }}
-            </strong>
-
           </div>
-
         </template>
+
+        <!-- FACTURA -->
 
         <template #item.numeroFactura="{ item }">
-          {{ item.numeroFactura || '-' }}
+          <span class="invoice-number">
+            {{ item.numeroFactura || 'Sin factura' }}
+          </span>
         </template>
+
+        <!-- TOTAL -->
 
         <template #item.total="{ item }">
-
-          <strong class="total-value">
-            {{ formatoMoneda(item.total) }}
+          <strong class="money-value">
+            {{ formatearMoneda(item.total) }}
           </strong>
-
         </template>
+
+        <!-- PAGO -->
 
         <template #item.estadoPago="{ item }">
+          <div class="payment-cell">
 
-          <v-chip :color="colorEstadoPago(
-            item.estadoPago,
-          )
-            " size="small" variant="tonal">
-            {{
-              textoEstadoPago(
-                item.estadoPago,
-              )
-            }}
-          </v-chip>
-
-        </template>
-
-        <template #item.estado="{ item }">
-
-          <v-chip :color="colorEstadoCompra(
-            item.estado,
-          )
-            " size="small" variant="tonal">
-            {{
-              textoEstadoCompra(
-                item.estado,
-              )
-            }}
-          </v-chip>
-
-        </template>
-
-        <template #item.acciones="{ item }">
-
-          <div class="actions">
-
-            <v-tooltip text="Ver detalle">
-
-              <template #activator="{ props }">
-
-                <v-btn v-bind="props" icon="mdi-eye-outline" variant="text" size="small" @click="
-                  abrirDetalle(item)
-                  " />
-
-              </template>
-
-            </v-tooltip>
-
-            <v-tooltip v-if="
-              item.estado ===
-              'CONFIRMADA'
-            " text="Anular compra">
-
-              <template #activator="{ props }">
-
-                <v-btn v-bind="props" icon="mdi-close-circle-outline" variant="text" color="error" size="small" @click="
-                  abrirAnular(item)
-                  " />
-
-              </template>
-
-            </v-tooltip>
-
-          </div>
-
-        </template>
-
-        <template #no-data>
-
-          <div class="empty-state">
-
-            <v-icon icon="mdi-cart-outline" size="44" />
-
-            <strong>
-              No hay compras
-            </strong>
+            <v-chip
+              :color="colorEstadoPago(item.estadoPago)"
+              size="small"
+              variant="tonal"
+            >
+              {{ textoEstadoPago(item.estadoPago) }}
+            </v-chip>
 
             <span>
-              No se encontraron compras con
-              los filtros actuales.
+              {{ textoMetodoPago(item.metodoPago) }}
             </span>
 
           </div>
+        </template>
 
+        <!-- ESTADO -->
+
+        <template #item.estado="{ item }">
+          <v-chip
+            :color="colorEstadoCompra(item.estado)"
+            size="small"
+            variant="tonal"
+          >
+            {{ textoEstadoCompra(item.estado) }}
+          </v-chip>
+        </template>
+
+        <!-- ACCIONES -->
+
+        <template #item.acciones="{ item }">
+          <div class="table-actions">
+
+            <v-tooltip text="Ver detalle">
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-eye-outline"
+                  variant="text"
+                  size="small"
+                  color="primary"
+                  @click="abrirDetalle(item)"
+                />
+              </template>
+            </v-tooltip>
+
+            <v-tooltip
+              v-if="item.estado !== 'ANULADA'"
+              text="Anular compra"
+            >
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-cancel"
+                  variant="text"
+                  size="small"
+                  color="error"
+                  @click="abrirAnular(item)"
+                />
+              </template>
+            </v-tooltip>
+
+          </div>
+        </template>
+
+        <!-- SIN DATOS -->
+
+        <template #no-data>
+          <div class="empty-state">
+            <v-icon size="52">
+              mdi-cart-outline
+            </v-icon>
+
+            <strong>No hay compras</strong>
+
+            <span>
+              Las compras registradas aparecerán aquí.
+            </span>
+          </div>
         </template>
 
       </v-data-table>
 
     </v-card>
 
-    <!-- DIALOG NUEVA COMPRA -->
+    <!-- =====================================================
+         DIALOG NUEVA COMPRA
+    ====================================================== -->
 
-    
-<v-dialog
-  v-model="compraDialog"
-  max-width="1050"
-  persistent
->
-  <v-card>
+    <v-dialog
+      v-model="compraDialog"
+      max-width="1100"
+      persistent
+    >
+      <v-card class="purchase-dialog">
 
-    <!-- =========================
-         HEADER
-    ========================== -->
-
-    <v-card-title class="dialog-title">
-
-      <div>
-
-        <span>
-          CAFETERÍA
-        </span>
-
-        <h2>
-          Nueva compra
-        </h2>
-
-      </div>
-
-      <v-btn
-        icon="mdi-close"
-        variant="text"
-        :disabled="loadingForm"
-        @click="
-          compraDialog = false
-        "
-      />
-
-    </v-card-title>
-
-    <v-divider />
-
-    <v-card-text>
-
-      <v-form
-        @submit.prevent="guardarCompra"
-      >
-
-        <!-- =========================
-             DATOS GENERALES
-        ========================== -->
-
-        <div class="section-title">
-
-          <div class="section-icon">
-            <v-icon
-              icon="mdi-file-document-outline"
-            />
-          </div>
-
+        <div class="dialog-header">
           <div>
-
-            <strong>
-              Información de la compra
-            </strong>
-
-            <span>
-              Datos generales de la compra
+            <span class="dialog-kicker">
+              CAFETERÍA
             </span>
 
+            <h2>Nueva compra</h2>
+
+            <p>
+              Registra la compra y su pago inicial.
+            </p>
           </div>
 
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            @click="cerrarCompraDialog"
+          />
         </div>
 
-        <v-row>
+        <v-divider />
 
-          <!-- PROVEEDOR -->
+        <v-card-text>
 
-          <v-col
-            cols="12"
-            md="6"
-          >
+          <!-- INFORMACIÓN GENERAL -->
 
-            <v-select
-              v-model="
-                formulario.proveedorId
-              "
-              :items="
-                proveedoresActivos
-              "
-              item-title="nombre"
-              item-value="id"
-              label="Proveedor *"
-              prepend-inner-icon="
-                mdi-truck-outline
-              "
-              variant="outlined"
-              :disabled="loadingForm"
-              hide-details="auto"
-              clearable
-            />
+          <div class="section-title">
+            <div class="section-icon">
+              <v-icon>mdi-information-outline</v-icon>
+            </div>
 
-          </v-col>
-
-          <!-- FACTURA -->
-
-          <v-col
-            cols="12"
-            md="6"
-          >
-
-            <v-text-field
-              v-model="
-                formulario.numeroFactura
-              "
-              label="Número de factura"
-              placeholder="Opcional"
-              prepend-inner-icon="
-                mdi-receipt-text-outline
-              "
-              variant="outlined"
-              :disabled="loadingForm"
-              maxlength="50"
-              hide-details="auto"
-            />
-
-          </v-col>
-
-        </v-row>
-
-
-        <!-- =========================
-             PRODUCTOS
-        ========================== -->
-
-        <div
-          class="section-title product-section-title"
-        >
-
-          <div class="section-icon">
-
-            <v-icon
-              icon="mdi-package-variant"
-            />
-
+            <div>
+              <strong>Información general</strong>
+              <span>Datos del proveedor y factura</span>
+            </div>
           </div>
 
-          <div>
-
-            <strong>
-              Productos
-            </strong>
-
-            <span>
-              Agrega los productos incluidos
-              en la compra
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <!-- AGREGAR PRODUCTO -->
-
-        <div class="add-product-box">
-
-          <v-row align="center">
-
-            <!-- PRODUCTO -->
+          <v-row>
 
             <v-col
               cols="12"
-              md="5"
+              md="6"
             >
-
               <v-select
-                v-model="
-                  nuevoDetalle.productoId
-                "
-                :items="
-                  productosActivos
-                "
+                v-model="formulario.proveedorId"
+                :items="proveedoresActivos"
                 item-title="nombre"
                 item-value="id"
-                label="Producto"
-                prepend-inner-icon="
-                  mdi-package-variant
-                "
+                label="Proveedor *"
                 variant="outlined"
-                :disabled="
-                  loadingForm
-                "
-                hide-details="auto"
-                clearable
-                @update:model-value="
-                  actualizarPrecioProducto
-                "
+                density="comfortable"
               />
-
             </v-col>
-
-
-            <!-- CANTIDAD -->
 
             <v-col
               cols="12"
-              sm="6"
-              md="2"
+              md="6"
             >
-
               <v-text-field
-                v-model.number="
-                  nuevoDetalle.cantidad
-                "
-                label="Cantidad"
-                type="number"
-                min="0.001"
-                step="0.001"
-                prepend-inner-icon="
-                  mdi-counter
-                "
+                v-model="formulario.numeroFactura"
+                label="Número de factura"
+                placeholder="Opcional"
                 variant="outlined"
-                :disabled="
-                  loadingForm
-                "
-                hide-details="auto"
+                density="comfortable"
               />
-
-            </v-col>
-
-
-            <!-- PRECIO -->
-
-            <v-col
-              cols="12"
-              sm="6"
-              md="3"
-            >
-
-              <v-text-field
-                v-model.number="
-                  nuevoDetalle.precioCompra
-                "
-                label="Precio de compra"
-                type="number"
-                min="0"
-                step="0.01"
-                prepend-inner-icon="
-                  mdi-currency-usd
-                "
-                prefix="$"
-                variant="outlined"
-                :disabled="
-                  loadingForm
-                "
-                hide-details="auto"
-              />
-
-            </v-col>
-
-
-            <!-- AGREGAR -->
-
-            <v-col
-              cols="12"
-              md="2"
-              class="add-product-action"
-            >
-
-              <v-btn
-                color="primary"
-                block
-                prepend-icon="mdi-plus"
-                :disabled="
-                  loadingForm
-                "
-                @click="
-                  agregarDetalle
-                "
-              >
-                Agregar
-              </v-btn>
-
             </v-col>
 
           </v-row>
 
-        </div>
+          <!-- PRODUCTOS -->
 
+          <div class="section-title">
+            <div class="section-icon">
+              <v-icon>mdi-package-variant-closed</v-icon>
+            </div>
 
-        <!-- =========================
-             DETALLES
-        ========================== -->
+            <div>
+              <strong>Productos</strong>
+              <span>Agrega los productos recibidos</span>
+            </div>
+          </div>
 
-        <div
-          v-if="
-            formulario.detalles.length
-          "
-          class="details-table"
-        >
+          <div class="add-product-box">
 
-          <!-- HEADER -->
+            <v-row align="center">
 
-          <div class="details-header">
+              <v-col
+                cols="12"
+                md="5"
+              >
+                <v-autocomplete
+                  v-model="nuevoDetalle.productoId"
+                  :items="productosActivos"
+                  item-title="nombre"
+                  item-value="id"
+                  label="Producto"
+                  variant="outlined"
+                  density="comfortable"
+                  hide-details
+                  clearable
+                  @update:model-value="actualizarPrecioProducto"
+                />
+              </v-col>
 
-            <span>
-              Producto
-            </span>
+              <v-col
+                cols="6"
+                md="2"
+              >
+                <v-text-field
+                  v-model.number="nuevoDetalle.cantidad"
+                  label="Cantidad"
+                  type="number"
+                  min="0.001"
+                  step="0.001"
+                  variant="outlined"
+                  density="comfortable"
+                  hide-details
+                />
+              </v-col>
 
-            <span>
-              Cantidad
-            </span>
+              <v-col
+                cols="6"
+                md="3"
+              >
+                <v-text-field
+                  v-model.number="nuevoDetalle.precioCompra"
+                  label="Precio compra"
+                  type="number"
+                  min="0"
+                  variant="outlined"
+                  density="comfortable"
+                  hide-details
+                  prefix="$"
+                />
+              </v-col>
 
-            <span>
-              Precio
-            </span>
+              <v-col
+                cols="12"
+                md="2"
+              >
+                <v-btn
+                  block
+                  color="primary"
+                  prepend-icon="mdi-plus"
+                  height="48"
+                  @click="agregarDetalle"
+                >
+                  Agregar
+                </v-btn>
+              </v-col>
 
-            <span>
-              Subtotal
-            </span>
-
-            <span>
-            </span>
+            </v-row>
 
           </div>
 
-
-          <!-- FILAS -->
+          <!-- DETALLES -->
 
           <div
-            v-for="(
-              detalle,
-              index
-            ) in formulario.detalles"
-            :key="
-              detalle.productoId
-            "
-            class="detail-row"
+            v-if="formulario.detalles.length"
+            class="details-table"
           >
 
-            <!-- PRODUCTO -->
-
-            <div class="detail-product">
-
-              <div class="mini-product-icon">
-
-                <v-icon
-                  icon="
-                    mdi-package-variant
-                  "
-                />
-
-              </div>
-
-              <div>
-
-                <strong>
-                  {{
-                    detalle.producto
-                      ?.nombre
-                  }}
-                </strong>
-
-                <span>
-                  {{
-                    detalle.producto
-                      ?.unidad ||
-                    ''
-                  }}
-                </span>
-
-              </div>
-
+            <div class="details-header">
+              <span>Producto</span>
+              <span>Cantidad</span>
+              <span>Precio</span>
+              <span>Subtotal</span>
+              <span></span>
             </div>
 
+            <div
+              v-for="(detalle, index) in formulario.detalles"
+              :key="index"
+              class="detail-row"
+            >
 
-            <!-- CANTIDAD -->
+              <div class="product-info">
+                <v-avatar
+                  size="34"
+                  color="primary"
+                  variant="tonal"
+                >
+                  <v-icon size="18">
+                    mdi-package-variant
+                  </v-icon>
+                </v-avatar>
 
-            <div>
+                <strong>
+                  {{ nombreProducto(detalle) }}
+                </strong>
+              </div>
 
               <v-text-field
-                v-model.number="
-                  detalle.cantidad
-                "
+                v-model.number="detalle.cantidad"
                 type="number"
                 min="0.001"
                 step="0.001"
                 density="compact"
                 variant="outlined"
                 hide-details
-                :disabled="
-                  loadingForm
-                "
-                @update:model-value="
-                  actualizarSubtotal(
-                    detalle,
-                  )
-                "
+                @input="actualizarSubtotal(detalle)"
               />
-
-            </div>
-
-
-            <!-- PRECIO -->
-
-            <div>
 
               <v-text-field
-                v-model.number="
-                  detalle.precioCompra
-                "
+                v-model.number="detalle.precioCompra"
                 type="number"
                 min="0"
-                step="0.01"
                 density="compact"
                 variant="outlined"
-                prefix="$"
                 hide-details
-                :disabled="
-                  loadingForm
-                "
-                @update:model-value="
-                  actualizarSubtotal(
-                    detalle,
-                  )
-                "
+                prefix="$"
+                @input="actualizarSubtotal(detalle)"
               />
 
-            </div>
-
-
-            <!-- SUBTOTAL -->
-
-            <div
-              class="detail-subtotal"
-            >
-
-              {{
-                formatoMoneda(
-                  detalle.subtotal,
-                )
-              }}
-
-            </div>
-
-
-            <!-- ELIMINAR -->
-
-            <div
-              class="detail-remove"
-            >
+              <strong>
+                {{ formatearMoneda(detalle.subtotal) }}
+              </strong>
 
               <v-btn
-                icon="
-                  mdi-delete-outline
-                "
+                icon="mdi-delete-outline"
                 variant="text"
                 color="error"
                 size="small"
-                :disabled="
-                  loadingForm
-                "
-                @click="
-                  eliminarDetalle(index)
-                "
+                @click="eliminarDetalle(index)"
               />
 
             </div>
 
           </div>
 
-        </div>
-
-
-        <!-- SIN PRODUCTOS -->
-
-        <div
-          v-else
-          class="no-details"
-        >
-
-          <v-icon
-            icon="mdi-cart-plus"
-            size="32"
-          />
-
-          <span>
-            Agrega productos para
-            construir la compra
-          </span>
-
-        </div>
-
-
-        <!-- =========================
-             TOTALES
-        ========================== -->
-
-        <div class="purchase-total">
-
-          <div>
-
-            <span>
-              Subtotal
-            </span>
-
-            <strong>
-              {{
-                formatoMoneda(
-                  subtotalForm,
-                )
-              }}
-            </strong>
-
-          </div>
-
-
-          <div>
-
-            <span>
-              Descuento
-            </span>
-
-            <strong>
-              {{
-                formatoMoneda(
-                  formulario.descuento,
-                )
-              }}
-            </strong>
-
-          </div>
-
-
-          <div class="grand-total">
-
-            <span>
-              Total
-            </span>
-
-            <strong>
-              {{
-                formatoMoneda(
-                  totalForm,
-                )
-              }}
-            </strong>
-
-          </div>
-
-        </div>
-
-
-        <!-- =========================
-             DESCUENTO
-        ========================== -->
-
-        <div class="discount-section">
-
-          <v-text-field
-            v-model.number="
-              formulario.descuento
-            "
-            label="Descuento aplicado"
-            type="number"
-            min="0"
-            :max="subtotalForm"
-            step="100"
-            prepend-inner-icon="
-              mdi-tag-outline
-            "
-            prefix="$"
-            variant="outlined"
-            :disabled="
-              loadingForm
-            "
-            hide-details="auto"
-          />
-
-        </div>
-
-
-        <!-- =========================
-             INFORMACIÓN DEL PAGO
-        ========================== -->
-
-        <div
-          class="
-            section-title
-            payment-section-title
-          "
-        >
-
-          <div class="section-icon">
-
-            <v-icon
-              icon="mdi-cash-multiple"
-            />
-
-          </div>
-
-          <div>
-
-            <strong>
-              Información del pago
-            </strong>
-
-            <span>
-              Registra cuánto se pagó de esta compra
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <!-- RESUMEN DEL PAGO -->
-
-        <div
-          class="
-            purchase-payment-summary
-          "
-        >
-
-          <div>
-
-            <span>
-              Total de la compra
-            </span>
-
-            <strong>
-              {{
-                formatoMoneda(
-                  totalForm,
-                )
-              }}
-            </strong>
-
-          </div>
-
-
-          <div>
-
-            <span>
-              Monto pagado
-            </span>
-
-            <strong
-              class="text-success"
-            >
-              {{
-                formatoMoneda(
-                  formulario.montoPagado,
-                )
-              }}
-            </strong>
-
-          </div>
-
-
           <div
-            class="
-              pending-payment
-            "
+            v-else
+            class="empty-products"
           >
+            <v-icon size="38">
+              mdi-package-variant-closed
+            </v-icon>
 
             <span>
-              Saldo pendiente
+              No has agregado productos a la compra.
             </span>
+          </div>
 
-            <strong>
+          <!-- TOTALES -->
 
-              {{
-                formatoMoneda(
-                  Math.max(
-                    0,
-                    totalForm -
-                      Number(
-                        formulario.montoPagado ||
-                        0
-                      ),
-                  ),
-                )
-              }}
+          <div class="purchase-totals">
 
-            </strong>
+            <div>
+              <span>Subtotal</span>
+              <strong>
+                {{ formatearMoneda(subtotalForm) }}
+              </strong>
+            </div>
+
+            <div class="discount-row">
+
+              <v-text-field
+                v-model.number="formulario.descuento"
+                label="Descuento"
+                type="number"
+                min="0"
+                variant="outlined"
+                density="compact"
+                hide-details
+                prefix="$"
+                style="max-width: 180px"
+              />
+
+            </div>
+
+            <div class="total-row">
+              <span>Total</span>
+
+              <strong>
+                {{ formatearMoneda(totalForm) }}
+              </strong>
+            </div>
 
           </div>
 
-        </div>
+          <!-- PAGO INICIAL -->
 
+          <div class="section-title payment-section-title">
+            <div class="section-icon">
+              <v-icon>mdi-cash-check</v-icon>
+            </div>
 
-        <!-- ESTADO + MÉTODO + MONTO -->
+            <div>
+              <strong>Pago inicial</strong>
+              <span>
+                Define cuánto se paga al registrar la compra
+              </span>
+            </div>
+          </div>
 
-        <v-row class="mt-4">
-
-          <!-- ESTADO -->
-
-          <v-col
-            cols="12"
-            md="4"
+          <v-alert
+            v-if="formulario.estadoPago === 'PENDIENTE'"
+            type="info"
+            variant="tonal"
+            class="mb-5"
+            icon="mdi-information-outline"
           >
+            Esta compra quedará como crédito. El dinero no se
+            registra en ninguna cuenta financiera hasta que se
+            realice un abono desde la vista de cuentas por pagar.
+          </v-alert>
 
-            <v-select
-              v-model="
-                formulario.estadoPago
-              "
-              :items="
-                estadosPago
-              "
-              item-title="title"
-              item-value="value"
-              label="Estado del pago *"
-              prepend-inner-icon="
-                mdi-cash-check
-              "
-              variant="outlined"
-              :disabled="
-                loadingForm
-              "
-              hide-details="auto"
-            />
+          <v-row>
 
-          </v-col>
+            <v-col
+              cols="12"
+              md="4"
+            >
+              <v-select
+                v-model="formulario.estadoPago"
+                :items="estadosPago"
+                item-title="title"
+                item-value="value"
+                label="Estado del pago"
+                variant="outlined"
+                density="comfortable"
+              />
+            </v-col>
 
+            <v-col
+              cols="12"
+              md="4"
+            >
+              <v-select
+                v-model="formulario.metodoPago"
+                :items="metodosPago"
+                item-title="title"
+                item-value="value"
+                label="Método de pago"
+                variant="outlined"
+                density="comfortable"
+                :disabled="
+                  formulario.estadoPago === 'PENDIENTE'
+                "
+              />
+            </v-col>
 
-          <!-- MÉTODO -->
+            <v-col
+              cols="12"
+              md="4"
+            >
+              <v-text-field
+                v-model.number="formulario.montoPagado"
+                label="Monto pagado"
+                type="number"
+                min="0"
+                :max="totalForm"
+                variant="outlined"
+                density="comfortable"
+                prefix="$"
+                :disabled="
+                  formulario.estadoPago === 'PENDIENTE' ||
+                  formulario.estadoPago === 'PAGADO'
+                "
+              />
+            </v-col>
 
-          <v-col
-            cols="12"
-            md="4"
-          >
+          </v-row>
 
-            <v-select
-              v-model="
-                formulario.metodoPago
-              "
-              :items="
-                metodosPago
-              "
-              item-title="title"
-              item-value="value"
-              label="Método de pago *"
-              prepend-inner-icon="
-                mdi-credit-card-outline
-              "
-              variant="outlined"
-              :disabled="
-                loadingForm ||
-                formulario.estadoPago ===
-                  'PENDIENTE'
-              "
-              hide-details="auto"
-            />
+          <!-- RESUMEN PAGO -->
 
-          </v-col>
+          <div class="payment-summary">
 
+            <div>
+              <span>Total compra</span>
+              <strong>
+                {{ formatearMoneda(totalForm) }}
+              </strong>
+            </div>
 
-          <!-- MONTO PAGADO -->
+            <div>
+              <span>Pago inicial</span>
+              <strong class="payment-value">
+                {{ formatearMoneda(formulario.montoPagado) }}
+              </strong>
+            </div>
 
-          <v-col
-            cols="12"
-            md="4"
-          >
+            <div>
+              <span>Saldo pendiente</span>
+              <strong class="pending-value">
+                {{ formatearMoneda(saldoPendienteForm) }}
+              </strong>
+            </div>
 
-            <v-text-field
-              v-model.number="
-                formulario.montoPagado
-              "
-              label="Monto pagado"
-              type="number"
-              min="0"
-              :max="totalForm"
-              step="100"
-              prepend-inner-icon="
-                mdi-cash-multiple
-              "
-              prefix="$"
-              variant="outlined"
-              :disabled="
-                loadingForm ||
-                formulario.estadoPago !==
-                  'PARCIAL'
-              "
-              hide-details="auto"
-            />
+          </div>
 
-          </v-col>
+          <!-- OBSERVACIONES -->
 
-        </v-row>
+          <div class="section-title">
+            <div class="section-icon">
+              <v-icon>mdi-note-text-outline</v-icon>
+            </div>
 
+            <div>
+              <strong>Observaciones</strong>
+              <span>Información adicional de la compra</span>
+            </div>
+          </div>
 
-        <!-- =========================
-             OBSERVACIONES
-        ========================== -->
+          <v-textarea
+            v-model="formulario.observaciones"
+            label="Observaciones"
+            placeholder="Notas sobre la compra..."
+            variant="outlined"
+            rows="3"
+            auto-grow
+          />
 
-        <v-textarea
-          v-model="
-            formulario.observaciones
-          "
-          label="Observaciones"
-          placeholder="
-            Notas adicionales de la compra...
-          "
-          prepend-inner-icon="
-            mdi-note-text-outline
-          "
-          variant="outlined"
-          rows="2"
-          maxlength="1000"
-          :disabled="
-            loadingForm
-          "
-          hide-details="auto"
-          class="mt-5"
-        />
+        </v-card-text>
 
+        <v-divider />
 
-        <!-- =========================
-             ACCIONES
-        ========================== -->
-
-        <div class="dialog-actions">
+        <v-card-actions class="dialog-actions">
 
           <v-btn
             variant="text"
-            :disabled="
-              loadingForm
-            "
-            @click="
-              compraDialog = false
-            "
+            @click="cerrarCompraDialog"
           >
             Cancelar
           </v-btn>
 
           <v-btn
             color="primary"
-            type="submit"
-            prepend-icon="mdi-check"
-            :loading="
-              loadingForm
-            "
+            prepend-icon="mdi-content-save-outline"
+            :loading="loadingForm"
+            @click="guardarCompra"
           >
             Registrar compra
           </v-btn>
 
-        </div>
+        </v-card-actions>
 
-      </v-form>
+      </v-card>
+    </v-dialog>
 
-    </v-card-text>
+    <!-- =====================================================
+         DIALOG DETALLE
+    ====================================================== -->
 
-  </v-card>
+    <v-dialog
+      v-model="detalleDialog"
+      max-width="950"
+    >
+      <v-card class="detail-dialog">
 
-</v-dialog>
-
-
-
-    <!-- DIALOG DETALLE -->
-
-    <v-dialog v-model="detalleDialog" max-width="900">
-
-      <v-card>
-
-        <v-card-title class="dialog-title">
+        <div class="dialog-header">
 
           <div>
-
-            <span>
+            <span class="dialog-kicker">
               DETALLE DE COMPRA
             </span>
 
             <h2>
-              {{
-                detalleCompra
-                  ?.numeroCompra ||
-                'Compra'
-              }}
+              {{ detalleCompra?.numeroCompra || 'Compra' }}
             </h2>
 
+            <p>
+              Información completa de la compra
+            </p>
           </div>
 
-          <v-btn icon="mdi-close" variant="text" @click="
-            detalleDialog = false
-            " />
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            @click="cerrarDetalle"
+          />
 
-        </v-card-title>
+        </div>
 
         <v-divider />
 
         <v-card-text>
 
-          <div v-if="loadingDetalle" class="loading-container">
+          <div
+            v-if="loadingDetalle"
+            class="loading-detail"
+          >
+            <v-progress-circular
+              indeterminate
+              color="primary"
+            />
 
-            <v-progress-circular indeterminate size="42" />
-
+            <span>
+              Cargando detalle...
+            </span>
           </div>
 
           <template v-else-if="detalleCompra">
 
+            <!-- RESUMEN -->
+
             <div class="detail-summary">
 
               <div>
-
-                <span>
-                  Proveedor
-                </span>
+                <span>Proveedor</span>
 
                 <strong>
                   {{
-                    nombreProveedor(
-                      detalleCompra,
-                    )
+                    detalleCompra.proveedor?.nombre ||
+                    'Sin proveedor'
                   }}
                 </strong>
-
               </div>
 
               <div>
-
-                <span>
-                  Fecha
-                </span>
+                <span>Fecha</span>
 
                 <strong>
-                  {{
-                    formatoFecha(
-                      detalleCompra
-                        .fechaCompra,
-                    )
-                  }}
+                  {{ formatearFecha(detalleCompra.createdAt) }}
                 </strong>
-
               </div>
 
               <div>
+                <span>Estado</span>
 
-                <span>
-                  Estado
-                </span>
-
-                <v-chip :color="colorEstadoCompra(
-                  detalleCompra.estado,
-                )
-                  " size="small" variant="tonal">
+                <v-chip
+                  :color="
+                    colorEstadoCompra(
+                      detalleCompra.estado,
+                    )
+                  "
+                  size="small"
+                  variant="tonal"
+                >
                   {{
                     textoEstadoCompra(
                       detalleCompra.estado,
                     )
                   }}
                 </v-chip>
-
               </div>
 
               <div>
+                <span>Pago</span>
 
-                <span>
-                  Pago
-                </span>
-
-                <v-chip :color="colorEstadoPago(
-                  detalleCompra
-                    .estadoPago,
-                )
-                  " size="small" variant="tonal">
+                <v-chip
+                  :color="
+                    colorEstadoPago(
+                      detalleCompra.estadoPago,
+                    )
+                  "
+                  size="small"
+                  variant="tonal"
+                >
                   {{
                     textoEstadoPago(
-                      detalleCompra
-                        .estadoPago,
+                      detalleCompra.estadoPago,
                     )
                   }}
                 </v-chip>
-
               </div>
 
             </div>
 
-            <div v-if="
-              detalleCompra.numeroFactura
-            " class="invoice-info">
+            <div
+              v-if="detalleCompra.numeroFactura"
+              class="invoice-detail"
+            >
+              <v-icon>mdi-receipt-text-outline</v-icon>
 
-              <v-icon icon="
-              mdi-receipt-text-outline
-            " size="18" />
-
-              <span>
-                Factura:
-              </span>
+              <span>Factura:</span>
 
               <strong>
-                {{
-                  detalleCompra
-                    .numeroFactura
-                }}
+                {{ detalleCompra.numeroFactura }}
               </strong>
-
             </div>
 
-            <div class="detail-list">
+            <!-- PRODUCTOS -->
 
-              <div class="detail-list-header">
+            <div class="detail-section">
 
-                <span>
-                  Producto
-                </span>
+              <div class="detail-section-title">
+                <v-icon>
+                  mdi-package-variant
+                </v-icon>
 
-                <span>
-                  Cantidad
-                </span>
-
-                <span>
-                  Precio
-                </span>
-
-                <span>
-                  Subtotal
-                </span>
-
+                <strong>
+                  Productos
+                </strong>
               </div>
 
-              <div v-for="detalle in
-                detalleCompra.detalles" :key="detalle.id" class="detail-list-row">
+              <div class="detail-items">
 
-                <div>
+                <div
+                  v-for="detalle in detalleCompra.detalles"
+                  :key="detalle.id"
+                  class="detail-item"
+                >
+
+                  <div class="detail-product">
+                    <v-avatar
+                      size="36"
+                      color="primary"
+                      variant="tonal"
+                    >
+                      <v-icon>
+                        mdi-package-variant
+                      </v-icon>
+                    </v-avatar>
+
+                    <div>
+                      <strong>
+                        {{ nombreProducto(detalle) }}
+                      </strong>
+
+                      <span>
+                        {{ detalle.cantidad }}
+                        ×
+                        {{
+                          formatearMoneda(
+                            detalle.precioCompra,
+                          )
+                        }}
+                      </span>
+                    </div>
+                  </div>
 
                   <strong>
                     {{
-                      detalle.producto
-                        ?.nombre ||
-                      '-'
+                      formatearMoneda(
+                        detalle.subtotal,
+                      )
                     }}
                   </strong>
 
-                  <span>
-                    {{
-                      detalle.producto
-                        ?.unidad ||
-                      ''
-                    }}
-                  </span>
-
                 </div>
-
-                <span>
-                  {{
-                    formatoCantidad(
-                      detalle.cantidad,
-                    )
-                  }}
-                </span>
-
-                <span>
-                  {{
-                    formatoMoneda(
-                      detalle.precioCompra,
-                    )
-                  }}
-                </span>
-
-                <strong>
-                  {{
-                    formatoMoneda(
-                      detalle.subtotal,
-                    )
-                  }}
-                </strong>
 
               </div>
 
             </div>
+
+            <!-- TOTALES -->
 
             <div class="detail-totals">
 
               <div>
-
-                <span>
-                  Subtotal
-                </span>
+                <span>Subtotal</span>
 
                 <strong>
                   {{
-                    formatoMoneda(
+                    formatearMoneda(
                       detalleCompra.subtotal,
                     )
                   }}
                 </strong>
-
               </div>
 
               <div>
-
-                <span>
-                  Descuento
-                </span>
+                <span>Descuento</span>
 
                 <strong>
                   {{
-                    formatoMoneda(
+                    formatearMoneda(
                       detalleCompra.descuento,
                     )
                   }}
                 </strong>
-
               </div>
 
-              <div class="detail-grand-total">
-
-                <span>
-                  Total
-                </span>
+              <div class="grand-total">
+                <span>Total</span>
 
                 <strong>
                   {{
-                    formatoMoneda(
+                    formatearMoneda(
                       detalleCompra.total,
                     )
                   }}
                 </strong>
+              </div>
 
+              <div>
+                <span>Pago inicial</span>
+
+                <strong>
+                  {{
+                    formatearMoneda(
+                      detalleCompra.montoPagado,
+                    )
+                  }}
+                </strong>
+              </div>
+
+              <div class="pending-total">
+                <span>Saldo pendiente</span>
+
+                <strong>
+                  {{
+                    formatearMoneda(
+                      Number(detalleCompra.total || 0) -
+                      Number(
+                        detalleCompra.montoPagado || 0,
+                      ),
+                    )
+                  }}
+                </strong>
               </div>
 
             </div>
 
-            <div v-if="
-              detalleCompra.observaciones
-            " class="observation-box">
+            <!-- MÉTODO -->
 
-              <span>
-                Observaciones
-              </span>
+            <div class="payment-method-detail">
+
+              <v-icon>
+                mdi-credit-card-outline
+              </v-icon>
+
+              <div>
+                <span>Método de pago inicial</span>
+
+                <strong>
+                  {{
+                    textoMetodoPago(
+                      detalleCompra.metodoPago,
+                    )
+                  }}
+                </strong>
+              </div>
+
+            </div>
+
+            <!-- OBSERVACIONES -->
+
+            <div
+              v-if="detalleCompra.observaciones"
+              class="observations"
+            >
+              <span>Observaciones</span>
 
               <p>
-                {{
-                  detalleCompra
-                    .observaciones
-                }}
+                {{ detalleCompra.observaciones }}
               </p>
-
             </div>
 
           </template>
 
         </v-card-text>
 
-      </v-card>
+        <v-card-actions class="dialog-actions">
 
+          <v-spacer />
+
+          <v-btn
+            variant="text"
+            @click="cerrarDetalle"
+          >
+            Cerrar
+          </v-btn>
+
+        </v-card-actions>
+
+      </v-card>
     </v-dialog>
 
-    <!-- DIALOG ANULAR -->
+    <!-- =====================================================
+         DIALOG ANULAR
+    ====================================================== -->
 
-    <v-dialog v-model="anularDialog" max-width="480">
+    <v-dialog
+      v-model="anularDialog"
+      max-width="500"
+    >
+      <v-card class="cancel-dialog">
 
-      <v-card>
+        <div class="cancel-icon">
+          <v-icon>
+            mdi-alert-outline
+          </v-icon>
+        </div>
 
-        <v-card-title class="confirm-title">
-
-          <div class="confirm-icon">
-
-            <v-icon icon="mdi-alert-outline" />
-
-          </div>
-
-          <div>
-
-            <h2>
-              Anular compra
-            </h2>
-
-            <p>
-              Esta acción revertirá el inventario
-              y, si corresponde, el movimiento de caja.
-            </p>
-
-          </div>
-
+        <v-card-title>
+          Anular compra
         </v-card-title>
 
         <v-card-text>
 
-          <p class="confirm-text">
-
-            ¿Deseas anular la compra
-
+          <p>
+            ¿Estás seguro de que deseas anular la compra
             <strong>
-              {{
-                compraSeleccionada
-                  ?.numeroCompra
-              }}
+              {{ compraSeleccionada?.numeroCompra }}
             </strong>?
-
           </p>
 
-          <v-alert type="warning" variant="tonal">
-            Los productos de esta compra serán
-            descontados nuevamente del inventario.
-
+          <v-alert
+            type="warning"
+            variant="tonal"
+            class="mt-4"
+          >
+            Al anular la compra se revertirán los movimientos
+            de inventario y los movimientos financieros
+            asociados a sus pagos iniciales.
           </v-alert>
+
+          <p class="cancel-warning">
+            Esta acción no elimina la compra y no puede
+            deshacerse automáticamente.
+          </p>
 
         </v-card-text>
 
-        <v-card-actions class="confirm-actions">
+        <v-card-actions class="dialog-actions">
 
-          <v-btn variant="text" :disabled="loadingForm" @click="cerrarAnular">
+          <v-btn
+            variant="text"
+            @click="cerrarAnular"
+          >
             Cancelar
           </v-btn>
 
-          <v-btn color="error" prepend-icon="
-          mdi-close-circle-outline
-        " :loading="loadingForm" @click="anularCompra">
+          <v-btn
+            color="error"
+            prepend-icon="mdi-cancel"
+            :loading="loadingForm"
+            @click="anularCompra"
+          >
             Anular compra
           </v-btn>
 
         </v-card-actions>
 
       </v-card>
-
     </v-dialog>
 
-    <!-- SNACKBAR -->
+    <!-- =====================================================
+         SNACKBAR
+    ====================================================== -->
 
-    <v-snackbar v-model="snackbar" :color="snackbarColor" timeout="3500">
-
+    <v-snackbar
+      v-model="snackbar"
+      :color="snackbarColor"
+      location="bottom right"
+      timeout="3500"
+    >
       {{ snackbarMessage }}
 
       <template #actions>
-
-        <v-btn variant="text" @click="snackbar = false">
+        <v-btn
+          variant="text"
+          @click="snackbar = false"
+        >
           Cerrar
         </v-btn>
-
       </template>
-
     </v-snackbar>
-    ```
 
   </div>
 </template>
 
 <style scoped>
+/* =========================================================
+   PAGE
+========================================================= */
+
 .compras-page {
   padding: 28px;
-  max-width: 1600px;
-  margin: 0 auto;
+  min-height: 100%;
+  background: #f7f9fc;
 }
+
+/* =========================================================
+   HEADER
+========================================================= */
 
 .page-header {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 20px;
-  margin-bottom: 26px;
+  margin-bottom: 28px;
 }
 
-.eyebrow {
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #7b8794;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 1.6px;
-  color: #1976d2;
-  margin-bottom: 6px;
+  letter-spacing: 0.08em;
+  margin-bottom: 7px;
+}
+
+.breadcrumb span {
+  color: #b7c0cc;
 }
 
 .page-header h1 {
   margin: 0;
-  font-size: 32px;
+  color: #172b4d;
+  font-size: 30px;
   font-weight: 750;
-  color: #172033;
+  line-height: 1.2;
 }
 
 .page-header p {
-  margin: 6px 0 0;
-  color: #687386;
+  margin: 7px 0 0;
+  color: #7b8794;
+  font-size: 14px;
 }
 
 .header-actions {
@@ -2430,10 +2100,13 @@ onMounted(() => {
   gap: 10px;
 }
 
+/* =========================================================
+   SUMMARY
+========================================================= */
+
 .summary-grid {
   display: grid;
-  grid-template-columns:
-    repeat(4, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 22px;
 }
@@ -2441,90 +2114,98 @@ onMounted(() => {
 .summary-card {
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 20px;
-  background: #fff;
-  border: 1px solid #e7ebf1;
-  border-radius: 14px;
-  transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
+  gap: 14px;
+  min-height: 96px;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid #e7ebf0;
+  border-radius: 16px;
+  box-shadow: 0 3px 12px rgba(24, 39, 75, 0.035);
 }
 
-.summary-card:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 10px 30px rgba(30, 50, 80, 0.07);
+.summary-card > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .summary-card span {
-  display: block;
-  font-size: 13px;
-  color: #778195;
-  margin-bottom: 4px;
+  color: #7b8794;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .summary-card strong {
-  display: block;
-  font-size: 22px;
-  color: #172033;
+  color: #172b4d;
+  font-size: 20px;
+  font-weight: 750;
 }
 
 .summary-icon {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 11px;
-  background: #eaf3ff;
-  color: #1976d2;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 13px;
 }
 
-.success-icon {
-  background: #eaf8ef;
-  color: #2e7d32;
+.summary-icon.blue {
+  background: #eaf2ff;
+  color: #246bce;
 }
 
-.warning-icon {
-  background: #fff6df;
-  color: #c78300;
+.summary-icon.green {
+  background: #eaf8f0;
+  color: #239b61;
 }
 
-.money-icon {
-  background: #eef0ff;
-  color: #4b5bd5;
+.summary-icon.orange {
+  background: #fff4e5;
+  color: #d98218;
 }
+
+.summary-icon.purple {
+  background: #f1edff;
+  color: #7454c8;
+}
+
+/* =========================================================
+   MAIN CARD
+========================================================= */
 
 .main-card {
   overflow: hidden;
-  border:
-    1px solid #e7ebf1 !important;
-  border-radius:
-    14px !important;
-}
-
-.card-header {
-  padding: 22px 24px 8px;
-}
-
-.card-header h2 {
-  margin: 0;
-  font-size: 19px;
-  color: #172033;
-}
-
-.card-header p {
-  margin: 5px 0 0;
-  color: #7a8496;
-  font-size: 13px;
+  border: 1px solid #e7ebf0 !important;
+  border-radius: 17px !important;
+  background: #fff;
 }
 
 .filters {
   display: grid;
-  grid-template-columns:
-    1.6fr 0.7fr 0.7fr;
-  gap: 14px;
-  padding: 18px 24px 20px;
+  grid-template-columns: minmax(250px, 1fr) 190px 190px;
+  gap: 12px;
+  padding: 18px;
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.purchases-table :deep(th) {
+  height: 48px !important;
+  background: #fafbfd !important;
+  color: #6b7785 !important;
+  font-size: 11px !important;
+  font-weight: 750 !important;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.purchases-table :deep(td) {
+  height: 70px !important;
+  border-bottom: 1px solid #edf0f4 !important;
 }
 
 .purchase-number {
@@ -2534,156 +2215,419 @@ onMounted(() => {
 }
 
 .purchase-number strong {
-  color: #172033;
+  color: #172b4d;
+  font-size: 13px;
 }
 
 .purchase-number span {
-  font-size: 12px;
-  color: #8992a2;
+  color: #8995a3;
+  font-size: 11px;
+}
+
+.date-text,
+.invoice-number {
+  color: #667382;
+  font-size: 13px;
 }
 
 .provider-cell {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
 }
 
-.provider-avatar {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 9px;
-  background: #eaf3ff;
-  color: #1976d2;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.total-value {
-  color: #172033;
-}
-
-.actions {
+.provider-cell > div:last-child {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
   gap: 2px;
 }
 
-.empty-state {
-  min-height: 190px;
+.provider-cell strong {
+  color: #26374d;
+  font-size: 13px;
+}
+
+.provider-cell span {
+  color: #8a96a3;
+  font-size: 11px;
+}
+
+.money-value {
+  color: #172b4d;
+  font-size: 13px;
+}
+
+.payment-cell {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.payment-cell span {
+  color: #8995a3;
+  font-size: 10px;
+}
+
+.table-actions {
+  display: flex;
   justify-content: center;
+  gap: 2px;
+}
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  color: #8a94a6;
+  padding: 55px 20px;
+  color: #9aa5b1;
 }
 
 .empty-state strong {
-  color: #465064;
+  color: #667382;
+  font-size: 14px;
 }
 
-.dialog-title {
+.empty-state span {
+  font-size: 12px;
+}
+
+/* =========================================================
+   DIALOG
+========================================================= */
+
+.purchase-dialog,
+.detail-dialog,
+.cancel-dialog {
+  border-radius: 20px !important;
+  overflow: hidden;
+}
+
+.dialog-header {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  align-items: center;
-  padding: 18px 22px;
+  gap: 15px;
+  padding: 23px 25px 20px;
 }
 
-.dialog-title span {
+.dialog-kicker {
   display: block;
+  margin-bottom: 5px;
+  color: #3478d4;
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.4px;
-  color: #1976d2;
+  font-weight: 800;
+  letter-spacing: 0.1em;
 }
 
-.dialog-title h2 {
-  margin: 3px 0 0;
-  font-size: 20px;
-  color: #172033;
+.dialog-header h2 {
+  margin: 0;
+  color: #172b4d;
+  font-size: 22px;
+  font-weight: 750;
 }
+
+.dialog-header p {
+  margin: 5px 0 0;
+  color: #8995a3;
+  font-size: 13px;
+}
+
+.dialog-actions {
+  padding: 16px 24px 20px !important;
+  gap: 8px;
+}
+
+/* =========================================================
+   SECTION TITLES
+========================================================= */
 
 .section-title {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 6px 0 18px;
-}
-
-.section-title strong {
-  display: block;
-  font-size: 15px;
-  color: #172033;
-}
-
-.section-title span {
-  display: block;
-  margin-top: 2px;
-  font-size: 12px;
-  color: #7a8496;
+  gap: 11px;
+  margin: 6px 0 17px;
 }
 
 .section-icon {
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  background: #eaf3ff;
-  color: #1976d2;
-}
-
-.product-section-title {
-  margin-top: 28px;
-}
-
-.add-product-box {
-  padding: 18px;
-  background: #f7f9fc;
-  border: 1px solid #e5eaf1;
-  border-radius: 12px;
-}
-
-.add-product-action {
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #edf4ff;
+  color: #2c70cf;
 }
 
+.section-title > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section-title strong {
+  color: #26374d;
+  font-size: 14px;
+}
+
+.section-title span {
+  color: #8995a3;
+  font-size: 11px;
+}
+
+.payment-section-title {
+  margin-top: 30px;
+}
+
+/* =========================================================
+   ADD PRODUCT
+========================================================= */
+
+.add-product-box {
+  padding: 16px;
+  margin-bottom: 18px;
+  border: 1px solid #e6ebf1;
+  border-radius: 13px;
+  background: #fafbfd;
+}
+
+/* =========================================================
+   DETAILS TABLE
+========================================================= */
+
 .details-table {
-  margin-top: 16px;
-  border: 1px solid #e5eaf1;
-  border-radius: 11px;
   overflow: hidden;
+  margin-bottom: 20px;
+  border: 1px solid #e7ebf0;
+  border-radius: 12px;
 }
 
 .details-header,
 .detail-row {
   display: grid;
-  grid-template-columns:
-    2fr 0.8fr 1fr 1fr 48px;
+  grid-template-columns: minmax(200px, 1.8fr) 100px 150px 140px 45px;
   align-items: center;
   gap: 12px;
-  padding: 12px 14px;
+  padding: 10px 14px;
 }
 
 .details-header {
-  background: #f7f9fc;
-  border-bottom: 1px solid #e5eaf1;
-  color: #737e91;
-  font-size: 11px;
-  font-weight: 700;
+  background: #f8fafc;
+  color: #7c8896;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .detail-row {
+  min-height: 64px;
+  border-top: 1px solid #edf0f4;
+}
+
+.detail-row > strong {
+  color: #26374d;
+  font-size: 13px;
+}
+
+.product-info {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.product-info strong {
+  color: #26374d;
+  font-size: 13px;
+}
+
+.empty-products {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 30px;
+  margin-bottom: 20px;
+  border: 1px dashed #dce2e9;
+  border-radius: 12px;
+  color: #9aa5b1;
+  font-size: 12px;
+}
+
+/* =========================================================
+   TOTALS
+========================================================= */
+
+.purchase-totals {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 18px 4px;
+  border-top: 1px solid #edf0f4;
+}
+
+.purchase-totals > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+  min-width: 330px;
+}
+
+.purchase-totals span {
+  color: #7b8794;
+  font-size: 13px;
+}
+
+.purchase-totals strong {
+  color: #26374d;
+  font-size: 14px;
+}
+
+.purchase-totals .total-row {
+  padding-top: 12px;
+  border-top: 1px solid #e3e8ee;
+}
+
+.purchase-totals .total-row span {
+  color: #172b4d;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.purchase-totals .total-row strong {
+  color: #172b4d;
+  font-size: 21px;
+  font-weight: 800;
+}
+
+/* =========================================================
+   PAYMENT
+========================================================= */
+
+.payment-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px;
+  margin-top: 5px;
+  border: 1px solid #e4e9ef;
+  border-radius: 13px;
+  background: #f9fbfd;
+}
+
+.payment-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.payment-summary span {
+  color: #7d8996;
+  font-size: 11px;
+}
+
+.payment-summary strong {
+  color: #26374d;
+  font-size: 17px;
+}
+
+.payment-summary .payment-value {
+  color: #238957;
+}
+
+.payment-summary .pending-value {
+  color: #c47718;
+}
+
+/* =========================================================
+   DETAIL
+========================================================= */
+
+.detail-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e7ebf0;
+  border-radius: 13px;
+  background: #fafbfd;
+}
+
+.detail-summary > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.detail-summary span {
+  color: #8995a3;
+  font-size: 10px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.detail-summary strong {
+  color: #26374d;
+  font-size: 13px;
+}
+
+.invoice-detail {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 14px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  background: #f7f9fc;
+  color: #697685;
+  font-size: 12px;
+}
+
+.invoice-detail strong {
+  color: #26374d;
+}
+
+.detail-section {
+  margin-top: 20px;
+}
+
+.detail-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #26374d;
+  font-size: 14px;
+}
+
+.detail-items {
+  overflow: hidden;
+  border: 1px solid #e7ebf0;
+  border-radius: 12px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 12px 15px;
   border-bottom: 1px solid #edf0f4;
 }
 
-.detail-row:last-child {
-  border-bottom: 0;
+.detail-item:last-child {
+  border-bottom: none;
 }
 
 .detail-product {
@@ -2692,304 +2636,176 @@ onMounted(() => {
   gap: 10px;
 }
 
-.detail-product>div:last-child {
+.detail-product > div {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .detail-product strong {
-  color: #172033;
+  color: #26374d;
   font-size: 13px;
 }
 
 .detail-product span {
-  color: #8992a2;
+  color: #8995a3;
   font-size: 11px;
 }
 
-.mini-product-icon {
-  width: 34px;
-  height: 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  background: #eef4fb;
-  color: #1976d2;
-}
-
-.detail-subtotal {
-  font-weight: 700;
-  color: #172033;
-}
-
-.detail-remove {
-  display: flex;
-  justify-content: center;
-}
-
-.no-details {
-  min-height: 130px;
-  margin-top: 16px;
-  border: 1px dashed #d7dde7;
-  border-radius: 11px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  color: #8a94a6;
-}
-
-.purchase-total {
-  display: flex;
-  justify-content: flex-end;
-  align-items: stretch;
-  margin-top: 20px;
-  border-top: 1px solid #e5eaf1;
-  padding-top: 18px;
-  gap: 28px;
-}
-
-.purchase-total>div {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-
-.purchase-total span {
-  font-size: 12px;
-  color: #7a8496;
-}
-
-.purchase-total strong {
-  font-size: 16px;
-  color: #172033;
-}
-
-.purchase-total .grand-total {
-  min-width: 160px;
-  padding-left: 28px;
-  border-left: 1px solid #e5eaf1;
-}
-
-.purchase-total .grand-total strong {
-  font-size: 23px;
-  color: #1976d2;
-}
-
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 22px;
-}
-
-.loading-container {
-  min-height: 260px;
-  display: grid;
-  place-items: center;
-}
-
-.detail-summary {
-  display: grid;
-  grid-template-columns:
-    repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.detail-summary>div {
-  padding: 14px;
-  background: #f7f9fc;
-  border-radius: 10px;
-}
-
-.detail-summary span {
-  display: block;
-  margin-bottom: 5px;
-  font-size: 11px;
-  color: #7a8496;
-}
-
-.detail-summary strong {
-  color: #172033;
-  font-size: 14px;
-}
-
-.invoice-info {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 12px 14px;
-  margin-bottom: 18px;
-  background: #f7f9fc;
-  border-radius: 9px;
-  color: #687386;
+.detail-item > strong {
+  color: #26374d;
   font-size: 13px;
-}
-
-.invoice-info strong {
-  color: #172033;
-}
-
-.detail-list {
-  border: 1px solid #e5eaf1;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.detail-list-header,
-.detail-list-row {
-  display: grid;
-  grid-template-columns:
-    2fr 1fr 1fr 1fr;
-  gap: 12px;
-  align-items: center;
-  padding: 12px 15px;
-}
-
-.detail-list-header {
-  background: #f7f9fc;
-  color: #737e91;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.detail-list-row {
-  border-top: 1px solid #edf0f4;
-  font-size: 13px;
-  color: #566174;
-}
-
-.detail-list-row>div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.detail-list-row strong {
-  color: #172033;
-}
-
-.detail-list-row span {
-  font-size: 11px;
-  color: #8992a2;
 }
 
 .detail-totals {
   display: flex;
-  justify-content: flex-end;
-  gap: 30px;
-  margin-top: 18px;
-}
-
-.detail-totals>div {
-  display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 3px;
+  gap: 8px;
+  padding: 18px 5px;
+}
+
+.detail-totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  min-width: 300px;
 }
 
 .detail-totals span {
+  color: #7b8794;
   font-size: 12px;
-  color: #7a8496;
 }
 
 .detail-totals strong {
-  font-size: 15px;
-  color: #172033;
+  color: #26374d;
+  font-size: 13px;
 }
 
-.detail-grand-total {
-  padding-left: 25px;
-  border-left: 1px solid #e5eaf1;
+.detail-totals .grand-total {
+  padding-top: 10px;
+  border-top: 1px solid #e3e8ee;
 }
 
-.detail-grand-total strong {
-  color: #1976d2 !important;
-  font-size: 21px !important;
+.detail-totals .grand-total span {
+  color: #172b4d;
+  font-weight: 700;
 }
 
-.observation-box {
-  margin-top: 18px;
-  padding: 14px 16px;
-  background: #f7f9fc;
-  border-radius: 10px;
+.detail-totals .grand-total strong {
+  color: #172b4d;
+  font-size: 20px;
+  font-weight: 800;
 }
 
-.observation-box span {
-  display: block;
+.detail-totals .pending-total strong {
+  color: #c47718;
+}
+
+.payment-method-detail {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  margin-top: 5px;
+  border-radius: 11px;
+  background: #f5f8fc;
+}
+
+.payment-method-detail > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.payment-method-detail span {
+  color: #8995a3;
+  font-size: 10px;
+}
+
+.payment-method-detail strong {
+  color: #26374d;
+  font-size: 13px;
+}
+
+.observations {
+  padding: 15px;
+  margin-top: 15px;
+  border-radius: 11px;
+  background: #fafbfd;
+}
+
+.observations > span {
+  color: #7d8996;
   font-size: 11px;
-  color: #7a8496;
-  margin-bottom: 5px;
+  font-weight: 700;
 }
 
-.observation-box p {
-  margin: 0;
-  color: #4e596d;
+.observations p {
+  margin: 6px 0 0;
+  color: #4c5b6c;
   font-size: 13px;
   white-space: pre-wrap;
 }
 
-.confirm-title {
+.loading-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 300px;
+  color: #8995a3;
+  font-size: 13px;
+}
+
+/* =========================================================
+   CANCEL
+========================================================= */
+
+.cancel-dialog {
+  text-align: center;
+}
+
+.cancel-icon {
+  width: 58px;
+  height: 58px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 22px;
+  justify-content: center;
+  margin: 25px auto 5px;
+  border-radius: 50%;
+  background: #fff1f1;
+  color: #d74444;
 }
 
-.confirm-title h2 {
-  margin: 0;
+.cancel-dialog .v-card-title {
+  padding-bottom: 5px;
+  color: #26374d;
   font-size: 20px;
-  color: #172033;
+  font-weight: 750;
 }
 
-.confirm-title p {
-  margin: 4px 0 0;
+.cancel-dialog .v-card-text {
+  color: #687585;
   font-size: 13px;
-  color: #7a8496;
 }
 
-.confirm-icon {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 11px;
-  background: #fff4df;
-  color: #c78300;
-}
-
-.confirm-text {
-  color: #596579;
-  margin-bottom: 16px;
-}
-
-.confirm-text strong {
-  color: #172033;
-}
-
-.confirm-actions {
+.cancel-dialog .dialog-actions {
   justify-content: flex-end;
-  padding: 8px 22px 20px;
 }
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
 
 @media (max-width: 1100px) {
   .summary-grid {
-    grid-template-columns:
-      repeat(2, 1fr);
-  }
-
-  .filters {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .detail-summary {
-    grid-template-columns:
-      repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -3006,8 +2822,12 @@ onMounted(() => {
     width: 100%;
   }
 
-  .header-actions .v-btn {
+  .header-actions .v-btn:last-child {
     flex: 1;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
   }
 
   .details-header {
@@ -3015,24 +2835,24 @@ onMounted(() => {
   }
 
   .detail-row {
+    grid-template-columns: 1fr 1fr;
+    padding: 14px;
+  }
+
+  .detail-row .product-info {
+    grid-column: 1 / -1;
+  }
+
+  .payment-summary {
     grid-template-columns: 1fr;
-    gap: 10px;
   }
 
-  .detail-remove {
-    justify-content: flex-end;
+  .purchase-totals > div {
+    min-width: 100%;
   }
 
-  .purchase-total {
-    flex-direction: column;
-    align-items: flex-end;
-  }
-
-  .purchase-total .grand-total {
-    border-left: 0;
-    border-top: 1px solid #e5eaf1;
-    padding-left: 0;
-    padding-top: 12px;
+  .detail-totals > div {
+    min-width: 100%;
   }
 }
 
@@ -3041,29 +2861,24 @@ onMounted(() => {
     grid-template-columns: 1fr;
   }
 
-  .header-actions {
-    flex-direction: column;
-  }
-
-  .header-actions .v-btn {
-    width: 100%;
+  .page-header h1 {
+    font-size: 25px;
   }
 
   .detail-summary {
     grid-template-columns: 1fr;
   }
 
-  .detail-list-header {
+  .provider-cell > div:last-child span {
     display: none;
   }
 
-  .detail-list-row {
-    grid-template-columns: 1fr 1fr;
+  .purchase-totals {
+    align-items: stretch;
   }
 
-  .detail-totals {
-    flex-direction: column;
-    align-items: flex-end;
+  .purchase-totals > div {
+    gap: 15px;
   }
 }
 </style>

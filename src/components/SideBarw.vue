@@ -1,372 +1,604 @@
 <script setup>
-//SideBar.vue
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-//import logoURL from '../assets/logo.png'
 import MenuItem from './MenuItem.vue'
+import { MenuSideBar } from '@/assets/js/MenuSideBar'
+import logoURL from '@/assets/triangulo-logo.png'
 
-// Reactive state for the menu (sidebar expanded/collapsed)
 const is_expanded = ref(true)
-
-// Function to update sidebar state based on window width
-const updateMenuState = () => {
-  if (window.innerWidth > 1024) {
-    is_expanded.value = true // Expanded for larger screens
-  } else {
-    is_expanded.value = false // Collapsed for smaller screens
-  }
-}
-
-// Initial check for window size when the component mounts
-onMounted(() => {
-  updateMenuState() // Check the window size
-  window.addEventListener('resize', updateMenuState) // Add resize listener
-})
-
-// Function to toggle sidebar on small screens (less than 1024px)
-const toggleSidebar = () => {
-  if (window.innerWidth < 1024) {
-    is_expanded.value = !is_expanded.value
-  }
-}
-
-// Cerrar el sidebar cuando se emite el evento
-const closeSidebar = () => {
-  if (window.innerWidth < 1024) {
-    is_expanded.value = false
-  }
-}
-
-// Ref for sidebar element to detect clicks outside
 const sidebarRef = ref(null)
 
-// Function to close sidebar when clicking outside
-const closeSidebarIfClickedOutside = (event) => {
-  if (window.innerWidth > 1024) return
-  // Close sidebar if click is outside the sidebar or menu toggle button
-  if (sidebarRef.value && !sidebarRef.value.contains(event.target)) {
+const menuTree = MenuSideBar
+
+const isMobile = () => {
+  return window.innerWidth <= 1024
+}
+
+const updateMenuState = () => {
+  if (isMobile()) {
     is_expanded.value = false
   }
 }
 
-// Add event listener on mount, and remove on before unmount
+const toggleSidebar = () => {
+  is_expanded.value = !is_expanded.value
+}
+
+const closeSidebar = () => {
+  if (isMobile()) {
+    is_expanded.value = false
+  }
+}
+
+const closeSidebarIfClickedOutside = (event) => {
+  if (!isMobile()) return
+
+  if (
+    sidebarRef.value &&
+    !sidebarRef.value.contains(event.target)
+  ) {
+    is_expanded.value = false
+  }
+}
+
 onMounted(() => {
+  updateMenuState()
+
+  window.addEventListener('resize', updateMenuState)
   window.addEventListener('click', closeSidebarIfClickedOutside)
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateMenuState)
   window.removeEventListener('click', closeSidebarIfClickedOutside)
 })
 </script>
 
 <template>
-  <div>
-    <button
-      class="menu-toggle-no-expanded"
-      :class="`${is_expanded ? 'is-expanded' : ''}`"
-      @click.stop="toggleSidebar"
-    >
-      <h3>Menu</h3>
-      <span class="material-icons">keyboard_double_arrow_right</span>
-    </button>
-  </div>
-  <aside
-    ref="sidebarRef"
-    :class="`${is_expanded ? 'is-expanded' : ''}`"
-    class="scrollable-nav-main"
-  >
-    <div class="menu-toggle-wrap">
-      <button class="menu-toggle" @click="toggleSidebar">
-        <span class="material-icons">keyboard_double_arrow_right</span>
-      </button>
-    </div>
-    <div class="logo-wrap">
-      <h3>Menu</h3>
+  <!-- Botón móvil -->
+  <button v-if="!is_expanded" class="mobile-menu-button" @click.stop="toggleSidebar">
+    <span class="material-icons">
+      menu
+    </span>
+  </button>
 
-      <div class="logo">
-        <img :src="logoURL" alt="" />
+  <aside ref="sidebarRef" class="sidebar" :class="{ 'is-expanded': is_expanded }">
+
+    <!-- HEADER -->
+    <div class="sidebar-header">
+
+      <div class="brand">
+
+        <div class="brand-logo">
+          <img :src="logoURL" alt="CFES" />
+        </div>
+
+        <div v-if="is_expanded" class="brand-info">
+          <span class="brand-title">
+            CFES
+          </span>
+
+          <span class="brand-subtitle">
+            Administración
+          </span>
+        </div>
+
       </div>
+      <button class="collapse-button" :class="{ 'is-collapsed': !is_expanded }" @click.stop="toggleSidebar"
+        :title="is_expanded ? 'Contraer menú' : 'Expandir menú'">
+        <span class="material-icons">
+          {{ is_expanded ? 'chevron_left' : 'chevron_right' }}
+        </span>
+      </button>
+
     </div>
-    <div class="menu scrollable-nav-main">
-      <MenuItem
-        v-for="(item, index) in menuTree"
-        :key="index"
-        :data="item.children"
-        :label="item.label"
-        :icon="item.icon"
-        :to="item.to"
-        :RequiresAdmin="item.RequiresAdmin"
-        :RequiresPastor="item.RequiresPastor"
-        :href="item.href"
-        :depth="0"
-        :smallMenu="smallMenu"
-        @closeSidebar="closeSidebar"
-      />
+
+
+    <div class="sidebar-divider"></div>
+
+
+    <!-- MENU -->
+    <div class="sidebar-content">
+
+      <div v-if="is_expanded" class="navigation-label">
+        MENÚ PRINCIPAL
+      </div>
+
+      <nav class="menu">
+
+        <MenuItem v-for="(item, index) in menuTree" :key="index" :data="item.children" :label="item.label"
+          :icon="item.icon" :to="item.to" :href="item.href" :RequiresAdmin="item.RequiresAdmin"
+          :RequiresPastor="item.RequiresPastor" :depth="0" :smallMenu="!is_expanded" @closeSidebar="closeSidebar" />
+
+      </nav>
+
     </div>
+
+
+    <!-- FOOTER -->
+    <div class="sidebar-footer">
+
+      <div class="footer-divider"></div>
+
+      <div class="footer-user">
+
+        <div class="user-avatar">
+          <span class="material-icons">
+            person
+          </span>
+        </div>
+
+        <div v-if="is_expanded" class="user-info">
+          <span class="user-name">
+            Usuario
+          </span>
+
+          <span class="user-role">
+            Administración
+          </span>
+        </div>
+
+      </div>
+
+    </div>
+
   </aside>
 </template>
-<script>
-import MenuItem from './MenuItem.vue'
-import { MenuSideBar } from '@/assets/js/MenuSideBar'
-import logoURL from '@/assets/triangulo-logo.png'
 
-export default {
-  name: 'SideBar',
-  data: () => ({
-    smallMenu: false,
-    is_expanded: true,
-    //Menu de opciones de la barra lateral
-    menuTree: MenuSideBar,
-    dialogLogout: false,
-  }),
-  components: {
-    MenuItem,
-  },
-  methods: {
-    // DialogLogout() {
-    //   this.dialogLogout = true
-    // },
-    // closeLogout() {
-    //   this.dialogLogout = false
-    // },
-    // logoutConfirm() {
-    //   store.dispatch('logout')
-    //   this.$router.push({ path: '/' })
-    //   this.dialogLogout = false
-    // },
-  },
-}
-</script>
 
-<style lang="scss">
-.logout {
-  height: 19vh;
-}
-.menu-toggle-no-expanded {
-  display: flex;
-  position: absolute;
-  z-index: 991;
-  .material-icons {
-    position: absolute;
-    top: 10px;
-    left: 65px;
-    font-size: 2rem;
-    color: var(--light);
-    transition: 0.2s ease-out;
-  }
+<style scoped lang="scss">
+.sidebar {
+  --sidebar-expanded: 260px;
+  --sidebar-collapsed: 76px;
 
-  &:hover {
-    .material-icons {
-      color: var(--dark);
-      transform: translateX(0.5rem);
-    }
-    h3 {
-      color: var(--dark);
-    }
-  }
-  &.is-expanded {
-    display: none;
-    opacity: 0;
-  }
-  h3 {
-    position: absolute;
-    top: 15px;
-    left: 25px;
-    color: var(--light);
-    font-size: 0.985rem;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-  }
-}
-aside {
-  max-height: 100vh;
+  position: sticky;
+  top: 0;
+  left: 0;
+
+  width: var(--sidebar-collapsed);
+  min-width: var(--sidebar-collapsed);
+  height: 100vh;
+
+  flex-shrink: 0;
+
   display: flex;
   flex-direction: column;
 
-  background-color: var(--blue);
+  background: linear-gradient(180deg,
+      var(--blue) 0%,
+      #0b3c66 100%);
+
   color: var(--light);
 
-  width: calc(2rem + 32px);
+  z-index: 1000;
+
   overflow: hidden;
-  min-height: 100vh;
-  padding: 1rem;
-  opacity: 0;
-  transition: 0.2s ease-in-out;
-  display: none;
-  .logo-wrap {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between; // 👈 clave para separar izquierda/derecha
 
-    .logo {
-      margin-top: 1rem;
+  box-shadow: 4px 0 18px rgba(0, 0, 0, .10);
 
-      img {
-        width: 7rem;
-      }
-    }
-  }
-
-  .flex {
-    flex: 1 1 0%;
-  }
-
-  .menu-toggle-wrap {
-    display: flex;
-    margin-bottom: -1rem;
-
-    transition: 0.2s ease-in-out;
-
-    .menu-toggle {
-      transition: 0.2s ease-in-out;
-      .material-icons {
-        font-size: 2rem;
-        color: var(--light);
-        transition: 0.2s ease-out;
-      }
-
-      &:hover {
-        .material-icons {
-          color: var(--dark);
-          transform: translateX(0.5rem);
-        }
-      }
-    }
-  }
-
-  h3,
-  .button .text {
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-  }
-
-  h3 {
-    color: var(--light);
-    font-size: 0.975rem;
-    margin-bottom: 0.5rem;
-    text-transform: uppercase;
-  }
-
-  .menu {
-    margin: 0 -1rem;
-    max-height: 100vh;
-    overflow-y: auto;
-    .button {
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-
-      transition: 0.2s ease-in-out;
-      padding: 0.5rem 1rem;
-
-      .material-icons {
-        font-size: 1.5rem;
-        color: var(--light);
-        transition: 0.2s ease-in-out;
-      }
-      .text {
-        color: var(--light);
-        transition: 0.2s ease-in-out;
-      }
-
-      &:hover {
-        background-color: var(--dark);
-        box-shadow: 10px 1px 4px var(--dark);
-
-        .material-icons,
-        .text {
-          color: var(--light);
-        }
-      }
-
-      &.router-link-exact-active {
-        background-color: var(--dark);
-        border-right: 5px solid var(--light);
-
-        .material-icons,
-        .text {
-          color: var(--light);
-        }
-      }
-    }
-  }
-
-  .footer {
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-
-    p {
-      font-size: 0.875rem;
-      color: var(--grey);
-    }
-  }
-
-  &.is-expanded {
-    width: var(--sidebar-width);
-    display: flex;
-    opacity: 1;
-    transition: 0.3s ease-in-out;
-    .menu-toggle-wrap {
-      top: -3rem;
-
-      .menu-toggle {
-        display: none;
-        @media (max-width: 1024px) {
-          transform: rotate(-180deg);
-          display: flex;
-        }
-      }
-    }
-
-    h3,
-    .button .text {
-      opacity: 1;
-    }
-
-    .button {
-      .material-icons {
-        margin-right: 1rem;
-      }
-    }
-
-    .footer {
-      opacity: 0;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    position: absolute;
-    z-index: 991;
-  }
-}
-/* Personaliza las barras de desplazamiento para navegadores basados en Webkit (Chrome, Safari, Edge) */
-::-webkit-scrollbar {
-  width: 1px; /* Ancho de la barra de scroll */
+  transition:
+    width .28s cubic-bezier(.4, 0, .2, 1),
+    min-width .28s cubic-bezier(.4, 0, .2, 1),
+    box-shadow .28s ease;
 }
 
-/* Personaliza el "track" o fondo sobre el que se desplaza */
-::-webkit-scrollbar-track {
-  background: #f1f1f1; /* Color de fondo del track */
+.sidebar.is-expanded {
+  width: var(--sidebar-expanded);
+  min-width: var(--sidebar-expanded);
+
+  box-shadow: 6px 0 25px rgba(0, 0, 0, .13);
 }
 
-/* Personaliza el "thumb" o control deslizante */
-::-webkit-scrollbar-thumb {
-  background: var(--light); /* Color del control */
+
+/* =========================================
+   EXPANDIDO
+========================================= */
+
+.sidebar.is-expanded {
+  width: var(--sidebar-expanded);
+
+  box-shadow: 6px 0 25px rgba(0, 0, 0, .13);
 }
 
-/* Cambia el color del "thumb" cuando está en hover */
-::-webkit-scrollbar-thumb:hover {
-  background: #1298cd;
+
+/* =========================================
+   HEADER
+========================================= */
+
+.sidebar-header {
+  min-height: 82px;
+
+  padding: 16px 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  flex-shrink: 0;
 }
 
-/* Cambia el color del "thumb" cuando se presiona */
-::-webkit-scrollbar-thumb:active {
-  background: #333;
+
+.brand {
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
 }
 
-/* Personaliza las barras de desplazamiento para Firefox */
-.scrollable-nav-main {
-  scrollbar-width: thin; /* Ancho de la barra de desplazamiento */
-  scrollbar-color: var(--dark) var(--light); /* Color del "thumb" y del track */
+
+.brand-logo {
+  width: 48px;
+  height: 48px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, .12);
+}
+
+
+.brand-logo img {
+  width: 34px;
+  height: 34px;
+
+  object-fit: contain;
+}
+
+
+.brand-info {
+  display: flex;
+  flex-direction: column;
+
+  margin-left: 12px;
+
+  white-space: nowrap;
+}
+
+
+.brand-title {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+
+.brand-subtitle {
+  margin-top: 2px;
+
+  font-size: 11px;
+
+  color: rgba(255, 255, 255, .60);
+}
+
+
+/* =========================================
+   BOTON COMPRIMIR
+========================================= */
+
+/* =========================================
+   BOTÓN DE COLAPSAR
+========================================= */
+
+.collapse-button {
+  position: absolute;
+  top: 24px;
+  right: 12px;
+
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 9px;
+
+  background: rgba(255, 255, 255, 0.09);
+  color: white;
+
+  cursor: pointer;
+  z-index: 5;
+
+  transition:
+    background .2s ease,
+    transform .2s ease;
+}
+
+.collapse-button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Sidebar contraído en escritorio */
+
+@media (min-width: 1025px) {
+  .sidebar:not(.is-expanded) .sidebar-header {
+    justify-content: center;
+    padding: 16px 0;
+  }
+
+  .sidebar:not(.is-expanded) .brand {
+    justify-content: center;
+  }
+
+  .sidebar:not(.is-expanded) .collapse-button {
+    top: 88px;
+    right: 50%;
+    transform: translateX(50%);
+
+    width: 28px;
+    height: 28px;
+
+    background: rgba(255, 255, 255, 0.10);
+  }
+
+  .sidebar:not(.is-expanded) .collapse-button:hover {
+    background: rgba(255, 255, 255, 0.20);
+  }
+}
+.collapse-button .material-icons {
+  font-size: 21px;
+}
+
+
+/* =========================================
+   DIVIDER
+========================================= */
+
+.sidebar-divider,
+.footer-divider {
+  height: 1px;
+
+  margin: 0 14px;
+
+  background: rgba(255, 255, 255, .09);
+}
+
+
+/* =========================================
+   CONTENT
+========================================= */
+
+.sidebar-content {
+  flex: 1;
+
+  min-height: 0;
+
+  overflow: hidden;
+}
+
+
+/* =========================================
+   LABEL
+========================================= */
+
+.navigation-label {
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 18px;
+
+  color: rgba(255, 255, 255, .40);
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+}
+
+
+/* =========================================
+   MENU - SCROLLBAR PREMIUM
+========================================= */
+.sidebar-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.menu {
+  height: calc(100vh - 145px);
+  min-height: 0;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding: 8px 10px 20px;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+
+  /* Evita movimientos visuales al aparecer el scroll */
+  scrollbar-gutter: stable;
+}
+
+/* Chrome, Edge y Safari */
+
+.menu::-webkit-scrollbar {
+  width: 5px;
+}
+
+.menu::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+}
+
+.menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.20);
+
+  border-radius: 20px;
+
+  border: 1px solid transparent;
+  background-clip: padding-box;
+
+  transition: background 0.25s ease;
+}
+
+.menu:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.42);
+  background-clip: padding-box;
+}
+
+.menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.68);
+  background-clip: padding-box;
+}
+
+/* Scrollbar discreto cuando el menú está comprimido */
+
+.sidebar:not(.is-expanded) .menu {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+.sidebar:not(.is-expanded) .menu::-webkit-scrollbar {
+  width: 3px;
+}
+
+.sidebar:not(.is-expanded) .menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* =========================================
+   FOOTER
+========================================= */
+
+.sidebar-footer {
+  flex-shrink: 0;
+
+  padding-bottom: 14px;
+}
+
+
+.footer-user {
+  min-height: 60px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 10px 14px;
+}
+
+
+.user-avatar {
+  width: 38px;
+  height: 38px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+
+  background: rgba(255, 255, 255, .12);
+}
+
+
+.user-avatar .material-icons {
+  font-size: 21px;
+}
+
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+
+  margin-left: 10px;
+}
+
+
+.user-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+
+.user-role {
+  margin-top: 2px;
+
+  font-size: 10px;
+
+  color: rgba(255, 255, 255, .50);
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+.mobile-menu-button {
+  position: fixed;
+
+  top: 16px;
+  left: 16px;
+
+  width: 44px;
+  height: 44px;
+
+  z-index: 1100;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 12px;
+
+  background: var(--blue);
+
+  color: white;
+
+  box-shadow: 0 5px 18px rgba(0, 0, 0, .20);
+
+  cursor: pointer;
+}
+
+
+/* =========================================
+   MOBILE SIDEBAR
+========================================= */
+
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+
+    width: 260px;
+    min-width: 260px;
+
+    transform: translateX(-100%);
+
+    transition:
+      transform .28s cubic-bezier(.4, 0, .2, 1);
+  }
+
+  .sidebar.is-expanded {
+    width: 260px;
+    min-width: 260px;
+
+    transform: translateX(0);
+  }
+}
+
+
+/* =========================================
+   DESKTOP
+========================================= */
+
+@media (min-width: 1025px) {
+
+  .mobile-menu-button {
+    display: none;
+  }
+
 }
 </style>

@@ -1,4 +1,3 @@
-```vue
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import axios from '@/plugins/axios'
@@ -106,9 +105,7 @@ const productosActivos = computed(() => {
 })
 
 const productosFiltrados = computed(() => {
-  const texto = search.value
-    .trim()
-    .toLowerCase()
+  const texto = search.value.trim().toLowerCase()
 
   return productos.value.filter((producto) => {
     const coincideBusqueda =
@@ -119,8 +116,7 @@ const productosFiltrados = computed(() => {
 
     const coincideCategoria =
       !categoriaFiltro.value ||
-      producto.categoria?.id ===
-        categoriaFiltro.value
+      producto.categoria?.id === categoriaFiltro.value
 
     const estado = obtenerEstado(producto)
 
@@ -159,6 +155,18 @@ const productosStockNormal = computed(() => {
     (producto) =>
       obtenerEstado(producto) === 'NORMAL',
   ).length
+})
+
+const productoSeleccionado = computed(() => {
+  if (!movimientoForm.value.productoId) {
+    return null
+  }
+
+  return productos.value.find(
+    (producto) =>
+      producto.id ===
+      Number(movimientoForm.value.productoId),
+  )
 })
 
 // ─────────────────────────────────────────────
@@ -269,8 +277,6 @@ function obtenerEstado(producto) {
 }
 
 function textoEstado(producto) {
-  const estado = obtenerEstado(producto)
-
   const estados = {
     NORMAL: 'Normal',
     BAJO: 'Stock bajo',
@@ -278,12 +284,13 @@ function textoEstado(producto) {
     NO_CONTROLADO: 'No controlado',
   }
 
-  return estados[estado] || estado
+  return (
+    estados[obtenerEstado(producto)] ||
+    obtenerEstado(producto)
+  )
 }
 
 function colorEstado(producto) {
-  const estado = obtenerEstado(producto)
-
   const colores = {
     NORMAL: 'success',
     BAJO: 'warning',
@@ -291,7 +298,24 @@ function colorEstado(producto) {
     NO_CONTROLADO: 'grey',
   }
 
-  return colores[estado] || 'grey'
+  return (
+    colores[obtenerEstado(producto)] ||
+    'grey'
+  )
+}
+
+function iconoEstado(producto) {
+  const iconos = {
+    NORMAL: 'mdi-check-circle-outline',
+    BAJO: 'mdi-alert-circle-outline',
+    AGOTADO: 'mdi-close-circle-outline',
+    NO_CONTROLADO: 'mdi-infinity',
+  }
+
+  return (
+    iconos[obtenerEstado(producto)] ||
+    'mdi-help-circle-outline'
+  )
 }
 
 // ─────────────────────────────────────────────
@@ -357,6 +381,45 @@ function colorTipoMovimiento(tipo) {
   return esEntrada(tipo)
     ? 'success'
     : 'error'
+}
+
+function iconoMovimiento(tipo) {
+  const iconos = {
+    INVENTARIO_INICIAL:
+      'mdi-package-variant-plus',
+
+    COMPRA:
+      'mdi-cart-plus',
+
+    VENTA:
+      'mdi-cart-minus',
+
+    ANULACION_VENTA:
+      'mdi-cart-arrow-up',
+
+    AJUSTE_POSITIVO:
+      'mdi-plus-circle-outline',
+
+    AJUSTE_NEGATIVO:
+      'mdi-minus-circle-outline',
+
+    DONACION:
+      'mdi-gift-outline',
+
+    VENCIMIENTO:
+      'mdi-calendar-remove-outline',
+
+    CONSUMO_INTERNO:
+      'mdi-account-minus-outline',
+
+    ANULACION_COMPRA:
+      'mdi-cart-arrow-up',
+  }
+
+  return (
+    iconos[tipo] ||
+    'mdi-swap-vertical'
+  )
 }
 
 // ─────────────────────────────────────────────
@@ -427,7 +490,6 @@ async function registrarMovimiento() {
     return
   }
 
-  // Validación visual antes de llegar al backend
   const movimientosSalida = [
     'AJUSTE_NEGATIVO',
     'VENCIMIENTO',
@@ -633,30 +695,46 @@ onMounted(() => {
 <template>
   <div class="inventario-page">
 
-    <!-- HEADER -->
-    <div class="page-header">
+    <!-- ═══════════════════════════════════════ -->
+    <!-- HEADER                                  -->
+    <!-- ═══════════════════════════════════════ -->
 
-      <div>
+    <header class="page-header">
+
+      <div class="page-heading">
+
         <div class="eyebrow">
           CAFETERÍA
         </div>
 
-        <h1>
-          Inventario
-        </h1>
+        <div class="title-row">
+          <h1>Inventario</h1>
+
+          <v-chip
+            size="small"
+            color="primary"
+            variant="tonal"
+          >
+            {{ totalProductos }} productos
+          </v-chip>
+        </div>
 
         <p>
           Control de existencias y movimientos
+          de inventario.
         </p>
+
       </div>
 
       <div class="header-actions">
 
         <v-btn
           variant="outlined"
+          color="primary"
           prepend-icon="mdi-refresh"
           :loading="
-            loading || loadingMovimientos
+            loading ||
+            loadingMovimientos
           "
           @click="cargarTodo"
         >
@@ -666,6 +744,7 @@ onMounted(() => {
         <v-btn
           color="primary"
           prepend-icon="mdi-plus"
+          elevation="0"
           @click="abrirMovimiento"
         >
           Nuevo movimiento
@@ -673,200 +752,238 @@ onMounted(() => {
 
       </div>
 
-    </div>
+    </header>
 
-    <!-- RESUMEN -->
-    <div class="summary-grid">
+    <!-- ═══════════════════════════════════════ -->
+    <!-- RESUMEN                                 -->
+    <!-- ═══════════════════════════════════════ -->
 
-      <!-- Productos -->
+    <section class="summary-grid">
+
+      <!-- TOTAL -->
       <div class="summary-card">
 
-        <div class="summary-icon">
+        <div class="summary-icon blue">
           <v-icon
             icon="mdi-package-variant"
           />
         </div>
 
-        <div>
-          <span>
-            Productos
-          </span>
+        <div class="summary-content">
+
+          <span>Productos</span>
 
           <strong>
             {{ totalProductos }}
           </strong>
+
+          <small>
+            Registrados
+          </small>
+
         </div>
 
       </div>
 
-      <!-- Bajo stock -->
+      <!-- NORMAL -->
       <div class="summary-card">
 
-        <div
-          class="
-            summary-icon
-            warning-icon
-          "
-        >
-          <v-icon
-            icon="mdi-alert-outline"
-          />
-        </div>
-
-        <div>
-          <span>
-            Stock bajo
-          </span>
-
-          <strong>
-            {{ productosBajoStock }}
-          </strong>
-        </div>
-
-      </div>
-
-      <!-- Agotados -->
-      <div class="summary-card">
-
-        <div
-          class="
-            summary-icon
-            danger-icon
-          "
-        >
-          <v-icon
-            icon="
-              mdi-package-variant-closed-remove
-            "
-          />
-        </div>
-
-        <div>
-          <span>
-            Agotados
-          </span>
-
-          <strong>
-            {{ productosAgotados }}
-          </strong>
-        </div>
-
-      </div>
-
-      <!-- Normal -->
-      <div class="summary-card">
-
-        <div
-          class="
-            summary-icon
-            success-icon
-          "
-        >
+        <div class="summary-icon green">
           <v-icon
             icon="mdi-check-circle-outline"
           />
         </div>
 
-        <div>
-          <span>
-            Stock normal
-          </span>
+        <div class="summary-content">
+
+          <span>Stock normal</span>
 
           <strong>
             {{ productosStockNormal }}
           </strong>
+
+          <small>
+            Existencias saludables
+          </small>
+
         </div>
 
       </div>
 
-    </div>
+      <!-- BAJO -->
+      <div class="summary-card">
 
-    <!-- INVENTARIO ACTUAL -->
+        <div class="summary-icon orange">
+          <v-icon
+            icon="mdi-alert-outline"
+          />
+        </div>
+
+        <div class="summary-content">
+
+          <span>Stock bajo</span>
+
+          <strong>
+            {{ productosBajoStock }}
+          </strong>
+
+          <small>
+            Requieren atención
+          </small>
+
+        </div>
+
+      </div>
+
+      <!-- AGOTADOS -->
+      <div class="summary-card">
+
+        <div class="summary-icon red">
+          <v-icon
+            icon="mdi-package-variant-closed-remove"
+          />
+        </div>
+
+        <div class="summary-content">
+
+          <span>Agotados</span>
+
+          <strong>
+            {{ productosAgotados }}
+          </strong>
+
+          <small>
+            Sin existencias
+          </small>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- EXISTENCIAS                             -->
+    <!-- ═══════════════════════════════════════ -->
+
     <v-card
       class="main-card"
       elevation="0"
     >
 
+      <!-- CARD HEADER -->
+
       <div class="card-header">
 
-        <div>
-          <h2>
-            Existencias
-          </h2>
+        <div class="section-heading">
 
-          <p>
-            Estado actual de los productos
-          </p>
+          <div class="section-icon">
+            <v-icon
+              icon="mdi-warehouse"
+            />
+          </div>
+
+          <div>
+            <h2>Existencias</h2>
+
+            <p>
+              Estado actual de tus productos
+            </p>
+          </div>
+
+        </div>
+
+        <div class="result-counter">
+          {{ productosFiltrados.length }}
+          resultados
         </div>
 
       </div>
 
       <!-- FILTROS -->
-      <div class="filters">
 
-        <v-text-field
-          v-model="search"
-          label="Buscar producto"
-          placeholder="Nombre del producto..."
-          prepend-inner-icon="mdi-magnify"
-          variant="outlined"
-          density="comfortable"
-          hide-details
-          clearable
-        />
+      <div class="filters-container">
 
-        <v-select
-          v-model="categoriaFiltro"
-          :items="categoriasActivas"
-          item-title="nombre"
-          item-value="id"
-          label="Categoría"
-          variant="outlined"
-          density="comfortable"
-          hide-details
-          clearable
-        />
+        <div class="filter-search">
 
-        <v-select
-          v-model="estadoFiltro"
-          :items="[
-            {
-              title: 'Todos',
-              value: 'TODOS',
-            },
-            {
-              title: 'Normal',
-              value: 'NORMAL',
-            },
-            {
-              title: 'Stock bajo',
-              value: 'BAJO',
-            },
-            {
-              title: 'Agotados',
-              value: 'AGOTADO',
-            },
-            {
-              title: 'No controlado',
-              value: 'NO_CONTROLADO',
-            },
-          ]"
-          item-title="title"
-          item-value="value"
-          label="Estado"
-          variant="outlined"
-          density="comfortable"
-          hide-details
-        />
+          <v-text-field
+            v-model="search"
+            placeholder="Buscar producto..."
+            prepend-inner-icon="mdi-magnify"
+            variant="solo"
+            flat
+            density="comfortable"
+            hide-details
+            clearable
+          />
+
+        </div>
+
+        <div class="filter-select">
+
+          <v-select
+            v-model="categoriaFiltro"
+            :items="categoriasActivas"
+            item-title="nombre"
+            item-value="id"
+            placeholder="Todas las categorías"
+            prepend-inner-icon="mdi-shape-outline"
+            variant="solo"
+            flat
+            density="comfortable"
+            hide-details
+            clearable
+          />
+
+        </div>
+
+        <div class="filter-select">
+
+          <v-select
+            v-model="estadoFiltro"
+            :items="[
+              {
+                title: 'Todos los estados',
+                value: 'TODOS',
+              },
+              {
+                title: 'Normal',
+                value: 'NORMAL',
+              },
+              {
+                title: 'Stock bajo',
+                value: 'BAJO',
+              },
+              {
+                title: 'Agotados',
+                value: 'AGOTADO',
+              },
+              {
+                title: 'No controlado',
+                value: 'NO_CONTROLADO',
+              },
+            ]"
+            item-title="title"
+            item-value="value"
+            prepend-inner-icon="mdi-filter-outline"
+            variant="solo"
+            flat
+            density="comfortable"
+            hide-details
+          />
+
+        </div>
 
       </div>
 
-      <!-- TABLA INVENTARIO -->
+      <!-- TABLA -->
+
       <v-data-table
         :headers="[
           {
             title: 'Producto',
             key: 'nombre',
+            minWidth: 250,
           },
           {
             title: 'Categoría',
@@ -878,7 +995,7 @@ onMounted(() => {
             align: 'end',
           },
           {
-            title: 'Stock mínimo',
+            title: 'Mínimo',
             key: 'stockMinimo',
             align: 'end',
           },
@@ -891,10 +1008,11 @@ onMounted(() => {
             key: 'estado',
           },
           {
-            title: 'Acciones',
+            title: '',
             key: 'acciones',
             sortable: false,
             align: 'end',
+            width: 70,
           },
         ]"
         :items="productosFiltrados"
@@ -905,73 +1023,112 @@ onMounted(() => {
       >
 
         <!-- PRODUCTO -->
+
         <template #item.nombre="{ item }">
 
-          <div class="product-name">
+          <div class="product-cell">
 
-            <strong>
-              {{ item.nombre }}
-            </strong>
-
-            <span
-              v-if="item.descripcion"
+            <div
+              class="product-avatar"
+              :class="`avatar-${colorEstado(item)}`"
             >
-              {{ item.descripcion }}
-            </span>
+              <v-icon
+                :icon="
+                  item.controlaInventario
+                    ? 'mdi-package-variant'
+                    : 'mdi-infinity'
+                "
+                size="20"
+              />
+            </div>
+
+            <div class="product-info">
+
+              <strong>
+                {{ item.nombre }}
+              </strong>
+
+              <span
+                v-if="item.descripcion"
+              >
+                {{ item.descripcion }}
+              </span>
+
+            </div>
 
           </div>
 
         </template>
 
         <!-- CATEGORÍA -->
+
         <template
           #item.categoria.nombre="{ item }"
         >
-          {{
-            item.categoria?.nombre ||
-            'Sin categoría'
-          }}
+
+          <span class="category-label">
+            {{
+              item.categoria?.nombre ||
+              'Sin categoría'
+            }}
+          </span>
+
         </template>
 
-        <!-- STOCK -->
+        <!-- STOCK ACTUAL -->
+
         <template
           #item.stockActual="{ item }"
         >
 
-          <strong
-            :class="{
-              'stock-danger':
-                obtenerEstado(item) ===
-                'AGOTADO',
+          <div class="stock-cell">
 
-              'stock-warning':
-                obtenerEstado(item) ===
-                'BAJO',
-            }"
-          >
-            {{
-              formatoStock(
-                item.stockActual,
-                item.unidad,
-              )
-            }}
-          </strong>
+            <strong
+              :class="{
+                'stock-danger':
+                  obtenerEstado(item) ===
+                  'AGOTADO',
+
+                'stock-warning':
+                  obtenerEstado(item) ===
+                  'BAJO',
+              }"
+            >
+              {{
+                formatoStock(
+                  item.stockActual,
+                  item.unidad,
+                )
+              }}
+            </strong>
+
+            <span>
+              {{ item.unidad }}
+            </span>
+
+          </div>
 
         </template>
 
         <!-- STOCK MÍNIMO -->
+
         <template
           #item.stockMinimo="{ item }"
         >
-          {{
-            formatoStock(
-              item.stockMinimo,
-              item.unidad,
-            )
-          }}
+
+          <span class="minimum-stock">
+            {{
+              formatoStock(
+                item.stockMinimo,
+                item.unidad,
+              )
+            }}
+          </span>
+
         </template>
 
         <!-- UNIDAD -->
+
         <template #item.unidad="{ item }">
 
           <span class="unit-label">
@@ -981,25 +1138,37 @@ onMounted(() => {
         </template>
 
         <!-- ESTADO -->
+
         <template #item.estado="{ item }">
 
           <v-chip
             :color="colorEstado(item)"
             size="small"
             variant="tonal"
+            class="status-chip"
           >
+
+            <v-icon
+              start
+              :icon="iconoEstado(item)"
+              size="15"
+            />
+
             {{ textoEstado(item) }}
+
           </v-chip>
 
         </template>
 
         <!-- ACCIONES -->
+
         <template
           #item.acciones="{ item }"
         >
 
           <v-tooltip
             text="Ver kardex"
+            location="top"
           >
 
             <template
@@ -1011,6 +1180,7 @@ onMounted(() => {
                 icon="mdi-history"
                 variant="text"
                 size="small"
+                color="primary"
                 @click="
                   abrirKardex(item)
                 "
@@ -1023,22 +1193,25 @@ onMounted(() => {
         </template>
 
         <!-- SIN DATOS -->
+
         <template #no-data>
 
           <div class="empty-state">
 
-            <v-icon
-              icon="mdi-package-variant"
-              size="42"
-            />
+            <div class="empty-icon">
+              <v-icon
+                icon="mdi-package-search-outline"
+                size="30"
+              />
+            </div>
 
             <strong>
-              No hay productos
+              No encontramos productos
             </strong>
 
             <span>
-              No se encontraron productos
-              con los filtros actuales.
+              Prueba cambiando los filtros
+              de búsqueda.
             </span>
 
           </div>
@@ -1049,26 +1222,46 @@ onMounted(() => {
 
     </v-card>
 
-    <!-- ÚLTIMOS MOVIMIENTOS -->
+    <!-- ═══════════════════════════════════════ -->
+    <!-- MOVIMIENTOS                             -->
+    <!-- ═══════════════════════════════════════ -->
+
     <v-card
-      class="
-        main-card
-        movements-card
-      "
+      class="main-card movements-card"
       elevation="0"
     >
 
       <div class="card-header">
 
-        <div>
-          <h2>
-            Últimos movimientos
-          </h2>
+        <div class="section-heading">
 
-          <p>
-            Historial reciente del inventario
-          </p>
+          <div class="section-icon">
+            <v-icon
+              icon="mdi-swap-vertical-circle-outline"
+            />
+          </div>
+
+          <div>
+
+            <h2>
+              Últimos movimientos
+            </h2>
+
+            <p>
+              Actividad reciente del inventario
+            </p>
+
+          </div>
+
         </div>
+
+        <v-chip
+          size="small"
+          variant="tonal"
+          color="primary"
+        >
+          Últimos 15
+        </v-chip>
 
       </div>
 
@@ -1081,6 +1274,7 @@ onMounted(() => {
           {
             title: 'Producto',
             key: 'producto.nombre',
+            minWidth: 220,
           },
           {
             title: 'Movimiento',
@@ -1107,25 +1301,67 @@ onMounted(() => {
         :loading="loadingMovimientos"
         item-value="id"
         hover
+        class="movements-table"
       >
 
         <!-- FECHA -->
+
         <template
           #item.createdAt="{ item }"
         >
-          {{ formatoFecha(item.createdAt) }}
+
+          <div class="date-cell">
+            <strong>
+              {{
+                formatoFecha(
+                  item.createdAt,
+                ).split(',')[0]
+              }}
+            </strong>
+
+            <span>
+              {{
+                formatoFecha(
+                  item.createdAt,
+                ).split(',')[1]
+              }}
+            </span>
+          </div>
+
         </template>
 
         <!-- PRODUCTO -->
+
         <template
           #item.producto.nombre="{ item }"
         >
-          {{
-            item.producto?.nombre || '-'
-          }}
+
+          <div class="movement-product">
+
+            <div class="movement-product-icon">
+              <v-icon
+                :icon="
+                  iconoMovimiento(
+                    item.tipo,
+                  )
+                "
+                size="18"
+              />
+            </div>
+
+            <strong>
+              {{
+                item.producto?.nombre ||
+                '-'
+              }}
+            </strong>
+
+          </div>
+
         </template>
 
         <!-- TIPO -->
+
         <template #item.tipo="{ item }">
 
           <v-chip
@@ -1137,75 +1373,127 @@ onMounted(() => {
             size="small"
             variant="tonal"
           >
+
+            <v-icon
+              start
+              :icon="
+                iconoMovimiento(
+                  item.tipo,
+                )
+              "
+              size="15"
+            />
+
             {{
               textoTipoMovimiento(
                 item.tipo,
               )
             }}
+
           </v-chip>
 
         </template>
 
         <!-- CANTIDAD -->
+
         <template
           #item.cantidad="{ item }"
         >
 
-          <strong
+          <div
+            class="movement-quantity"
             :class="
               cantidadMovimiento(item) >= 0
-                ? 'movement-positive'
-                : 'movement-negative'
+                ? 'positive'
+                : 'negative'
             "
           >
 
-            {{
-              cantidadMovimiento(item) >= 0
-                ? '+'
-                : ''
-            }}{{
-              formatoStock(
-                Math.abs(
-                  cantidadMovimiento(item),
-                ),
-                item.producto?.unidad,
-              )
-            }}
+            <v-icon
+              :icon="
+                cantidadMovimiento(item) >= 0
+                  ? 'mdi-arrow-up'
+                  : 'mdi-arrow-down'
+              "
+              size="16"
+            />
 
-          </strong>
+            <strong>
+
+              {{
+                formatoStock(
+                  Math.abs(
+                    cantidadMovimiento(
+                      item,
+                    ),
+                  ),
+                  item.producto?.unidad,
+                )
+              }}
+
+            </strong>
+
+          </div>
 
         </template>
 
         <!-- STOCK NUEVO -->
+
         <template
           #item.stockNuevo="{ item }"
         >
 
-          {{
-            formatoStock(
-              item.stockNuevo,
-              item.producto?.unidad,
-            )
-          }}
+          <strong class="resulting-stock">
+            {{
+              formatoStock(
+                item.stockNuevo,
+                item.producto?.unidad,
+              )
+            }}
+          </strong>
 
         </template>
 
         <!-- MIEMBRO -->
+
         <template #item.miembro="{ item }">
 
-          {{ nombreMiembro(item.miembro) }}
+          <div class="member-cell">
+
+            <div class="member-avatar">
+              {{
+                nombreMiembro(
+                  item.miembro,
+                )
+                  .charAt(0)
+                  .toUpperCase()
+              }}
+            </div>
+
+            <span>
+              {{
+                nombreMiembro(
+                  item.miembro,
+                )
+              }}
+            </span>
+
+          </div>
 
         </template>
 
         <!-- SIN DATOS -->
+
         <template #no-data>
 
           <div class="empty-state">
 
-            <v-icon
-              icon="mdi-history"
-              size="42"
-            />
+            <div class="empty-icon">
+              <v-icon
+                icon="mdi-history"
+                size="30"
+              />
+            </div>
 
             <strong>
               No hay movimientos
@@ -1230,31 +1518,40 @@ onMounted(() => {
 
     <v-dialog
       v-model="movimientoDialog"
-      max-width="650"
+      max-width="680"
       persistent
     >
 
-      <v-card>
+      <v-card class="modern-dialog">
 
-        <v-card-title
-          class="dialog-title"
-        >
+        <div class="dialog-header">
 
-          <div>
+          <div class="dialog-heading">
 
-            <span>
-              INVENTARIO
-            </span>
+            <div class="dialog-icon">
+              <v-icon
+                icon="mdi-swap-vertical"
+              />
+            </div>
 
-            <h2>
-              Nuevo movimiento
-            </h2>
+            <div>
+
+              <span>
+                INVENTARIO
+              </span>
+
+              <h2>
+                Nuevo movimiento
+              </h2>
+
+            </div>
 
           </div>
 
           <v-btn
             icon="mdi-close"
             variant="text"
+            size="small"
             :disabled="
               movimientoLoading
             "
@@ -1263,22 +1560,25 @@ onMounted(() => {
             "
           />
 
-        </v-card-title>
+        </div>
 
         <v-divider />
 
-        <v-card-text>
+        <v-card-text class="dialog-content">
 
-          <v-alert
-            type="info"
-            variant="tonal"
-            class="mb-5"
-          >
-            Utiliza esta opción para
-            registrar ajustes, donaciones,
-            vencimientos, consumo interno
-            o el inventario inicial.
-          </v-alert>
+          <div class="dialog-info">
+
+            <v-icon
+              icon="mdi-information-outline"
+              size="20"
+            />
+
+            <span>
+              Registra entradas o salidas
+              manuales del inventario.
+            </span>
+
+          </div>
 
           <v-form
             @submit.prevent="
@@ -1286,214 +1586,248 @@ onMounted(() => {
             "
           >
 
-            <v-row>
+            <div class="form-section">
 
-              <!-- PRODUCTO -->
-              <v-col cols="12">
+              <div class="form-section-title">
+                Producto y movimiento
+              </div>
 
-                <v-select
-                  v-model="
-                    movimientoForm.productoId
-                  "
-                  :items="
-                    productosActivos
-                  "
-                  item-title="nombre"
-                  item-value="id"
-                  label="Producto"
-                  prepend-inner-icon="
-                    mdi-package-variant
-                  "
-                  variant="outlined"
-                  :disabled="
-                    movimientoLoading
-                  "
-                  hide-details="auto"
-                  clearable
-                />
+              <v-row>
 
-              </v-col>
+                <!-- PRODUCTO -->
 
-              <!-- TIPO -->
-              <v-col
-                cols="12"
-                md="6"
-              >
+                <v-col cols="12">
 
-                <v-select
-                  v-model="
-                    movimientoForm.tipo
-                  "
-                  :items="
-                    tiposMovimientoManual
-                  "
-                  item-title="title"
-                  item-value="value"
-                  label="Tipo de movimiento"
-                  prepend-inner-icon="
-                    mdi-swap-vertical
-                  "
-                  variant="outlined"
-                  :disabled="
-                    movimientoLoading
-                  "
-                  hide-details="auto"
-                  clearable
-                />
+                  <v-select
+                    v-model="
+                      movimientoForm.productoId
+                    "
+                    :items="
+                      productosActivos
+                    "
+                    item-title="nombre"
+                    item-value="id"
+                    label="Producto"
+                    prepend-inner-icon="
+                      mdi-package-variant
+                    "
+                    variant="outlined"
+                    :disabled="
+                      movimientoLoading
+                    "
+                    hide-details="auto"
+                    clearable
+                  />
 
-              </v-col>
+                </v-col>
 
-              <!-- CANTIDAD -->
-              <v-col
-                cols="12"
-                md="6"
-              >
+                <!-- TIPO -->
 
-                <v-text-field
-                  v-model.number="
-                    movimientoForm.cantidad
-                  "
-                  label="Cantidad"
-                  type="number"
-                  min="0.001"
-                  step="0.001"
-                  prepend-inner-icon="
-                    mdi-counter
-                  "
-                  variant="outlined"
-                  :disabled="
-                    movimientoLoading
-                  "
-                  hide-details="auto"
-                />
-
-              </v-col>
-
-              <!-- STOCK ACTUAL -->
-              <v-col
-                v-if="
-                  movimientoForm.productoId
-                "
-                cols="12"
-              >
-
-                <div
-                  class="current-stock"
+                <v-col
+                  cols="12"
+                  md="6"
                 >
 
-                  <span>
-                    Stock actual
-                  </span>
+                  <v-select
+                    v-model="
+                      movimientoForm.tipo
+                    "
+                    :items="
+                      tiposMovimientoManual
+                    "
+                    item-title="title"
+                    item-value="value"
+                    label="Tipo de movimiento"
+                    prepend-inner-icon="
+                      mdi-swap-vertical
+                    "
+                    variant="outlined"
+                    :disabled="
+                      movimientoLoading
+                    "
+                    hide-details="auto"
+                    clearable
+                  />
 
-                  <strong>
+                </v-col>
 
-                    {{
-                      formatoStock(
-                        productos.find(
-                          p =>
-                            p.id ===
-                            Number(
-                              movimientoForm.productoId,
-                            ),
-                        )?.stockActual,
-                        productos.find(
-                          p =>
-                            p.id ===
-                            Number(
-                              movimientoForm.productoId,
-                            ),
-                        )?.unidad,
-                      )
-                    }}
+                <!-- CANTIDAD -->
 
-                    {{
-                      productos.find(
-                        p =>
-                          p.id ===
-                          Number(
-                            movimientoForm.productoId,
-                          ),
-                      )?.unidad
-                    }}
+                <v-col
+                  cols="12"
+                  md="6"
+                >
 
-                  </strong>
+                  <v-text-field
+                    v-model.number="
+                      movimientoForm.cantidad
+                    "
+                    label="Cantidad"
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    prepend-inner-icon="
+                      mdi-counter
+                    "
+                    variant="outlined"
+                    :disabled="
+                      movimientoLoading
+                    "
+                    hide-details="auto"
+                  />
 
-                </div>
+                </v-col>
 
-              </v-col>
+              </v-row>
 
-              <!-- OBSERVACIÓN -->
-              <v-col cols="12">
+            </div>
 
-                <v-textarea
-                  v-model="
-                    movimientoForm.observacion
-                  "
-                  label="Observación"
-                  placeholder="
-                    Motivo del movimiento...
-                  "
-                  rows="3"
-                  variant="outlined"
-                  :disabled="
-                    movimientoLoading
-                  "
-                  hide-details="auto"
+            <!-- STOCK -->
+
+            <div
+              v-if="
+                productoSeleccionado
+              "
+              class="selected-product"
+            >
+
+              <div class="selected-product-icon">
+                <v-icon
+                  icon="mdi-package-variant"
                 />
+              </div>
 
-              </v-col>
+              <div>
 
-              <!-- REFERENCIA -->
-              <v-col
-                cols="12"
-                md="7"
+                <span>
+                  Stock actual
+                </span>
+
+                <strong>
+
+                  {{
+                    formatoStock(
+                      productoSeleccionado.stockActual,
+                      productoSeleccionado.unidad,
+                    )
+                  }}
+
+                  {{
+                    productoSeleccionado.unidad
+                  }}
+
+                </strong>
+
+              </div>
+
+              <v-chip
+                :color="
+                  colorEstado(
+                    productoSeleccionado,
+                  )
+                "
+                variant="tonal"
+                size="small"
               >
+                {{
+                  textoEstado(
+                    productoSeleccionado,
+                  )
+                }}
+              </v-chip>
 
-                <v-text-field
-                  v-model="
-                    movimientoForm
-                      .numeroReferencia
-                  "
-                  label="Número de referencia"
-                  placeholder="Opcional"
-                  variant="outlined"
-                  :disabled="
-                    movimientoLoading
-                  "
-                  hide-details="auto"
-                />
+            </div>
 
-              </v-col>
+            <!-- DETALLES -->
 
-              <!-- ID REFERENCIA -->
-              <v-col
-                cols="12"
-                md="5"
-              >
+            <div class="form-section">
 
-                <v-text-field
-                  v-model.number="
-                    movimientoForm
-                      .referenciaId
-                  "
-                  label="ID referencia"
-                  type="number"
-                  placeholder="Opcional"
-                  variant="outlined"
-                  :disabled="
-                    movimientoLoading
-                  "
-                  hide-details="auto"
-                />
+              <div class="form-section-title">
+                Detalles
+              </div>
 
-              </v-col>
+              <v-row>
 
-            </v-row>
+                <!-- OBSERVACIÓN -->
+
+                <v-col cols="12">
+
+                  <v-textarea
+                    v-model="
+                      movimientoForm.observacion
+                    "
+                    label="Observación"
+                    placeholder="Describe el motivo del movimiento..."
+                    rows="3"
+                    variant="outlined"
+                    :disabled="
+                      movimientoLoading
+                    "
+                    hide-details="auto"
+                  />
+
+                </v-col>
+
+                <!-- REFERENCIA -->
+
+                <v-col
+                  cols="12"
+                  md="7"
+                >
+
+                  <v-text-field
+                    v-model="
+                      movimientoForm
+                        .numeroReferencia
+                    "
+                    label="Número de referencia"
+                    placeholder="Opcional"
+                    prepend-inner-icon="
+                      mdi-pound
+                    "
+                    variant="outlined"
+                    :disabled="
+                      movimientoLoading
+                    "
+                    hide-details="auto"
+                  />
+
+                </v-col>
+
+                <!-- ID -->
+
+                <v-col
+                  cols="12"
+                  md="5"
+                >
+
+                  <v-text-field
+                    v-model.number="
+                      movimientoForm
+                        .referenciaId
+                    "
+                    label="ID referencia"
+                    type="number"
+                    placeholder="Opcional"
+                    prepend-inner-icon="
+                      mdi-identifier
+                    "
+                    variant="outlined"
+                    :disabled="
+                      movimientoLoading
+                    "
+                    hide-details="auto"
+                  />
+
+                </v-col>
+
+              </v-row>
+
+            </div>
 
             <!-- ACCIONES -->
-            <div
-              class="dialog-actions"
-            >
+
+            <div class="dialog-actions">
 
               <v-btn
                 variant="text"
@@ -1514,6 +1848,7 @@ onMounted(() => {
                   movimientoLoading
                 "
                 prepend-icon="mdi-check"
+                elevation="0"
               >
                 Registrar movimiento
               </v-btn>
@@ -1534,45 +1869,55 @@ onMounted(() => {
 
     <v-dialog
       v-model="kardexDialog"
-      max-width="1100"
+      max-width="1150"
     >
 
-      <v-card>
+      <v-card class="modern-dialog">
 
-        <v-card-title
-          class="dialog-title"
-        >
+        <div class="dialog-header">
 
-          <div>
+          <div class="dialog-heading">
 
-            <span>
-              KARDEX
-            </span>
+            <div class="dialog-icon">
+              <v-icon
+                icon="mdi-history"
+              />
+            </div>
 
-            <h2>
-              {{
-                kardex?.producto?.nombre ||
-                'Producto'
-              }}
-            </h2>
+            <div>
+
+              <span>
+                KARDEX
+              </span>
+
+              <h2>
+                {{
+                  kardex?.producto?.nombre ||
+                  'Producto'
+                }}
+              </h2>
+
+            </div>
 
           </div>
 
           <v-btn
             icon="mdi-close"
             variant="text"
+            size="small"
             @click="
               kardexDialog = false
             "
           />
 
-        </v-card-title>
+        </div>
 
         <v-divider />
 
         <v-card-text>
 
           <!-- LOADING -->
+
           <div
             v-if="kardexLoading"
             class="loading-container"
@@ -1580,213 +1925,282 @@ onMounted(() => {
 
             <v-progress-circular
               indeterminate
-              size="42"
+              size="44"
+              width="3"
+              color="primary"
             />
+
+            <span>
+              Cargando historial...
+            </span>
 
           </div>
 
           <!-- KARDEX -->
-          <template
-            v-else-if="kardex"
-          >
 
-            <!-- RESUMEN KARDEX -->
-            <div
-              class="kardex-summary"
-            >
+          <template v-else-if="kardex">
 
-              <div>
+            <!-- RESUMEN -->
 
-                <span>
-                  Producto
-                </span>
+            <div class="kardex-summary">
 
-                <strong>
-                  {{
-                    kardex.producto.nombre
-                  }}
-                </strong>
+              <div class="kardex-product-card">
+
+                <div class="kardex-summary-icon">
+                  <v-icon
+                    icon="mdi-package-variant"
+                  />
+                </div>
+
+                <div>
+
+                  <span>
+                    Producto
+                  </span>
+
+                  <strong>
+                    {{
+                      kardex.producto.nombre
+                    }}
+                  </strong>
+
+                </div>
 
               </div>
 
-              <div>
+              <div class="kardex-stock-card">
 
-                <span>
-                  Stock actual
-                </span>
+                <div class="kardex-summary-icon">
+                  <v-icon
+                    icon="mdi-cube-outline"
+                  />
+                </div>
 
-                <strong>
+                <div>
 
-                  {{
-                    formatoStock(
-                      kardex.producto
-                        .stockActual,
-                      kardex.producto
-                        .unidad,
-                    )
-                  }}
+                  <span>
+                    Stock actual
+                  </span>
 
-                  {{
-                    kardex.producto.unidad
-                  }}
+                  <strong>
 
-                </strong>
+                    {{
+                      formatoStock(
+                        kardex.producto
+                          .stockActual,
+                        kardex.producto
+                          .unidad,
+                      )
+                    }}
+
+                    {{
+                      kardex.producto.unidad
+                    }}
+
+                  </strong>
+
+                </div>
 
               </div>
 
             </div>
 
-            <!-- TABLA KARDEX -->
-            <v-data-table
-              :headers="[
-                {
-                  title: 'Fecha',
-                  key: 'fecha',
-                },
-                {
-                  title: 'Movimiento',
-                  key: 'tipo',
-                },
-                {
-                  title: 'Cantidad',
-                  key: 'cantidad',
-                  align: 'end',
-                },
-                {
-                  title: 'Stock anterior',
-                  key: 'stockAnterior',
-                  align: 'end',
-                },
-                {
-                  title: 'Stock nuevo',
-                  key: 'stockNuevo',
-                  align: 'end',
-                },
-                {
-                  title: 'Realizado por',
-                  key: 'realizadoPor',
-                },
-                {
-                  title: 'Observación',
-                  key: 'observacion',
-                },
-              ]"
-              :items="
-                kardex.movimientos
-              "
-              density="comfortable"
-              hover
-            >
+            <!-- TABLA -->
 
-              <template
-                #item.fecha="{ item }"
+            <div class="kardex-table-wrapper">
+
+              <v-data-table
+                :headers="[
+                  {
+                    title: 'Fecha',
+                    key: 'fecha',
+                  },
+                  {
+                    title: 'Movimiento',
+                    key: 'tipo',
+                  },
+                  {
+                    title: 'Cantidad',
+                    key: 'cantidad',
+                    align: 'end',
+                  },
+                  {
+                    title: 'Stock anterior',
+                    key: 'stockAnterior',
+                    align: 'end',
+                  },
+                  {
+                    title: 'Stock nuevo',
+                    key: 'stockNuevo',
+                    align: 'end',
+                  },
+                  {
+                    title: 'Realizado por',
+                    key: 'realizadoPor',
+                  },
+                  {
+                    title: 'Observación',
+                    key: 'observacion',
+                  },
+                ]"
+                :items="
+                  kardex.movimientos
+                "
+                density="comfortable"
+                hover
               >
 
-                {{
-                  formatoFecha(
-                    item.fecha,
-                  )
-                }}
-
-              </template>
-
-              <template
-                #item.tipo="{ item }"
-              >
-
-                <v-chip
-                  :color="
-                    colorTipoMovimiento(
-                      item.tipo,
-                    )
-                  "
-                  size="small"
-                  variant="tonal"
-                >
-                  {{
-                    textoTipoMovimiento(
-                      item.tipo,
-                    )
-                  }}
-                </v-chip>
-
-              </template>
-
-              <template
-                #item.cantidad="{ item }"
-              >
-
-                <strong
-                  :class="
-                    cantidadMovimiento(
-                      item,
-                    ) >= 0
-                      ? 'movement-positive'
-                      : 'movement-negative'
-                  "
+                <template
+                  #item.fecha="{ item }"
                 >
 
-                  {{
-                    cantidadMovimiento(
-                      item,
-                    ) >= 0
-                      ? '+'
-                      : ''
-                  }}{{
-                    formatoStock(
-                      Math.abs(
+                  <div class="date-cell">
+
+                    <strong>
+                      {{
+                        formatoFecha(
+                          item.fecha,
+                        ).split(',')[0]
+                      }}
+                    </strong>
+
+                    <span>
+                      {{
+                        formatoFecha(
+                          item.fecha,
+                        ).split(',')[1]
+                      }}
+                    </span>
+
+                  </div>
+
+                </template>
+
+                <template
+                  #item.tipo="{ item }"
+                >
+
+                  <v-chip
+                    :color="
+                      colorTipoMovimiento(
+                        item.tipo,
+                      )
+                    "
+                    size="small"
+                    variant="tonal"
+                  >
+
+                    <v-icon
+                      start
+                      :icon="
+                        iconoMovimiento(
+                          item.tipo,
+                        )
+                      "
+                      size="15"
+                    />
+
+                    {{
+                      textoTipoMovimiento(
+                        item.tipo,
+                      )
+                    }}
+
+                  </v-chip>
+
+                </template>
+
+                <template
+                  #item.cantidad="{ item }"
+                >
+
+                  <div
+                    class="movement-quantity"
+                    :class="
+                      cantidadMovimiento(
+                        item,
+                      ) >= 0
+                        ? 'positive'
+                        : 'negative'
+                    "
+                  >
+
+                    <v-icon
+                      :icon="
                         cantidadMovimiento(
                           item,
-                        ),
-                      ),
+                        ) >= 0
+                          ? 'mdi-arrow-up'
+                          : 'mdi-arrow-down'
+                      "
+                      size="16"
+                    />
+
+                    <strong>
+
+                      {{
+                        formatoStock(
+                          Math.abs(
+                            cantidadMovimiento(
+                              item,
+                            ),
+                          ),
+                          kardex.producto
+                            .unidad,
+                        )
+                      }}
+
+                    </strong>
+
+                  </div>
+
+                </template>
+
+                <template
+                  #item.stockAnterior="{ item }"
+                >
+
+                  {{
+                    formatoStock(
+                      item.stockAnterior,
                       kardex.producto
                         .unidad,
                     )
                   }}
 
-                </strong>
+                </template>
 
-              </template>
+                <template
+                  #item.stockNuevo="{ item }"
+                >
 
-              <template
-                #item.stockAnterior="{ item }"
-              >
+                  <strong>
+                    {{
+                      formatoStock(
+                        item.stockNuevo,
+                        kardex.producto
+                          .unidad,
+                      )
+                    }}
+                  </strong>
 
-                {{
-                  formatoStock(
-                    item.stockAnterior,
-                    kardex.producto
-                      .unidad,
-                  )
-                }}
+                </template>
 
-              </template>
+                <template
+                  #item.observacion="{ item }"
+                >
 
-              <template
-                #item.stockNuevo="{ item }"
-              >
+                  <span class="observation">
+                    {{
+                      item.observacion || '-'
+                    }}
+                  </span>
 
-                {{
-                  formatoStock(
-                    item.stockNuevo,
-                    kardex.producto
-                      .unidad,
-                  )
-                }}
+                </template>
 
-              </template>
+              </v-data-table>
 
-              <template
-                #item.observacion="{ item }"
-              >
-
-                {{
-                  item.observacion || '-'
-                }}
-
-              </template>
-
-            </v-data-table>
+            </div>
 
           </template>
 
@@ -1797,13 +2211,27 @@ onMounted(() => {
     </v-dialog>
 
     <!-- SNACKBAR -->
+
     <v-snackbar
       v-model="snackbar"
       :color="snackbarColor"
       timeout="3500"
+      location="bottom right"
     >
 
-      {{ snackbarMessage }}
+      <div class="snackbar-content">
+
+        <v-icon
+          :icon="
+            snackbarColor === 'error'
+              ? 'mdi-alert-circle-outline'
+              : 'mdi-check-circle-outline'
+          "
+        />
+
+        {{ snackbarMessage }}
+
+      </div>
 
       <template #actions>
 
@@ -1824,42 +2252,63 @@ onMounted(() => {
 </template>
 
 <style scoped>
+
+/* ═══════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════ */
+
 .inventario-page {
   padding: 28px;
-  max-width: 1600px;
+  max-width: 1650px;
   margin: 0 auto;
+  color: #172033;
 }
 
-/* ─────────────────────────────────────────────
+/* ═══════════════════════════════════════════
    HEADER
-───────────────────────────────────────────── */
+═══════════════════════════════════════════ */
 
 .page-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
   margin-bottom: 26px;
 }
 
+.page-heading {
+  min-width: 0;
+}
+
 .eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.6px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.7px;
   color: #1976d2;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .page-header h1 {
   margin: 0;
-  font-size: 32px;
+  font-size: 30px;
+  line-height: 1.15;
   font-weight: 750;
+  letter-spacing: -0.5px;
   color: #172033;
 }
 
 .page-header p {
-  margin: 6px 0 0;
-  color: #687386;
+  margin: 7px 0 0;
+  color: #778195;
+  font-size: 14px;
 }
 
 .header-actions {
@@ -1868,294 +2317,690 @@ onMounted(() => {
   gap: 10px;
 }
 
-/* ─────────────────────────────────────────────
-   RESUMEN
-───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   SUMMARY
+═══════════════════════════════════════════ */
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 22px;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
 .summary-card {
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 20px;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px;
   background: #fff;
   border: 1px solid #e7ebf1;
   border-radius: 14px;
   transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .summary-card:hover {
   transform: translateY(-2px);
+  border-color: #dce3ed;
   box-shadow:
-    0 10px 30px
+    0 12px 30px
     rgba(30, 50, 80, 0.07);
 }
 
-.summary-card span {
-  display: block;
-  font-size: 13px;
-  color: #778195;
-  margin-bottom: 4px;
+.summary-icon {
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
 }
 
-.summary-card strong {
+.summary-icon.blue {
+  color: #1976d2;
+  background: #edf5ff;
+}
+
+.summary-icon.green {
+  color: #2e7d32;
+  background: #edf8f0;
+}
+
+.summary-icon.orange {
+  color: #c78300;
+  background: #fff7e6;
+}
+
+.summary-icon.red {
+  color: #d32f2f;
+  background: #ffeded;
+}
+
+.summary-content {
+  min-width: 0;
+}
+
+.summary-content span {
   display: block;
-  font-size: 25px;
+  font-size: 12px;
+  color: #7b8596;
+  margin-bottom: 2px;
+}
+
+.summary-content strong {
+  display: block;
+  font-size: 23px;
+  line-height: 1.2;
   color: #172033;
 }
 
-.summary-icon {
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 11px;
-  background: #eaf3ff;
-  color: #1976d2;
+.summary-content small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: #9aa3b2;
 }
 
-.warning-icon {
-  background: #fff6df;
-  color: #c78300;
-}
-
-.danger-icon {
-  background: #ffebeb;
-  color: #d32f2f;
-}
-
-.success-icon {
-  background: #eaf8ef;
-  color: #2e7d32;
-}
-
-/* ─────────────────────────────────────────────
-   CARDS
-───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════
+   MAIN CARDS
+═══════════════════════════════════════════ */
 
 .main-card {
   overflow: hidden;
   border:
-    1px solid #e7ebf1 !important;
+    1px solid #e6eaf0 !important;
   border-radius:
-    14px !important;
-  margin-bottom: 22px;
+    15px !important;
+  margin-bottom: 20px;
+  background: #fff;
 }
 
 .card-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 22px 24px 8px;
+  gap: 16px;
+  padding: 21px 22px 16px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #edf5ff;
+  color: #1976d2;
 }
 
 .card-header h2 {
   margin: 0;
-  font-size: 19px;
+  font-size: 17px;
+  font-weight: 700;
   color: #172033;
 }
 
 .card-header p {
-  margin: 5px 0 0;
-  color: #7a8496;
-  font-size: 13px;
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: #8992a2;
 }
 
-/* ─────────────────────────────────────────────
-   FILTROS
-───────────────────────────────────────────── */
+.result-counter {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f5f7fa;
+  color: #7b8596;
+  font-size: 12px;
+  white-space: nowrap;
+}
 
-.filters {
+/* ═══════════════════════════════════════════
+   FILTERS
+═══════════════════════════════════════════ */
+
+.filters-container {
   display: grid;
   grid-template-columns:
-    1.5fr 1fr 1fr;
-  gap: 14px;
-  padding:
-    18px 24px 20px;
+    minmax(250px, 1.5fr)
+    minmax(190px, 1fr)
+    minmax(190px, 1fr);
+  gap: 10px;
+  padding: 0 22px 18px;
 }
 
-/* ─────────────────────────────────────────────
-   PRODUCTO
-───────────────────────────────────────────── */
+.filters-container :deep(.v-field) {
+  background: #f7f9fc !important;
+  border-radius: 10px !important;
+}
 
-.product-name {
+.filters-container :deep(.v-field__outline) {
+  --v-field-border-opacity: 0;
+}
+
+/* ═══════════════════════════════════════════
+   TABLE
+═══════════════════════════════════════════ */
+
+.inventory-table :deep(thead th),
+.movements-table :deep(thead th) {
+  background: #fafbfc;
+  color: #7b8596 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.45px;
+  height: 44px !important;
+  border-bottom:
+    1px solid #edf0f4 !important;
+}
+
+.inventory-table :deep(tbody td),
+.movements-table :deep(tbody td) {
+  border-bottom:
+    1px solid #f0f2f5 !important;
+  height: 64px !important;
+}
+
+.inventory-table :deep(tbody tr:hover),
+.movements-table :deep(tbody tr:hover) {
+  background: #fafcff !important;
+}
+
+/* ═══════════════════════════════════════════
+   PRODUCT CELL
+═══════════════════════════════════════════ */
+
+.product-cell {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 220px;
+}
+
+.product-avatar {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+}
+
+.avatar-success {
+  background: #edf8f0;
+  color: #2e7d32;
+}
+
+.avatar-warning {
+  background: #fff7e6;
+  color: #c78300;
+}
+
+.avatar-error {
+  background: #ffeded;
+  color: #d32f2f;
+}
+
+.avatar-grey {
+  background: #f0f2f5;
+  color: #697386;
+}
+
+.product-info {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
-.product-name strong {
-  color: #172033;
+.product-info strong {
+  color: #273247;
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
 }
 
-.product-name span {
-  font-size: 12px;
-  color: #8992a2;
-  max-width: 300px;
+.product-info span {
+  color: #98a0ae;
+  font-size: 11px;
+  max-width: 280px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.unit-label {
+.category-label {
+  color: #687386;
   font-size: 12px;
-  color: #667085;
 }
 
-/* ─────────────────────────────────────────────
-   STOCK
-───────────────────────────────────────────── */
+.stock-cell {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.stock-cell strong {
+  font-size: 14px;
+  color: #273247;
+}
+
+.stock-cell span {
+  font-size: 10px;
+  color: #9aa3b2;
+}
 
 .stock-warning {
-  color: #c78300;
+  color: #c78300 !important;
 }
 
 .stock-danger {
-  color: #d32f2f;
+  color: #d32f2f !important;
 }
 
-/* ─────────────────────────────────────────────
-   MOVIMIENTOS
-───────────────────────────────────────────── */
+.minimum-stock {
+  color: #7b8596;
+  font-size: 13px;
+}
 
-.movement-positive {
+.unit-label {
+  display: inline-flex;
+  padding: 4px 7px;
+  border-radius: 6px;
+  background: #f4f6f8;
+  color: #737d8d;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.status-chip {
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════
+   MOVEMENTS
+═══════════════════════════════════════════ */
+
+.date-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.date-cell strong {
+  font-size: 12px;
+  font-weight: 600;
+  color: #3d4759;
+}
+
+.date-cell span {
+  font-size: 11px;
+  color: #9aa3b2;
+}
+
+.movement-product {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.movement-product strong {
+  color: #3d4759;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.movement-product-icon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #f2f6fb;
+  color: #5d7390;
+}
+
+.movement-quantity {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.movement-quantity.positive {
   color: #2e7d32;
 }
 
-.movement-negative {
+.movement-quantity.negative {
   color: #d32f2f;
 }
 
-/* ─────────────────────────────────────────────
+.resulting-stock {
+  font-size: 13px;
+  color: #3d4759;
+}
+
+.member-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-cell span {
+  color: #687386;
+  font-size: 12px;
+}
+
+.member-avatar {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #edf3fa;
+  color: #55708f;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════
    EMPTY
-───────────────────────────────────────────── */
+═══════════════════════════════════════════ */
 
 .empty-state {
-  min-height: 180px;
+  min-height: 190px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 7px;
-  color: #8a94a6;
+  color: #929baa;
+}
+
+.empty-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+  border-radius: 14px;
+  background: #f3f5f8;
+  color: #9aa3b2;
 }
 
 .empty-state strong {
   color: #465064;
+  font-size: 13px;
 }
 
-/* ─────────────────────────────────────────────
+.empty-state span {
+  font-size: 12px;
+}
+
+/* ═══════════════════════════════════════════
    DIALOG
-───────────────────────────────────────────── */
+═══════════════════════════════════════════ */
 
-.dialog-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 22px;
+.modern-dialog {
+  border-radius: 16px !important;
+  overflow: hidden;
 }
 
-.dialog-title span {
-  display: block;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.4px;
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 17px 20px;
+}
+
+.dialog-heading {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.dialog-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #edf5ff;
   color: #1976d2;
 }
 
-.dialog-title h2 {
+.dialog-heading span {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #1976d2;
+}
+
+.dialog-heading h2 {
   margin: 3px 0 0;
-  font-size: 20px;
   color: #172033;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.dialog-content {
+  padding: 20px !important;
+}
+
+.dialog-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  background: #f3f7fc;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dialog-info .v-icon {
+  flex: 0 0 auto;
+  color: #1976d2;
+}
+
+.form-section {
+  margin-bottom: 20px;
+}
+
+.form-section-title {
+  margin-bottom: 12px;
+  color: #3d4759;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.selected-product {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin: 2px 0 20px;
+  padding: 12px 14px;
+  border: 1px solid #e7ebf1;
+  border-radius: 11px;
+  background: #fafbfd;
+}
+
+.selected-product-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #edf5ff;
+  color: #1976d2;
+}
+
+.selected-product > div:nth-child(2) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.selected-product span {
+  font-size: 11px;
+  color: #8992a2;
+}
+
+.selected-product strong {
+  font-size: 14px;
+  color: #273247;
 }
 
 .dialog-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 22px;
-}
-
-.current-stock {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  border-radius: 10px;
-  background: #f5f8fc;
-  border: 1px solid #e5eaf1;
+  justify-content: flex-end;
+  gap: 9px;
+  padding-top: 4px;
 }
 
-.current-stock span {
-  font-size: 13px;
-  color: #758095;
-}
-
-.current-stock strong {
-  font-size: 17px;
-  color: #172033;
-}
-
-/* ─────────────────────────────────────────────
+/* ═══════════════════════════════════════════
    KARDEX
-───────────────────────────────────────────── */
+═══════════════════════════════════════════ */
 
 .loading-container {
-  min-height: 250px;
-  display: grid;
-  place-items: center;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #8992a2;
+  font-size: 12px;
 }
 
 .kardex-summary {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
-.kardex-summary > div {
+.kardex-product-card,
+.kardex-stock-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 15px;
-  background: #f7f9fc;
+  border: 1px solid #e7ebf1;
+  border-radius: 11px;
+}
+
+.kardex-product-card {
+  background: #fafcff;
+}
+
+.kardex-stock-card {
+  background: #f9fcfa;
+}
+
+.kardex-summary-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
   border-radius: 10px;
+  background: #edf5ff;
+  color: #1976d2;
+}
+
+.kardex-stock-card
+.kardex-summary-icon {
+  background: #edf8f0;
+  color: #2e7d32;
 }
 
 .kardex-summary span {
   display: block;
-  font-size: 12px;
-  color: #7b8596;
-  margin-bottom: 4px;
+  font-size: 11px;
+  color: #8992a2;
+  margin-bottom: 3px;
 }
 
 .kardex-summary strong {
-  font-size: 16px;
-  color: #172033;
+  display: block;
+  color: #273247;
+  font-size: 14px;
 }
 
-/* ─────────────────────────────────────────────
-   RESPONSIVE
-───────────────────────────────────────────── */
+.kardex-table-wrapper {
+  overflow: hidden;
+  border: 1px solid #e7ebf1;
+  border-radius: 11px;
+}
 
-@media (max-width: 1100px) {
+.observation {
+  display: block;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #7b8596;
+  font-size: 12px;
+}
+
+/* ═══════════════════════════════════════════
+   SNACKBAR
+═══════════════════════════════════════════ */
+
+.snackbar-content {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+
+@media (max-width: 1200px) {
+
   .summary-grid {
     grid-template-columns:
-      repeat(2, 1fr);
+      repeat(2, minmax(0, 1fr));
   }
 
-  .filters {
-    grid-template-columns: 1fr;
+  .filters-container {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filter-search {
+    grid-column: 1 / -1;
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 800px) {
+
   .inventario-page {
-    padding: 18px;
+    padding: 20px;
   }
 
   .page-header {
@@ -2170,8 +3015,19 @@ onMounted(() => {
     flex: 1;
   }
 
-  .summary-grid {
+  .card-header {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+
+  .filters-container {
     grid-template-columns: 1fr;
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+
+  .filter-search {
+    grid-column: auto;
   }
 
   .kardex-summary {
@@ -2179,7 +3035,20 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
+
+  .inventario-page {
+    padding: 14px;
+  }
+
+  .page-header h1 {
+    font-size: 26px;
+  }
+
+  .title-row {
+    flex-wrap: wrap;
+  }
+
   .header-actions {
     flex-direction: column;
   }
@@ -2187,38 +3056,40 @@ onMounted(() => {
   .header-actions .v-btn {
     width: 100%;
   }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .summary-card {
+    padding: 15px;
+  }
+
+  .result-counter {
+    display: none;
+  }
+
+  .section-heading {
+    min-width: 0;
+  }
+
+  .card-header {
+    align-items: flex-start;
+  }
+
+  .card-header h2 {
+    font-size: 16px;
+  }
+
+  .movements-card
+  .card-header .v-chip {
+    display: none;
+  }
+
+  .dialog-content {
+    padding: 16px !important;
+  }
 }
+
 </style>
-```
-
-### Ruta
-
-Si todavía no la agregaste:
-
-```js
-{
-  path: 'cafeteria/inventario',
-  name: 'Inventario cafetería',
-  component: () =>
-    import('../views/cafeteria/inventario/InventarioView.vue'),
-},
-```
-
-### Y este frontend espera este POST
-
-```text
-POST /cafeteria/inventario
-```
-
-con:
-
-```json
-{
-  "productoId": 1,
-  "tipo": "AJUSTE_NEGATIVO",
-  "cantidad": 2,
-  "observacion": "Diferencia encontrada durante conteo físico"
-}
-```
-
-Por ahora, si todavía no implementaste el `POST` en NestJS, **todo lo demás de la pantalla debería funcionar**. El botón de movimiento naturalmente fallará hasta que exista ese endpoint.

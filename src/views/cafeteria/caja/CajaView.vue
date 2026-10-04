@@ -631,85 +631,108 @@ onMounted(async () => {
 </script>
 
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid class="caja-page pa-4 pa-md-6">
 
-    <!-- ===================================== -->
-    <!-- ENCABEZADO -->
-    <!-- ===================================== -->
+    <!-- ===================================================== -->
+    <!-- HEADER -->
+    <!-- ===================================================== -->
 
-    <div class="d-flex align-center justify-space-between mb-6">
+    <div class="page-header mb-6">
 
-      <div>
-        <h1 class="text-h5 font-weight-bold">
-          Caja
-        </h1>
+      <div class="page-header-main">
 
-        <p class="text-body-2 text-medium-emphasis mt-1">
-          Control de apertura, movimientos y cierre de caja
-        </p>
+        <div class="page-icon">
+          <v-icon icon="mdi-cash-register" size="26" />
+        </div>
+
+        <div>
+          <div class="d-flex align-center ga-3 flex-wrap">
+            <h1 class="page-title">
+              Caja
+            </h1>
+
+            <v-chip
+              :color="cajaAbierta ? 'success' : 'grey'"
+              variant="tonal"
+              size="small"
+              class="status-chip"
+            >
+              <span
+                class="status-dot"
+                :class="cajaAbierta ? 'status-dot-active' : ''"
+              />
+
+              {{ cajaAbierta ? 'Caja abierta' : 'Caja cerrada' }}
+            </v-chip>
+          </div>
+
+          <p class="page-subtitle">
+            Control de apertura, movimientos y cierre de caja
+          </p>
+        </div>
+
       </div>
 
-      <v-chip
-        :color="cajaAbierta ? 'success' : 'error'"
+      <v-btn
+        v-if="cajaAbierta"
         variant="tonal"
-        size="large"
+        color="primary"
+        prepend-icon="mdi-refresh"
+        :loading="loadingSaldo"
+        @click="actualizarCaja"
       >
-        <v-icon
-          :icon="
-            cajaAbierta
-              ? 'mdi-lock-open-variant'
-              : 'mdi-lock'
-          "
-          class="mr-2"
-        />
-
-        {{ cajaAbierta ? 'Caja abierta' : 'Caja cerrada' }}
-      </v-chip>
+        Actualizar
+      </v-btn>
 
     </div>
 
-    <!-- ===================================== -->
-    <!-- LOADING -->
-    <!-- ===================================== -->
+
+    <!-- ===================================================== -->
+    <!-- LOADING PRINCIPAL -->
+    <!-- ===================================================== -->
 
     <div
       v-if="loading"
-      class="d-flex justify-center py-12"
+      class="loading-container"
     >
       <v-progress-circular
         indeterminate
         color="primary"
-        size="48"
+        size="44"
+        width="3"
       />
     </div>
 
+
     <template v-else>
 
-      <!-- ===================================== -->
+
+      <!-- ===================================================== -->
       <!-- CAJA CERRADA -->
-      <!-- ===================================== -->
+      <!-- ===================================================== -->
 
       <v-card
         v-if="!cajaAbierta"
-        max-width="650"
-        class="mx-auto"
-        rounded="lg"
+        class="closed-card"
+        rounded="xl"
         border
         elevation="0"
       >
-        <v-card-text class="pa-8 text-center">
 
-          <v-icon
-            icon="mdi-cash-register"
-            size="72"
-            color="grey"
-          />
+        <v-card-text class="closed-card-content">
 
-          <h2 class="text-h5 font-weight-bold mt-4">
+          <div class="closed-icon">
+            <v-icon
+              icon="mdi-lock-outline"
+              size="38"
+            />
+          </div>
+
+          <h2 class="closed-title">
             La caja está cerrada
           </h2>
 
-          <p class="text-body-2 text-medium-emphasis mt-2 mb-6">
+          <p class="closed-description">
             Abre una sesión de caja para comenzar a registrar
             ventas y movimientos.
           </p>
@@ -717,6 +740,7 @@ onMounted(async () => {
           <v-btn
             color="primary"
             size="large"
+            rounded="lg"
             prepend-icon="mdi-lock-open-variant"
             @click="dialogAbrir = true"
           >
@@ -724,269 +748,335 @@ onMounted(async () => {
           </v-btn>
 
         </v-card-text>
+
       </v-card>
 
-      <!-- ===================================== -->
+
+      <!-- ===================================================== -->
       <!-- CAJA ABIERTA -->
-      <!-- ===================================== -->
+      <!-- ===================================================== -->
 
       <template v-else>
 
-        <!-- ===================================== -->
-        <!-- RESUMEN -->
-        <!-- ===================================== -->
 
-        <v-row>
+        <!-- ================================================= -->
+        <!-- RESUMEN -->
+        <!-- ================================================= -->
+
+        <v-row class="summary-row">
 
           <!-- SALDO INICIAL -->
 
           <v-col
             cols="12"
             sm="6"
-            md="3"
+            lg="3"
           >
             <v-card
-              rounded="lg"
+              class="metric-card"
+              rounded="xl"
               border
               elevation="0"
-              class="stat-card"
             >
+
               <v-card-text>
 
-                <div
-                  class="d-flex align-center justify-space-between"
-                >
+                <div class="metric-top">
 
-                  <div>
-                    <div class="text-body-2 text-medium-emphasis">
-                      Saldo inicial
-                    </div>
-
-                    <div class="text-h5 font-weight-bold mt-1">
-                      {{ formatoMoneda(saldo.saldoInicial) }}
-                    </div>
+                  <div class="metric-icon metric-icon-primary">
+                    <v-icon
+                      icon="mdi-cash-plus"
+                      size="21"
+                    />
                   </div>
 
-                  <v-avatar
-                    color="primary"
-                    variant="tonal"
-                  >
-                    <v-icon icon="mdi-cash-plus" />
-                  </v-avatar>
+                  <span class="metric-label">
+                    Saldo inicial
+                  </span>
 
                 </div>
 
+                <div class="metric-value">
+                  {{ formatoMoneda(saldo.saldoInicial) }}
+                </div>
+
+                <div class="metric-description">
+                  Dinero al abrir la sesión
+                </div>
+
               </v-card-text>
+
             </v-card>
           </v-col>
+
 
           <!-- INGRESOS -->
 
           <v-col
             cols="12"
             sm="6"
-            md="3"
+            lg="3"
           >
             <v-card
-              rounded="lg"
+              class="metric-card"
+              rounded="xl"
               border
               elevation="0"
-              class="stat-card"
             >
+
               <v-card-text>
 
-                <div
-                  class="d-flex align-center justify-space-between"
-                >
+                <div class="metric-top">
 
-                  <div>
-                    <div class="text-body-2 text-medium-emphasis">
-                      Ingresos
-                    </div>
-
-                    <div class="text-h5 font-weight-bold text-success mt-1">
-                      {{ formatoMoneda(saldo.ingresos) }}
-                    </div>
+                  <div class="metric-icon metric-icon-success">
+                    <v-icon
+                      icon="mdi-arrow-down-circle-outline"
+                      size="21"
+                    />
                   </div>
 
-                  <v-avatar
-                    color="success"
-                    variant="tonal"
-                  >
-                    <v-icon icon="mdi-arrow-down-circle-outline" />
-                  </v-avatar>
+                  <span class="metric-label">
+                    Ingresos
+                  </span>
 
                 </div>
 
+                <div class="metric-value text-success">
+                  {{ formatoMoneda(saldo.ingresos) }}
+                </div>
+
+                <div class="metric-description">
+                  Dinero recibido durante la sesión
+                </div>
+
               </v-card-text>
+
             </v-card>
           </v-col>
+
 
           <!-- EGRESOS -->
 
           <v-col
             cols="12"
             sm="6"
-            md="3"
+            lg="3"
           >
             <v-card
-              rounded="lg"
+              class="metric-card"
+              rounded="xl"
               border
               elevation="0"
-              class="stat-card"
             >
+
               <v-card-text>
 
-                <div
-                  class="d-flex align-center justify-space-between"
-                >
+                <div class="metric-top">
 
-                  <div>
-                    <div class="text-body-2 text-medium-emphasis">
-                      Egresos
-                    </div>
-
-                    <div class="text-h5 font-weight-bold text-error mt-1">
-                      {{ formatoMoneda(saldo.egresos) }}
-                    </div>
+                  <div class="metric-icon metric-icon-error">
+                    <v-icon
+                      icon="mdi-arrow-up-circle-outline"
+                      size="21"
+                    />
                   </div>
 
-                  <v-avatar
-                    color="error"
-                    variant="tonal"
-                  >
-                    <v-icon icon="mdi-arrow-up-circle-outline" />
-                  </v-avatar>
+                  <span class="metric-label">
+                    Egresos
+                  </span>
 
                 </div>
 
+                <div class="metric-value text-error">
+                  {{ formatoMoneda(saldo.egresos) }}
+                </div>
+
+                <div class="metric-description">
+                  Dinero retirado durante la sesión
+                </div>
+
               </v-card-text>
+
             </v-card>
           </v-col>
+
 
           <!-- SALDO ACTUAL -->
 
           <v-col
             cols="12"
             sm="6"
-            md="3"
+            lg="3"
           >
             <v-card
-              rounded="lg"
+              class="metric-card metric-card-current"
+              rounded="xl"
               border
               elevation="0"
-              class="stat-card"
             >
+
               <v-card-text>
 
-                <div
-                  class="d-flex align-center justify-space-between"
-                >
+                <div class="metric-top">
 
-                  <div>
-                    <div class="text-body-2 text-medium-emphasis">
-                      Saldo actual
-                    </div>
-
-                    <div class="text-h5 font-weight-bold text-primary mt-1">
-                      {{ formatoMoneda(saldo.saldoActual) }}
-                    </div>
+                  <div class="metric-icon metric-icon-primary">
+                    <v-icon
+                      icon="mdi-cash-multiple"
+                      size="21"
+                    />
                   </div>
 
-                  <v-avatar
-                    color="primary"
-                    variant="tonal"
-                  >
-                    <v-icon icon="mdi-cash-multiple" />
-                  </v-avatar>
+                  <span class="metric-label">
+                    Saldo actual
+                  </span>
 
                 </div>
 
+                <div class="metric-value text-primary">
+                  {{ formatoMoneda(saldo.saldoActual) }}
+                </div>
+
+                <div class="metric-description">
+                  Saldo esperado en caja
+                </div>
+
               </v-card-text>
+
             </v-card>
           </v-col>
 
         </v-row>
 
-        <!-- ===================================== -->
-        <!-- INFORMACIÓN + MOVIMIENTOS -->
-        <!-- ===================================== -->
 
-        <v-row class="mt-2">
+        <!-- ================================================= -->
+        <!-- SESIÓN + MOVIMIENTOS -->
+        <!-- ================================================= -->
 
-          <!-- SESIÓN -->
+        <v-row class="content-row">
+
+
+          <!-- =============================================== -->
+          <!-- SESIÓN ACTUAL -->
+          <!-- =============================================== -->
 
           <v-col
             cols="12"
-            md="5"
+            lg="4"
           >
+
             <v-card
-              rounded="lg"
+              class="section-card session-card"
+              rounded="xl"
               border
               elevation="0"
             >
 
-              <v-card-title class="d-flex align-center">
-                <v-icon
-                  icon="mdi-information-outline"
-                  class="mr-2"
-                />
+              <v-card-item>
 
-                Sesión actual
-              </v-card-title>
+                <template #prepend>
+                  <div class="section-icon">
+                    <v-icon
+                      icon="mdi-information-outline"
+                      size="20"
+                    />
+                  </div>
+                </template>
+
+                <v-card-title class="section-title">
+                  Sesión actual
+                </v-card-title>
+
+                <v-card-subtitle>
+                  Información de la caja activa
+                </v-card-subtitle>
+
+              </v-card-item>
 
               <v-divider />
 
-              <v-card-text>
+              <v-card-text class="pa-5">
 
-                <div class="info-row">
-                  <span>
-                    Número de sesión
+                <div class="session-number">
+
+                  <span class="session-number-label">
+                    Sesión
                   </span>
 
-                  <strong>
+                  <span class="session-number-value">
                     #{{ sesion.id }}
-                  </strong>
-                </div>
-
-                <div class="info-row">
-                  <span>
-                    Fecha de apertura
                   </span>
 
-                  <strong>
-                    {{ formatoFecha(sesion.fechaApertura) }}
-                  </strong>
                 </div>
 
-                <div class="info-row">
-                  <span>
-                    Abierta por
-                  </span>
 
-                  <strong>
-                    {{ nombreMiembro(sesion.abiertaPor) }}
-                  </strong>
+                <div class="info-list">
+
+                  <div class="info-row">
+
+                    <div class="info-label">
+                      <v-icon
+                        icon="mdi-calendar-outline"
+                        size="17"
+                      />
+
+                      Apertura
+                    </div>
+
+                    <strong>
+                      {{ formatoFecha(sesion.fechaApertura) }}
+                    </strong>
+
+                  </div>
+
+
+                  <div class="info-row">
+
+                    <div class="info-label">
+                      <v-icon
+                        icon="mdi-account-outline"
+                        size="17"
+                      />
+
+                      Abierta por
+                    </div>
+
+                    <strong>
+                      {{ nombreMiembro(sesion.abiertaPor) }}
+                    </strong>
+
+                  </div>
+
                 </div>
+
+
+                <!-- OBSERVACIÓN -->
 
                 <div
                   v-if="sesion.observacion"
-                  class="mt-4"
+                  class="session-note"
                 >
-                  <div class="text-caption text-medium-emphasis">
+
+                  <div class="session-note-label">
+                    <v-icon
+                      icon="mdi-note-text-outline"
+                      size="16"
+                    />
+
                     Observación
                   </div>
 
-                  <div class="text-body-2 mt-1">
+                  <div class="session-note-text">
                     {{ sesion.observacion }}
                   </div>
+
                 </div>
 
               </v-card-text>
 
+
               <v-divider />
 
-              <v-card-actions class="pa-4">
+
+              <v-card-actions class="session-actions">
 
                 <v-btn
                   color="primary"
@@ -1011,116 +1101,141 @@ onMounted(async () => {
               </v-card-actions>
 
             </v-card>
+
           </v-col>
 
+
+          <!-- =============================================== -->
           <!-- MOVIMIENTOS -->
+          <!-- =============================================== -->
 
           <v-col
             cols="12"
-            md="7"
+            lg="8"
           >
+
             <v-card
-              rounded="lg"
+              class="section-card"
+              rounded="xl"
               border
               elevation="0"
             >
 
-              <v-card-title
-                class="d-flex align-center justify-space-between"
-              >
+              <v-card-item>
 
-                <div class="d-flex align-center">
+                <template #prepend>
+                  <div class="section-icon">
+                    <v-icon
+                      icon="mdi-swap-vertical"
+                      size="20"
+                    />
+                  </div>
+                </template>
 
-                  <v-icon
-                    icon="mdi-format-list-bulleted"
-                    class="mr-2"
-                  />
-
+                <v-card-title class="section-title">
                   Movimientos
+                </v-card-title>
+
+                <v-card-subtitle>
+                  Actividad registrada en esta sesión
+                </v-card-subtitle>
+
+                <template #append>
 
                   <v-chip
-                    class="ml-2"
                     size="small"
                     variant="tonal"
+                    color="primary"
                   >
                     {{ movimientos.length }}
                   </v-chip>
 
-                </div>
+                </template>
 
-              </v-card-title>
+              </v-card-item>
 
               <v-divider />
 
-              <v-card-text class="pa-0">
 
-                <div
-                  v-if="movimientos.length === 0"
-                  class="text-center py-10"
-                >
+              <!-- SIN MOVIMIENTOS -->
 
+              <div
+                v-if="movimientos.length === 0"
+                class="empty-state"
+              >
+
+                <div class="empty-icon">
                   <v-icon
                     icon="mdi-receipt-text-outline"
-                    size="50"
-                    color="grey-lighten-1"
+                    size="30"
                   />
-
-                  <div class="text-body-1 mt-3">
-                    No hay movimientos todavía.
-                  </div>
-
-                  <div class="text-caption text-medium-emphasis mt-1">
-                    Las ventas aparecerán aquí automáticamente.
-                  </div>
-
                 </div>
 
-                <v-list
-                  v-else
-                  lines="two"
-                  class="py-0"
+                <div class="empty-title">
+                  No hay movimientos todavía
+                </div>
+
+                <div class="empty-description">
+                  Las ventas y movimientos de caja aparecerán aquí.
+                </div>
+
+              </div>
+
+
+              <!-- MOVIMIENTOS -->
+
+              <v-list
+                v-else
+                class="movement-list"
+                lines="two"
+              >
+
+                <v-list-item
+                  v-for="movimiento in movimientos"
+                  :key="movimiento.id"
+                  class="movement-item"
                 >
 
-                  <v-list-item
-                    v-for="movimiento in movimientos"
-                    :key="movimiento.id"
-                  >
+                  <template #prepend>
 
-                    <template #prepend>
+                    <div
+                      class="movement-icon"
+                      :class="
+                        movimiento.tipo === 'INGRESO'
+                          ? 'movement-icon-income'
+                          : 'movement-icon-expense'
+                      "
+                    >
 
-                      <v-avatar
-                        :color="
+                      <v-icon
+                        :icon="
                           movimiento.tipo === 'INGRESO'
-                            ? 'success'
-                            : 'error'
+                            ? 'mdi-arrow-down'
+                            : 'mdi-arrow-up'
                         "
-                        variant="tonal"
-                      >
+                        size="19"
+                      />
 
-                        <v-icon
-                          :icon="
-                            movimiento.tipo === 'INGRESO'
-                              ? 'mdi-arrow-down'
-                              : 'mdi-arrow-up'
-                          "
-                        />
+                    </div>
 
-                      </v-avatar>
+                  </template>
 
-                    </template>
 
-                    <v-list-item-title>
-                      {{ textoConcepto(movimiento.concepto) }}
-                    </v-list-item-title>
+                  <v-list-item-title class="movement-title">
+                    {{ textoConcepto(movimiento.concepto) }}
+                  </v-list-item-title>
 
-                    <v-list-item-subtitle>
-                      {{ formatoFecha(movimiento.createdAt) }}
-                    </v-list-item-subtitle>
+                  <v-list-item-subtitle class="movement-date">
+                    {{ formatoFecha(movimiento.createdAt) }}
+                  </v-list-item-subtitle>
 
-                    <template #append>
+
+                  <template #append>
+
+                    <div class="movement-amount-wrapper">
 
                       <div
-                        class="font-weight-bold"
+                        class="movement-amount"
                         :class="
                           movimiento.tipo === 'INGRESO'
                             ? 'text-success'
@@ -1138,229 +1253,301 @@ onMounted(async () => {
 
                       </div>
 
-                    </template>
+                    </div>
 
-                  </v-list-item>
+                  </template>
 
-                </v-list>
+                </v-list-item>
 
-              </v-card-text>
+              </v-list>
 
             </v-card>
+
           </v-col>
 
         </v-row>
 
       </template>
 
-      <!-- ===================================== -->
-      <!-- HISTORIAL DE CAJAS -->
-      <!-- ===================================== -->
+
+      <!-- ===================================================== -->
+      <!-- HISTORIAL -->
+      <!-- ===================================================== -->
 
       <v-card
-        rounded="lg"
+        class="section-card history-card mt-6"
+        rounded="xl"
         border
         elevation="0"
-        class="mt-6"
       >
 
-        <v-card-title
-          class="d-flex align-center justify-space-between"
-        >
+        <v-card-item>
 
-          <div class="d-flex align-center">
+          <template #prepend>
 
-            <v-icon
-              icon="mdi-history"
-              class="mr-2"
-            />
+            <div class="section-icon">
+              <v-icon
+                icon="mdi-history"
+                size="20"
+              />
+            </div>
 
+          </template>
+
+          <v-card-title class="section-title">
             Historial de cajas
+          </v-card-title>
 
-            <v-chip
-              class="ml-2"
-              size="small"
-              variant="tonal"
-            >
-              {{ sesiones.length }}
-            </v-chip>
+          <v-card-subtitle>
+            Consulta las sesiones anteriores y sus cierres
+          </v-card-subtitle>
 
-          </div>
+          <template #append>
 
-          <v-btn
-            icon="mdi-refresh"
-            variant="text"
-            :loading="loadingHistorial"
-            @click="cargarHistorial"
-          />
+            <div class="d-flex align-center ga-2">
 
-        </v-card-title>
+              <v-chip
+                size="small"
+                variant="tonal"
+              >
+                {{ sesiones.length }} sesiones
+              </v-chip>
+
+              <v-btn
+                icon="mdi-refresh"
+                variant="text"
+                size="small"
+                :loading="loadingHistorial"
+                @click="cargarHistorial"
+              />
+
+            </div>
+
+          </template>
+
+        </v-card-item>
 
         <v-divider />
 
-        <!-- LOADING HISTORIAL -->
+
+        <!-- LOADING -->
 
         <div
           v-if="loadingHistorial"
-          class="d-flex justify-center py-10"
+          class="history-loading"
         >
 
           <v-progress-circular
             indeterminate
             color="primary"
+            size="38"
           />
+
+          <span>
+            Cargando historial...
+          </span>
 
         </div>
 
-        <!-- SIN HISTORIAL -->
+
+        <!-- VACÍO -->
 
         <div
           v-else-if="sesiones.length === 0"
-          class="text-center py-10"
+          class="empty-state history-empty"
         >
 
-          <v-icon
-            icon="mdi-history"
-            size="52"
-            color="grey-lighten-1"
-          />
+          <div class="empty-icon">
+            <v-icon
+              icon="mdi-history"
+              size="30"
+            />
+          </div>
 
-          <div class="text-body-1 mt-3">
-            No hay sesiones registradas.
+          <div class="empty-title">
+            No hay sesiones registradas
+          </div>
+
+          <div class="empty-description">
+            Las sesiones cerradas aparecerán aquí.
           </div>
 
         </div>
 
+
         <!-- TABLA -->
 
-        <v-table
+        <div
           v-else
-          hover
-          class="caja-table"
+          class="history-table-wrapper"
         >
 
-          <thead>
-            <tr>
+          <v-table
+            hover
+            class="caja-table"
+          >
 
-              <th>
-                Sesión
-              </th>
+            <thead>
 
-              <th>
-                Apertura
-              </th>
+              <tr>
 
-              <th>
-                Cierre
-              </th>
+                <th>
+                  Sesión
+                </th>
 
-              <th>
-                Saldo inicial
-              </th>
+                <th>
+                  Apertura
+                </th>
 
-              <th>
-                Saldo final
-              </th>
+                <th>
+                  Cierre
+                </th>
 
-              <th>
-                Estado
-              </th>
+                <th>
+                  Saldo inicial
+                </th>
 
-              <th class="text-right">
-                Acción
-              </th>
+                <th>
+                  Saldo final
+                </th>
 
-            </tr>
-          </thead>
+                <th>
+                  Estado
+                </th>
 
-          <tbody>
+                <th class="text-right">
+                  Acción
+                </th>
 
-            <tr
-              v-for="item in sesiones"
-              :key="item.id"
-            >
+              </tr>
 
-              <td>
-                <strong>
-                  #{{ item.id }}
-                </strong>
-              </td>
+            </thead>
 
-              <td>
-                {{ formatoFecha(item.fechaApertura) }}
-              </td>
 
-              <td>
-                {{ formatoFecha(item.fechaCierre) }}
-              </td>
+            <tbody>
 
-              <td>
-                {{ formatoMoneda(item.saldoInicial) }}
-              </td>
+              <tr
+                v-for="item in sesiones"
+                :key="item.id"
+              >
 
-              <td>
-                {{ formatoMoneda(item.saldoFinal) }}
-              </td>
+                <td>
 
-              <td>
+                  <div class="session-table-id">
+                    #{{ item.id }}
+                  </div>
 
-                <v-chip
-                  :color="colorEstado(item.estado)"
-                  variant="tonal"
-                  size="small"
-                >
-                  {{ textoEstado(item.estado) }}
-                </v-chip>
+                </td>
 
-              </td>
 
-              <td class="text-right">
+                <td>
+                  {{ formatoFecha(item.fechaApertura) }}
+                </td>
 
-                <v-btn
-                  size="small"
-                  variant="tonal"
-                  color="primary"
-                  prepend-icon="mdi-eye-outline"
-                  @click="verDetalleSesion(item)"
-                >
-                  Ver detalle
-                </v-btn>
 
-              </td>
+                <td>
+                  {{ formatoFecha(item.fechaCierre) }}
+                </td>
 
-            </tr>
 
-          </tbody>
+                <td class="money-cell">
+                  {{ formatoMoneda(item.saldoInicial) }}
+                </td>
 
-        </v-table>
+
+                <td class="money-cell">
+                  {{ formatoMoneda(item.saldoFinal) }}
+                </td>
+
+
+                <td>
+
+                  <v-chip
+                    :color="colorEstado(item.estado)"
+                    variant="tonal"
+                    size="small"
+                  >
+                    <span class="table-status-dot" />
+
+                    {{ textoEstado(item.estado) }}
+                  </v-chip>
+
+                </td>
+
+
+                <td class="text-right">
+
+                  <v-btn
+                    size="small"
+                    variant="tonal"
+                    color="primary"
+                    prepend-icon="mdi-eye-outline"
+                    @click="verDetalleSesion(item)"
+                  >
+                    Ver detalle
+                  </v-btn>
+
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </v-table>
+
+        </div>
 
       </v-card>
 
     </template>
 
-    <!-- ===================================== -->
+
+    <!-- ===================================================== -->
     <!-- DIALOGO ABRIR CAJA -->
-    <!-- ===================================== -->
+    <!-- ===================================================== -->
 
     <v-dialog
       v-model="dialogAbrir"
       max-width="500"
     >
 
-      <v-card rounded="lg">
+      <v-card
+        rounded="xl"
+        class="dialog-card"
+      >
 
-        <v-card-title class="pa-5">
-          Abrir caja
-        </v-card-title>
+        <v-card-item class="dialog-header">
+
+          <template #prepend>
+
+            <div class="dialog-icon dialog-icon-primary">
+              <v-icon
+                icon="mdi-lock-open-variant"
+                size="23"
+              />
+            </div>
+
+          </template>
+
+          <v-card-title>
+            Abrir caja
+          </v-card-title>
+
+          <v-card-subtitle>
+            Inicia una nueva sesión de caja
+          </v-card-subtitle>
+
+        </v-card-item>
 
         <v-divider />
 
-        <v-card-text class="pa-5">
+        <v-card-text class="pa-6">
 
-          <p class="text-body-2 text-medium-emphasis mb-5">
+          <p class="dialog-description">
             Ingresa el dinero disponible al comenzar esta
             sesión de caja.
           </p>
+
 
           <v-text-field
             v-model.number="formAbrir.saldoInicial"
@@ -1370,7 +1557,10 @@ onMounted(async () => {
             prefix="$"
             variant="outlined"
             prepend-inner-icon="mdi-cash"
+            hide-details="auto"
+            class="mb-4"
           />
+
 
           <v-textarea
             v-model="formAbrir.observacion"
@@ -1380,13 +1570,17 @@ onMounted(async () => {
             auto-grow
             maxlength="500"
             variant="outlined"
+            counter
+            hide-details="auto"
           />
 
         </v-card-text>
 
+
         <v-divider />
 
-        <v-card-actions class="pa-4">
+
+        <v-card-actions class="dialog-actions">
 
           <v-spacer />
 
@@ -1399,6 +1593,7 @@ onMounted(async () => {
 
           <v-btn
             color="primary"
+            rounded="lg"
             :loading="guardando"
             :disabled="formAbrir.saldoInicial < 0"
             prepend-icon="mdi-lock-open-variant"
@@ -1413,47 +1608,84 @@ onMounted(async () => {
 
     </v-dialog>
 
-    <!-- ===================================== -->
+
+    <!-- ===================================================== -->
     <!-- DIALOGO CERRAR CAJA -->
-    <!-- ===================================== -->
+    <!-- ===================================================== -->
 
     <v-dialog
       v-model="dialogCerrar"
       max-width="550"
     >
 
-      <v-card rounded="lg">
+      <v-card
+        rounded="xl"
+        class="dialog-card"
+      >
 
-        <v-card-title class="pa-5">
-          Cerrar caja
-        </v-card-title>
+        <v-card-item class="dialog-header">
+
+          <template #prepend>
+
+            <div class="dialog-icon dialog-icon-error">
+              <v-icon
+                icon="mdi-lock"
+                size="23"
+              />
+            </div>
+
+          </template>
+
+          <v-card-title>
+            Cerrar caja
+          </v-card-title>
+
+          <v-card-subtitle>
+            Realiza el arqueo de la sesión
+          </v-card-subtitle>
+
+        </v-card-item>
 
         <v-divider />
 
-        <v-card-text class="pa-5">
+        <v-card-text class="pa-6">
 
-          <div class="resumen-cierre">
+          <!-- SALDO ESPERADO -->
 
-            <div class="info-row">
-              <span>
+          <div class="expected-balance">
+
+            <div>
+
+              <div class="expected-label">
                 Saldo esperado
-              </span>
+              </div>
 
-              <strong>
+              <div class="expected-value">
                 {{ formatoMoneda(saldo.saldoActual) }}
-              </strong>
+              </div>
+
+            </div>
+
+            <div class="expected-icon">
+              <v-icon
+                icon="mdi-cash-check"
+                size="25"
+              />
             </div>
 
           </div>
 
+
           <v-alert
             type="info"
             variant="tonal"
-            class="my-4"
+            density="comfortable"
+            class="my-5"
           >
             Cuenta físicamente el dinero disponible en caja
             e ingresa el valor exacto.
           </v-alert>
+
 
           <v-text-field
             v-model.number="formCerrar.dineroContado"
@@ -1463,7 +1695,9 @@ onMounted(async () => {
             prefix="$"
             variant="outlined"
             prepend-inner-icon="mdi-cash-check"
+            hide-details="auto"
           />
+
 
           <!-- DIFERENCIA -->
 
@@ -1471,14 +1705,14 @@ onMounted(async () => {
             v-if="formCerrar.dineroContado !== null"
             :type="tipoDiferencia"
             variant="tonal"
-            class="mt-2"
+            density="comfortable"
+            class="mt-4"
           >
 
-            <div
-              class="d-flex justify-space-between align-center"
-            >
+            <div class="difference-content">
 
               <div>
+
                 <div class="font-weight-medium">
                   {{ textoDiferencia }}
                 </div>
@@ -1486,15 +1720,17 @@ onMounted(async () => {
                 <div class="text-caption">
                   Diferencia respecto al saldo esperado
                 </div>
+
               </div>
 
-              <strong>
+              <strong class="difference-value">
                 {{ formatoMoneda(diferenciaCierre) }}
               </strong>
 
             </div>
 
           </v-alert>
+
 
           <v-textarea
             v-model="formCerrar.observacionCierre"
@@ -1504,14 +1740,18 @@ onMounted(async () => {
             auto-grow
             maxlength="500"
             variant="outlined"
+            counter
+            hide-details="auto"
             class="mt-4"
           />
 
         </v-card-text>
 
+
         <v-divider />
 
-        <v-card-actions class="pa-4">
+
+        <v-card-actions class="dialog-actions">
 
           <v-spacer />
 
@@ -1524,6 +1764,7 @@ onMounted(async () => {
 
           <v-btn
             color="error"
+            rounded="lg"
             :loading="guardando"
             :disabled="formCerrar.dineroContado === null"
             prepend-icon="mdi-lock"
@@ -1538,9 +1779,10 @@ onMounted(async () => {
 
     </v-dialog>
 
-    <!-- ===================================== -->
+
+    <!-- ===================================================== -->
     <!-- DIALOGO DETALLE SESIÓN -->
-    <!-- ===================================== -->
+    <!-- ===================================================== -->
 
     <v-dialog
       v-model="dialogDetalle"
@@ -1548,70 +1790,85 @@ onMounted(async () => {
       scrollable
     >
 
-      <v-card rounded="lg">
+      <v-card
+        rounded="xl"
+        class="dialog-card"
+      >
 
         <!-- HEADER -->
 
-        <v-card-title
-          class="pa-5 d-flex align-center justify-space-between"
-        >
+        <v-card-item class="dialog-header">
 
-          <div>
+          <template #prepend>
 
-            <div class="text-h6 font-weight-bold">
-              Detalle de sesión
+            <div class="dialog-icon dialog-icon-primary">
+              <v-icon
+                icon="mdi-file-document-outline"
+                size="23"
+              />
             </div>
 
-            <div
-              v-if="sesionDetalle"
-              class="text-body-2 text-medium-emphasis mt-1"
-            >
-              Sesión #{{ sesionDetalle.id }}
-            </div>
+          </template>
 
-          </div>
+          <v-card-title>
+            Detalle de sesión
+          </v-card-title>
 
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            @click="dialogDetalle = false"
-          />
+          <v-card-subtitle v-if="sesionDetalle">
+            Sesión #{{ sesionDetalle.id }}
+          </v-card-subtitle>
 
-        </v-card-title>
+          <template #append>
+
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              @click="dialogDetalle = false"
+            />
+
+          </template>
+
+        </v-card-item>
 
         <v-divider />
+
 
         <!-- LOADING -->
 
         <div
           v-if="loadingDetalle"
-          class="d-flex justify-center py-12"
+          class="detail-loading"
         >
 
           <v-progress-circular
             indeterminate
             color="primary"
             size="45"
+            width="3"
           />
+
+          <span>
+            Cargando detalle...
+          </span>
 
         </div>
 
+
         <template v-else>
 
-          <v-card-text class="pa-5">
+          <v-card-text class="pa-6">
+
 
             <!-- ESTADO -->
 
-            <div class="d-flex align-center mb-5">
+            <div class="detail-status">
 
-              <span class="text-body-2 text-medium-emphasis mr-3">
-                Estado
+              <span class="detail-status-label">
+                Estado de la sesión
               </span>
 
               <v-chip
-                :color="
-                  colorEstado(resumenDetalle.estado)
-                "
+                :color="colorEstado(resumenDetalle.estado)"
                 variant="tonal"
               >
                 {{ textoEstado(resumenDetalle.estado) }}
@@ -1619,137 +1876,127 @@ onMounted(async () => {
 
             </div>
 
+
             <!-- RESUMEN -->
 
-            <v-row>
+            <v-row class="detail-summary">
 
               <v-col
                 cols="12"
                 sm="6"
                 md="3"
               >
-                <v-card
-                  border
-                  rounded="lg"
-                  elevation="0"
-                >
-                  <v-card-text>
 
-                    <div class="text-caption text-medium-emphasis">
-                      Saldo inicial
-                    </div>
+                <div class="detail-metric">
 
-                    <div class="text-h6 font-weight-bold mt-1">
-                      {{
-                        formatoMoneda(
-                          resumenDetalle.saldoInicial
-                        )
-                      }}
-                    </div>
+                  <div class="detail-metric-label">
+                    Saldo inicial
+                  </div>
 
-                  </v-card-text>
-                </v-card>
+                  <div class="detail-metric-value">
+                    {{ formatoMoneda(resumenDetalle.saldoInicial) }}
+                  </div>
+
+                </div>
+
               </v-col>
 
+
               <v-col
                 cols="12"
                 sm="6"
                 md="3"
               >
-                <v-card
-                  border
-                  rounded="lg"
-                  elevation="0"
-                >
-                  <v-card-text>
 
-                    <div class="text-caption text-medium-emphasis">
-                      Ingresos
-                    </div>
+                <div class="detail-metric">
 
-                    <div class="text-h6 font-weight-bold text-success mt-1">
-                      {{
-                        formatoMoneda(
-                          resumenDetalle.totalIngresos
-                        )
-                      }}
-                    </div>
+                  <div class="detail-metric-label">
+                    Ingresos
+                  </div>
 
-                  </v-card-text>
-                </v-card>
+                  <div class="detail-metric-value text-success">
+                    {{ formatoMoneda(resumenDetalle.totalIngresos) }}
+                  </div>
+
+                </div>
+
               </v-col>
 
+
               <v-col
                 cols="12"
                 sm="6"
                 md="3"
               >
-                <v-card
-                  border
-                  rounded="lg"
-                  elevation="0"
-                >
-                  <v-card-text>
 
-                    <div class="text-caption text-medium-emphasis">
-                      Egresos
-                    </div>
+                <div class="detail-metric">
 
-                    <div class="text-h6 font-weight-bold text-error mt-1">
-                      {{
-                        formatoMoneda(
-                          resumenDetalle.totalEgresos
-                        )
-                      }}
-                    </div>
+                  <div class="detail-metric-label">
+                    Egresos
+                  </div>
 
-                  </v-card-text>
-                </v-card>
+                  <div class="detail-metric-value text-error">
+                    {{ formatoMoneda(resumenDetalle.totalEgresos) }}
+                  </div>
+
+                </div>
+
               </v-col>
 
+
               <v-col
                 cols="12"
                 sm="6"
                 md="3"
               >
-                <v-card
-                  border
-                  rounded="lg"
-                  elevation="0"
-                >
-                  <v-card-text>
 
-                    <div class="text-caption text-medium-emphasis">
-                      Saldo esperado
-                    </div>
+                <div class="detail-metric detail-metric-highlight">
 
-                    <div class="text-h6 font-weight-bold text-primary mt-1">
-                      {{
-                        formatoMoneda(
-                          resumenDetalle.saldoEsperado
-                        )
-                      }}
-                    </div>
+                  <div class="detail-metric-label">
+                    Saldo esperado
+                  </div>
 
-                  </v-card-text>
-                </v-card>
+                  <div class="detail-metric-value text-primary">
+                    {{ formatoMoneda(resumenDetalle.saldoEsperado) }}
+                  </div>
+
+                </div>
+
               </v-col>
 
             </v-row>
 
-            <!-- CIERRE -->
+
+            <!-- =========================================== -->
+            <!-- INFORMACIÓN DEL CIERRE -->
+            <!-- =========================================== -->
 
             <v-card
               v-if="resumenDetalle.estado === 'CERRADA'"
               border
-              rounded="lg"
+              rounded="xl"
               elevation="0"
-              class="mt-5"
+              class="detail-section"
             >
 
-              <v-card-title>
-                Información del cierre
-              </v-card-title>
+              <v-card-item>
+
+                <template #prepend>
+
+                  <div class="small-section-icon">
+                    <v-icon
+                      icon="mdi-lock-check-outline"
+                      size="18"
+                    />
+                  </div>
+
+                </template>
+
+                <v-card-title>
+                  Información del cierre
+                </v-card-title>
+
+              </v-card-item>
 
               <v-divider />
 
@@ -1759,27 +2006,37 @@ onMounted(async () => {
 
                   <v-col
                     cols="12"
-                    sm="6"
+                    md="6"
                   >
 
                     <div class="info-row">
-                      <span>
+
+                      <div class="info-label">
+                        <v-icon
+                          icon="mdi-cash-check"
+                          size="17"
+                        />
+
                         Dinero contado
-                      </span>
+                      </div>
 
                       <strong>
-                        {{
-                          formatoMoneda(
-                            resumenDetalle.dineroContado
-                          )
-                        }}
+                        {{ formatoMoneda(resumenDetalle.dineroContado) }}
                       </strong>
+
                     </div>
 
+
                     <div class="info-row">
-                      <span>
+
+                      <div class="info-label">
+                        <v-icon
+                          icon="mdi-scale-balance"
+                          size="17"
+                        />
+
                         Diferencia
-                      </span>
+                      </div>
 
                       <strong
                         :class="
@@ -1790,19 +2047,18 @@ onMounted(async () => {
                               : 'text-warning'
                         "
                       >
-                        {{
-                          formatoMoneda(
-                            resumenDetalle.diferencia
-                          )
-                        }}
+                        {{ formatoMoneda(resumenDetalle.diferencia) }}
                       </strong>
+
                     </div>
 
-                    <div class="mt-3">
+
+                    <div class="mt-4">
 
                       <v-chip
                         :color="tipoDiferenciaDetalle"
                         variant="tonal"
+                        size="small"
                       >
                         {{ textoDiferenciaDetalle }}
                       </v-chip>
@@ -1811,37 +2067,45 @@ onMounted(async () => {
 
                   </v-col>
 
+
                   <v-col
                     cols="12"
-                    sm="6"
+                    md="6"
                   >
 
                     <div class="info-row">
-                      <span>
+
+                      <div class="info-label">
+                        <v-icon
+                          icon="mdi-calendar-outline"
+                          size="17"
+                        />
+
                         Fecha de apertura
-                      </span>
+                      </div>
 
                       <strong>
-                        {{
-                          formatoFecha(
-                            resumenDetalle.fechaApertura
-                          )
-                        }}
+                        {{ formatoFecha(resumenDetalle.fechaApertura) }}
                       </strong>
+
                     </div>
 
+
                     <div class="info-row">
-                      <span>
+
+                      <div class="info-label">
+                        <v-icon
+                          icon="mdi-calendar-check-outline"
+                          size="17"
+                        />
+
                         Fecha de cierre
-                      </span>
+                      </div>
 
                       <strong>
-                        {{
-                          formatoFecha(
-                            resumenDetalle.fechaCierre
-                          )
-                        }}
+                        {{ formatoFecha(resumenDetalle.fechaCierre) }}
                       </strong>
+
                     </div>
 
                   </v-col>
@@ -1852,120 +2116,173 @@ onMounted(async () => {
 
             </v-card>
 
-            <!-- PERSONAS -->
+
+            <!-- =========================================== -->
+            <!-- PERSONAL -->
+            <!-- =========================================== -->
 
             <v-card
               v-if="sesionDetalle"
               border
-              rounded="lg"
+              rounded="xl"
               elevation="0"
-              class="mt-5"
+              class="detail-section"
             >
 
-              <v-card-title>
-                Personal responsable
-              </v-card-title>
+              <v-card-item>
+
+                <template #prepend>
+
+                  <div class="small-section-icon">
+                    <v-icon
+                      icon="mdi-account-group-outline"
+                      size="18"
+                    />
+                  </div>
+
+                </template>
+
+                <v-card-title>
+                  Personal responsable
+                </v-card-title>
+
+              </v-card-item>
 
               <v-divider />
 
               <v-card-text>
 
                 <div class="info-row">
-                  <span>
+
+                  <div class="info-label">
+                    <v-icon
+                      icon="mdi-account-outline"
+                      size="17"
+                    />
+
                     Abierta por
-                  </span>
+                  </div>
 
                   <strong>
                     {{ nombreMiembro(sesionDetalle.abiertaPor) }}
                   </strong>
+
                 </div>
+
 
                 <div
                   v-if="sesionDetalle.cerradaPor"
                   class="info-row"
                 >
-                  <span>
+
+                  <div class="info-label">
+                    <v-icon
+                      icon="mdi-account-check-outline"
+                      size="17"
+                    />
+
                     Cerrada por
-                  </span>
+                  </div>
 
                   <strong>
                     {{ nombreMiembro(sesionDetalle.cerradaPor) }}
                   </strong>
+
                 </div>
 
               </v-card-text>
 
             </v-card>
 
-            <!-- MOVIMIENTOS -->
+
+            <!-- =========================================== -->
+            <!-- MOVIMIENTOS DETALLE -->
+            <!-- =========================================== -->
 
             <v-card
               border
-              rounded="lg"
+              rounded="xl"
               elevation="0"
-              class="mt-5"
+              class="detail-section"
             >
 
-              <v-card-title
-                class="d-flex align-center"
-              >
+              <v-card-item>
 
-                <v-icon
-                  icon="mdi-format-list-bulleted"
-                  class="mr-2"
-                />
+                <template #prepend>
 
-                Movimientos
+                  <div class="small-section-icon">
+                    <v-icon
+                      icon="mdi-format-list-bulleted"
+                      size="18"
+                    />
+                  </div>
 
-                <v-chip
-                  size="small"
-                  variant="tonal"
-                  class="ml-2"
-                >
-                  {{ movimientosDetalle.length }}
-                </v-chip>
+                </template>
 
-              </v-card-title>
+                <v-card-title>
+                  Movimientos
+                </v-card-title>
+
+                <template #append>
+
+                  <v-chip
+                    size="small"
+                    variant="tonal"
+                  >
+                    {{ movimientosDetalle.length }}
+                  </v-chip>
+
+                </template>
+
+              </v-card-item>
 
               <v-divider />
 
+
+              <!-- VACÍO -->
+
               <div
                 v-if="movimientosDetalle.length === 0"
-                class="text-center py-8"
+                class="empty-state"
               >
 
-                <v-icon
-                  icon="mdi-receipt-text-outline"
-                  size="45"
-                  color="grey-lighten-1"
-                />
+                <div class="empty-icon">
+                  <v-icon
+                    icon="mdi-receipt-text-outline"
+                    size="28"
+                  />
+                </div>
 
-                <div class="text-body-2 mt-2">
-                  No hay movimientos registrados.
+                <div class="empty-title">
+                  No hay movimientos registrados
                 </div>
 
               </div>
 
+
+              <!-- MOVIMIENTOS -->
+
               <v-list
                 v-else
                 lines="two"
-                class="py-0"
+                class="movement-list"
               >
 
                 <v-list-item
                   v-for="movimiento in movimientosDetalle"
                   :key="movimiento.id"
+                  class="movement-item"
                 >
 
                   <template #prepend>
 
-                    <v-avatar
-                      :color="
+                    <div
+                      class="movement-icon"
+                      :class="
                         movimiento.tipo === 'INGRESO'
-                          ? 'success'
-                          : 'error'
+                          ? 'movement-icon-income'
+                          : 'movement-icon-expense'
                       "
-                      variant="tonal"
                     >
 
                       <v-icon
@@ -1974,13 +2291,15 @@ onMounted(async () => {
                             ? 'mdi-arrow-down'
                             : 'mdi-arrow-up'
                         "
+                        size="19"
                       />
 
-                    </v-avatar>
+                    </div>
 
                   </template>
 
-                  <v-list-item-title>
+
+                  <v-list-item-title class="movement-title">
                     {{ textoConcepto(movimiento.concepto) }}
                   </v-list-item-title>
 
@@ -1988,10 +2307,11 @@ onMounted(async () => {
                     {{ formatoFecha(movimiento.createdAt) }}
                   </v-list-item-subtitle>
 
+
                   <template #append>
 
                     <div
-                      class="font-weight-bold"
+                      class="movement-amount"
                       :class="
                         movimiento.tipo === 'INGRESO'
                           ? 'text-success'
@@ -2025,17 +2345,32 @@ onMounted(async () => {
 
     </v-dialog>
 
-    <!-- ===================================== -->
+
+    <!-- ===================================================== -->
     <!-- SNACKBAR -->
-    <!-- ===================================== -->
+    <!-- ===================================================== -->
 
     <v-snackbar
       v-model="snackbar.visible"
       :color="snackbar.color"
       timeout="3500"
+      rounded="lg"
     >
 
-      {{ snackbar.mensaje }}
+      <div class="d-flex align-center">
+
+        <v-icon
+          :icon="
+            snackbar.color === 'success'
+              ? 'mdi-check-circle-outline'
+              : 'mdi-alert-circle-outline'
+          "
+          class="mr-3"
+        />
+
+        {{ snackbar.mensaje }}
+
+      </div>
 
       <template #actions>
 
@@ -2053,41 +2388,843 @@ onMounted(async () => {
   </v-container>
 </template>
 
+
 <style scoped>
+
+.caja-page {
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+
+/* ========================================================= */
+/* HEADER */
+/* ========================================================= */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.page-header-main {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.page-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 13px;
+
+  color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.10);
+}
+
+.page-title {
+  margin: 0;
+  font-size: 1.55rem;
+  line-height: 1.2;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  margin: 5px 0 0;
+
+  color: rgba(var(--v-theme-on-surface), 0.60);
+
+  font-size: 0.875rem;
+}
+
+.status-chip {
+  font-weight: 600;
+}
+
+.status-dot,
+.table-status-dot {
+  width: 7px;
+  height: 7px;
+
+  margin-right: 7px;
+
+  border-radius: 50%;
+
+  background: currentColor;
+}
+
+.status-dot-active {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-success), 0.12);
+}
+
+
+/* ========================================================= */
+/* LOADING */
+/* ========================================================= */
+
+.loading-container {
+  min-height: 400px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* ========================================================= */
+/* CAJA CERRADA */
+/* ========================================================= */
+
+.closed-card {
+  max-width: 620px;
+  margin: 70px auto;
+}
+
+.closed-card-content {
+  padding: 52px 35px !important;
+  text-align: center;
+}
+
+.closed-icon {
+  width: 76px;
+  height: 76px;
+
+  margin: 0 auto 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 22px;
+
+  color: rgba(var(--v-theme-on-surface), 0.55);
+  background: rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.closed-title {
+  margin: 0;
+
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.closed-description {
+  max-width: 420px;
+
+  margin: 9px auto 25px;
+
+  color: rgba(var(--v-theme-on-surface), 0.60);
+
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+
+/* ========================================================= */
+/* METRIC CARDS */
+/* ========================================================= */
+
+.summary-row {
+  margin-bottom: 4px;
+}
+
+.metric-card {
+  height: 100%;
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.055) !important;
+}
+
+.metric-card-current {
+  border-color: rgba(var(--v-theme-primary), 0.20) !important;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(var(--v-theme-primary), 0.025),
+      rgba(var(--v-theme-primary), 0.07)
+    );
+}
+
+.metric-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.metric-icon {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+}
+
+.metric-icon-primary {
+  color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.10);
+}
+
+.metric-icon-success {
+  color: rgb(var(--v-theme-success));
+  background: rgba(var(--v-theme-success), 0.10);
+}
+
+.metric-icon-error {
+  color: rgb(var(--v-theme-error));
+  background: rgba(var(--v-theme-error), 0.10);
+}
+
+.metric-label {
+  color: rgba(var(--v-theme-on-surface), 0.62);
+
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.metric-value {
+  margin-top: 16px;
+
+  font-size: 1.45rem;
+  line-height: 1.1;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+}
+
+.metric-description {
+  margin-top: 7px;
+
+  color: rgba(var(--v-theme-on-surface), 0.48);
+
+  font-size: 0.73rem;
+}
+
+
+/* ========================================================= */
+/* SECTIONS */
+/* ========================================================= */
+
+.content-row {
+  margin-top: 8px;
+}
+
+.section-card {
+  height: 100%;
+  overflow: hidden;
+
+  transition:
+    box-shadow 0.18s ease;
+}
+
+.section-card:hover {
+  box-shadow:
+    0 6px 22px rgba(0, 0, 0, 0.035) !important;
+}
+
+.section-title {
+  font-size: 0.98rem !important;
+  font-weight: 700 !important;
+}
+
+.section-icon {
+  width: 38px;
+  height: 38px;
+
+  margin-right: 4px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.09);
+}
+
+
+/* ========================================================= */
+/* SESSION */
+/* ========================================================= */
+
+.session-card {
+  min-height: 100%;
+}
+
+.session-number {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 14px 16px;
+
+  border-radius: 11px;
+
+  background: rgba(var(--v-theme-primary), 0.055);
+}
+
+.session-number-label {
+  color: rgba(var(--v-theme-on-surface), 0.60);
+
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.session-number-value {
+  color: rgb(var(--v-theme-primary));
+
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.info-list {
+  margin-top: 16px;
+}
+
 .info-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  padding: 10px 0;
+  justify-content: space-between;
+
+  gap: 18px;
+
+  padding: 12px 0;
+
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.07);
 }
 
-.info-row span {
-  color: rgba(var(--v-theme-on-surface), 0.65);
+.info-row:last-child {
+  border-bottom: 0;
 }
 
-.stat-card {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+.info-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: rgba(var(--v-theme-on-surface), 0.60);
+
+  font-size: 0.82rem;
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
+.info-row strong {
+  text-align: right;
+
+  font-size: 0.82rem;
 }
 
-.caja-table th {
-  white-space: nowrap;
+.session-note {
+  margin-top: 18px;
+
+  padding: 13px 15px;
+
+  border-radius: 11px;
+
+  background: rgba(var(--v-theme-on-surface), 0.035);
+}
+
+.session-note-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  color: rgba(var(--v-theme-on-surface), 0.55);
+
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.session-note-text {
+  margin-top: 7px;
+
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.session-actions {
+  padding: 15px 20px !important;
+}
+
+
+/* ========================================================= */
+/* MOVEMENTS */
+/* ========================================================= */
+
+.movement-list {
+  padding: 0 !important;
+}
+
+.movement-item {
+  min-height: 70px;
+
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.movement-item:last-child {
+  border-bottom: 0;
+}
+
+.movement-icon {
+  width: 39px;
+  height: 39px;
+
+  margin-right: 3px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+}
+
+.movement-icon-income {
+  color: rgb(var(--v-theme-success));
+  background: rgba(var(--v-theme-success), 0.10);
+}
+
+.movement-icon-expense {
+  color: rgb(var(--v-theme-error));
+  background: rgba(var(--v-theme-error), 0.10);
+}
+
+.movement-title {
+  font-size: 0.86rem !important;
   font-weight: 600 !important;
 }
 
+.movement-date {
+  margin-top: 2px;
+
+  font-size: 0.74rem !important;
+}
+
+.movement-amount-wrapper {
+  min-width: 115px;
+  text-align: right;
+}
+
+.movement-amount {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+
+/* ========================================================= */
+/* EMPTY STATES */
+/* ========================================================= */
+
+.empty-state {
+  padding: 52px 25px;
+
+  text-align: center;
+}
+
+.empty-icon {
+  width: 56px;
+  height: 56px;
+
+  margin: 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 16px;
+
+  color: rgba(var(--v-theme-on-surface), 0.42);
+  background: rgba(var(--v-theme-on-surface), 0.055);
+}
+
+.empty-title {
+  margin-top: 15px;
+
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.empty-description {
+  margin-top: 5px;
+
+  color: rgba(var(--v-theme-on-surface), 0.50);
+
+  font-size: 0.77rem;
+}
+
+
+/* ========================================================= */
+/* HISTORY */
+/* ========================================================= */
+
+.history-card {
+  overflow: hidden;
+}
+
+.history-loading {
+  min-height: 220px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 12px;
+
+  color: rgba(var(--v-theme-on-surface), 0.55);
+
+  font-size: 0.8rem;
+}
+
+.history-empty {
+  min-height: 250px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.history-table-wrapper {
+  overflow-x: auto;
+}
+
+.caja-table {
+  min-width: 900px;
+}
+
+.caja-table th {
+  height: 46px !important;
+
+  background: rgba(var(--v-theme-on-surface), 0.025);
+
+  color: rgba(var(--v-theme-on-surface), 0.55) !important;
+
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+
+  text-transform: uppercase;
+  letter-spacing: 0.035em;
+}
+
 .caja-table td {
+  height: 62px !important;
+
+  font-size: 0.8rem;
+
   white-space: nowrap;
 }
 
-.resumen-cierre {
-  background: rgba(var(--v-theme-primary), 0.05);
-  border-radius: 10px;
-  padding: 4px 16px;
+.session-table-id {
+  font-weight: 700;
+  color: rgb(var(--v-theme-primary));
 }
+
+.money-cell {
+  font-weight: 600;
+}
+
+
+/* ========================================================= */
+/* DIALOGS */
+/* ========================================================= */
+
+.dialog-card {
+  overflow: hidden;
+}
+
+.dialog-header {
+  padding: 20px 24px !important;
+}
+
+.dialog-icon {
+  width: 42px;
+  height: 42px;
+
+  margin-right: 5px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+}
+
+.dialog-icon-primary {
+  color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.10);
+}
+
+.dialog-icon-error {
+  color: rgb(var(--v-theme-error));
+  background: rgba(var(--v-theme-error), 0.10);
+}
+
+.dialog-description {
+  margin: 0 0 20px;
+
+  color: rgba(var(--v-theme-on-surface), 0.60);
+
+  font-size: 0.83rem;
+  line-height: 1.55;
+}
+
+.dialog-actions {
+  min-height: 68px;
+
+  padding: 12px 20px !important;
+}
+
+
+/* ========================================================= */
+/* CIERRE */
+/* ========================================================= */
+
+.expected-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 17px 18px;
+
+  border-radius: 14px;
+
+  border: 1px solid rgba(var(--v-theme-primary), 0.12);
+
+  background: rgba(var(--v-theme-primary), 0.055);
+}
+
+.expected-label {
+  color: rgba(var(--v-theme-on-surface), 0.60);
+
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.expected-value {
+  margin-top: 4px;
+
+  color: rgb(var(--v-theme-primary));
+
+  font-size: 1.35rem;
+  font-weight: 750;
+}
+
+.expected-icon {
+  width: 44px;
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.10);
+}
+
+.difference-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+.difference-value {
+  font-size: 1rem;
+}
+
+
+/* ========================================================= */
+/* DETAIL */
+/* ========================================================= */
+
+.detail-loading {
+  min-height: 400px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 15px;
+
+  color: rgba(var(--v-theme-on-surface), 0.55);
+
+  font-size: 0.82rem;
+}
+
+.detail-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-bottom: 22px;
+}
+
+.detail-status-label {
+  color: rgba(var(--v-theme-on-surface), 0.55);
+
+  font-size: 0.78rem;
+}
+
+.detail-summary {
+  margin-bottom: 2px;
+}
+
+.detail-metric {
+  height: 100%;
+
+  padding: 17px;
+
+  border-radius: 13px;
+
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+
+  background: rgba(var(--v-theme-on-surface), 0.018);
+}
+
+.detail-metric-highlight {
+  border-color: rgba(var(--v-theme-primary), 0.14);
+
+  background: rgba(var(--v-theme-primary), 0.045);
+}
+
+.detail-metric-label {
+  color: rgba(var(--v-theme-on-surface), 0.55);
+
+  font-size: 0.73rem;
+  font-weight: 600;
+}
+
+.detail-metric-value {
+  margin-top: 8px;
+
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.detail-section {
+  margin-top: 18px;
+  overflow: hidden;
+}
+
+.small-section-icon {
+  width: 34px;
+  height: 34px;
+
+  margin-right: 4px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  color: rgb(var(--v-theme-primary));
+  background: rgba(var(--v-theme-primary), 0.08);
+}
+
+
+/* ========================================================= */
+/* RESPONSIVE */
+/* ========================================================= */
+
+@media (max-width: 700px) {
+
+  .caja-page {
+    padding: 14px !important;
+  }
+
+  .page-header {
+    align-items: flex-start;
+  }
+
+  .page-header-main {
+    align-items: flex-start;
+  }
+
+  .page-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .page-title {
+    font-size: 1.3rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.78rem;
+  }
+
+  .page-header > .v-btn {
+    display: none;
+  }
+
+  .metric-value {
+    font-size: 1.3rem;
+  }
+
+  .session-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .session-actions .v-spacer {
+    display: none;
+  }
+
+  .session-actions .v-btn:last-child {
+    margin-left: auto;
+  }
+
+  .movement-amount-wrapper {
+    min-width: auto;
+  }
+
+  .movement-amount {
+    font-size: 0.8rem;
+  }
+
+  .dialog-header {
+    padding: 17px 18px !important;
+  }
+
+  .dialog-card .v-card-text {
+    padding: 20px !important;
+  }
+
+  .difference-content {
+    align-items: flex-start;
+  }
+
+  .detail-status {
+    justify-content: space-between;
+  }
+
+}
+
 </style>

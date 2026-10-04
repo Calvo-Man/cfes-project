@@ -9,16 +9,24 @@ const userStore = useUserStore()
 <template>
   <div class="app">
     <Analytics />
+
     <SideBar v-if="userStore.isAuthenticated" />
-    <v-app style="background: var(--grey)" class="scrollable-nav container">
+
+    <v-app
+      style="background: var(--grey)"
+      class="scrollable-nav container"
+    >
       <div class="fondo-personalizado">
-        <img src="/img/centro-de-fe-removebg.png" alt="" />
+        <img
+          src="/img/centro-de-fe-removebg.png"
+          alt=""
+        />
       </div>
+
       <RouterView />
     </v-app>
   </div>
 </template>
-<script></script>
 <style lang="scss">
 :root {
   --primary: #4ade80;
@@ -29,20 +37,26 @@ const userStore = useUserStore()
   --light: #ffffff;
   --blue: #1359ee;
   --blur-light: rgba(255, 255, 255, 0.856);
-  --sidebar-width: 300px;
+
+  --sidebar-expanded: 260px;
+  --sidebar-collapsed: 76px;
 }
+
 .bg-blue {
   background-color: var(--blue);
 }
+
 .bg-blur {
   background-color: var(--blur-light) !important;
 }
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   font-family: 'Fira sans', sans-serif;
 }
+
 html {
   scroll-behavior: smooth;
 }
@@ -50,18 +64,22 @@ html {
 body {
   background: var(--light);
 }
+
 button {
   cursor: pointer;
 }
+
 .dialog-title {
   font-family: 'Nunito', sans-serif;
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: 0.3px;
 }
+
 .v-hover {
   transition: all 0.1s ease-in-out;
 }
+
 .v-hover:hover {
   transform: scale(1.1);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -70,20 +88,37 @@ button {
 
 .app {
   display: flex;
-  main {
-    flex: 1 1 0;
-    padding: 1.5rem;
-    @media (max-width: 1024px) {
-      padding: 0;
-    }
+  width: 100%;
+  min-height: 100vh;
+}
+
+.app > .container {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/*
+|--------------------------------------------------------------------------
+| MAIN
+|--------------------------------------------------------------------------
+*/
+
+main {
+  flex: 1 1 0;
+  padding: 1.5rem;
+
+  @media (max-width: 1024px) {
+    padding: 0;
   }
 }
+
 .container {
   position: relative;
   z-index: 1;
   max-height: 100vh;
   overflow-y: auto;
 }
+
 .fondo-personalizado {
   position: fixed;
   top: 50%;
@@ -95,24 +130,30 @@ button {
     height: auto;
     opacity: 0.5;
   }
+
   @media (max-width: 1024px) {
     left: 50%;
   }
 }
 
-/* 🔵 Estilo para navegadores basados en WebKit (Chrome, Edge, Safari) */
+/*
+|--------------------------------------------------------------------------
+| SCROLLBAR
+|--------------------------------------------------------------------------
+*/
+
 .scrollable-nav::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 .scrollable-nav::-webkit-scrollbar-track {
-  background-color: var(--grey); // Track gris claro
+  background-color: var(--grey);
   border-radius: 10px;
 }
 
 .scrollable-nav::-webkit-scrollbar-thumb {
-  background-color: var(--dark-alt); // Color oscuro
+  background-color: var(--dark-alt);
   border-radius: 10px;
   border: 2px solid transparent;
   background-clip: padding-box;
@@ -123,20 +164,22 @@ button {
   background-color: var(--blue);
 }
 
-/* 🟣 Firefox (usando scrollbar-color y scrollbar-width) */
 .scrollable-nav {
-  scrollbar-width: thin; /* Delgada */
-  scrollbar-color: var(--dark-alt) var(--grey); /* thumb - track */
+  scrollbar-width: thin;
+  scrollbar-color: var(--dark-alt) var(--grey);
+
   &::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
+
   &::-webkit-scrollbar-track {
-    background-color: var(--grey); /* Track gris claro */
+    background-color: var(--grey);
     border-radius: 10px;
   }
+
   &::-webkit-scrollbar-thumb {
-    background-color: var(--dark-alt); /* Color oscuro */
+    background-color: var(--dark-alt);
     border-radius: 10px;
     border: 2px solid transparent;
     background-clip: padding-box;

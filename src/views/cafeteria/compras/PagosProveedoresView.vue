@@ -876,7 +876,7 @@ async function cargarCompras() {
   loading.value = true
 
   try {
-    const response = await api.get('/compras')
+    const response = await api.get('/cafeteria/compras')
 
     compras.value = Array.isArray(response.data)
       ? response.data
@@ -897,7 +897,7 @@ async function cargarPagos(compraId) {
 
   try {
     const response = await api.get(
-      `/compras/${compraId}/pagos`,
+      `/cafeteria/compras/${compraId}/pagos`,
     )
 
     pagos.value = Array.isArray(response.data)
@@ -1003,7 +1003,7 @@ async function registrarPago() {
 
   try {
     await api.post(
-      `/compras/${selectedCompra.value.id}/pagos`,
+      `/cafeteria/compras/${selectedCompra.value.id}/pagos`,
       {
         monto,
         metodoPago: pagoForm.value.metodoPago,

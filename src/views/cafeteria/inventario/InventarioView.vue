@@ -177,7 +177,7 @@ async function cargarProductos() {
   loading.value = true
 
   try {
-    const response = await axios.get('/producto')
+    const response = await axios.get('/cafeteria/producto')
 
     productos.value = Array.isArray(response.data)
       ? response.data
@@ -199,7 +199,7 @@ async function cargarProductos() {
 async function cargarCategorias() {
   try {
     const response = await axios.get(
-      '/categoria-producto',
+      '/cafeteria/categoria-producto',
     )
 
     categorias.value = Array.isArray(response.data)

@@ -13,107 +13,111 @@ export const MenuSideBar = [
     RequiresAdmin: false,
     RequiresPastor: false,
   },
-{
-  label: 'Cafetería',
-  icon: 'restaurant',
-  RequiresAdmin: false,
-  RequiresPastor: false,
 
-  children: [
-    // =========================
-    // OPERACIÓN
-    // =========================
-    {
-      label: 'Dashboard',
-      icon: 'dashboard',
-      to: '/cafeteria',
-      RequiresAdmin: false,
-      RequiresPastor: false,
-    },
-    {
-      label: 'Ventas',
-      icon: 'point_of_sale',
-      to: '/cafeteria/ventas',
-      RequiresAdmin: false,
-      RequiresPastor: false,
-    },
-    {
-      label: 'Inventario',
-      icon: 'inventory_2',
-      to: '/cafeteria/inventario',
-      RequiresAdmin: false,
-      RequiresPastor: false,
-    },
-    {
-      label: 'Compras',
-      icon: 'shopping_cart',
-      to: '/cafeteria/compras',
-      RequiresAdmin: false,
-      RequiresPastor: false,
-    },
+  // =========================
+  // OPERACIÓN
+  // =========================
 
-    // =========================
-    // DINERO
-    // =========================
-    {
-      label: 'Caja',
-      icon: 'account_balance_wallet',
-      to: '/cafeteria/caja',
-      RequiresAdmin: false,
-      RequiresPastor: false,
-    },
-    {
-      label: 'Cuentas',
-      icon: 'account_balance',
-      to: '/cafeteria/cuentas',
-      RequiresAdmin: false,
-      RequiresPastor: false,
-    },
-    {
-      label: 'Cuentas por cobrar',
-      icon: 'request_quote',
-      to: '/cafeteria/cuentas-por-cobrar',
-      RequiresAdmin: false,
-      RequiresPastor: false,
-    },
-    {
-      label: 'Pagos a proveedores',
-      icon: 'payments',
-      to: '/cafeteria/pago-proveedores',
-      RequiresAdmin: false,
-      RequiresPastor: false,
-    },
+  {
+    label: 'Dashboard',
+    icon: 'dashboard',
+    to: '/cafeteria/dashboard',
+    permiso: 'CAFETERIA_DASHBOARD',
+  },
 
-    // =========================
-    // CATÁLOGO
-    // =========================
-    {
-      label: 'Productos',
-      icon: 'local_cafe',
-      to: '/cafeteria/productos',
-      RequiresAdmin: false,
-      RequiresPastor: false,
-    },
-    {
-      label: 'Categorías',
-      icon: 'category',
-      to: '/cafeteria/categorias',
-      RequiresAdmin: false,
-      RequiresPastor: false,
-    },
+  {
+    label: 'Ventas',
+    icon: 'point_of_sale',
+    to: '/cafeteria/ventas',
+    permiso: 'CAFETERIA_VENTAS',
+  },
 
-    // =========================
-    // PROVEEDORES
-    // =========================
-    {
-      label: 'Proveedores',
-      icon: 'local_shipping',
-      to: '/cafeteria/proveedores',
-      RequiresAdmin: false,
-      RequiresPastor: false,
-    },
-  ],
-},  {
+  {
+    label: 'Inventario',
+    icon: 'inventory_2',
+    to: '/cafeteria/inventario',
+    permiso: 'CAFETERIA_INVENTARIO',
+  },
+
+  {
+    label: 'Compras',
+    icon: 'shopping_cart',
+    to: '/cafeteria/compras',
+    permiso: 'CAFETERIA_COMPRAS',
+  },
+
+  // =========================
+  // DINERO
+  // =========================
+
+  {
+    label: 'Caja',
+    icon: 'account_balance_wallet',
+    to: '/cafeteria/caja',
+    permiso: 'CAFETERIA_CAJA',
+  },
+
+  {
+    label: 'Cuentas',
+    icon: 'account_balance',
+    to: '/cafeteria/cuentas',
+    permiso: 'CAFETERIA_CUENTAS',
+  },
+
+  {
+    label: 'Cuentas por cobrar',
+    icon: 'request_quote',
+    to: '/cafeteria/cuentas-por-cobrar',
+    permiso: 'CAFETERIA_CUENTAS_COBRAR',
+  },
+
+  {
+    label: 'Pagos a proveedores',
+    icon: 'payments',
+    to: '/cafeteria/pago-proveedores',
+    permiso: 'CAFETERIA_PAGOS_PROVEEDORES',
+  },
+
+  // =========================
+  // CATÁLOGO
+  // =========================
+
+  {
+    label: 'Productos',
+    icon: 'local_cafe',
+    to: '/cafeteria/productos',
+    permiso: 'CAFETERIA_PRODUCTOS',
+  },
+
+  {
+    label: 'Categorías',
+    icon: 'category',
+    to: '/cafeteria/categorias',
+    permiso: 'CAFETERIA_CATEGORIAS',
+  },
+
+  // =========================
+  // PROVEEDORES
+  // =========================
+
+  {
+    label: 'Proveedores',
+    icon: 'local_shipping',
+    to: '/cafeteria/proveedores',
+    permiso: 'CAFETERIA_PROVEEDORES',
+  },
+  // =========================
+  // ADMINISTRACIÓN
+  // =========================
+  {
+    label: 'Permisos cafetería',
+    icon: 'admin_panel_settings',
+    to: '/permisos',
+    requiresAdmin: true,
+    requiresPastor: true,
+  },
+
+  {
     label: 'Iglesias',
     icon: 'church',
     RequiresAdmin: false,

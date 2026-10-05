@@ -31,6 +31,15 @@ const transferenciaForm = ref({
   observacion: '',
 })
 
+const dialogOperacionSaldo = ref(false)
+const loadingOperacionSaldo = ref(false)
+const tipoOperacionSaldo = ref('INGRESO')
+
+const operacionSaldoForm = ref({
+  monto: null,
+  observacion: '',
+})
+
 /* ============================================================
    TIPOS DE CUENTA
 ============================================================ */
@@ -108,6 +117,36 @@ const puedeTransferir = computed(() => {
     transferenciaForm.value.cuentaDestinoId &&
     montoTransferenciaValido.value &&
     !loadingTransferencia.value
+  )
+})
+
+const esIngresoSaldo = computed(() => {
+  return tipoOperacionSaldo.value === 'INGRESO'
+})
+
+const saldoDisponibleOperacion = computed(() => {
+  return Number(cuentaSeleccionada.value?.saldo || 0)
+})
+
+const montoOperacionValido = computed(() => {
+  const monto = Number(operacionSaldoForm.value.monto)
+
+  if (!Number.isFinite(monto) || monto <= 0) {
+    return false
+  }
+
+  if (!esIngresoSaldo.value && monto > saldoDisponibleOperacion.value) {
+    return false
+  }
+
+  return true
+})
+
+const puedeGuardarOperacionSaldo = computed(() => {
+  return (
+    cuentaSeleccionada.value?.activo &&
+    montoOperacionValido.value &&
+    !loadingOperacionSaldo.value
   )
 })
 
@@ -299,7 +338,6 @@ const abrirTransferencia = () => {
 }
 
 const cerrarTransferencia = () => {
-  if (loadingTransferencia.value) return
 
   dialogTransferencia.value = false
 
@@ -308,6 +346,93 @@ const cerrarTransferencia = () => {
     cuentaDestinoId: null,
     monto: null,
     observacion: '',
+  }
+}
+
+/* ============================================================
+   INGRESO / RETIRO MANUAL DE SALDO
+============================================================ */
+
+const abrirOperacionSaldo = (cuenta, operacion) => {
+  cuentaSeleccionada.value = cuenta
+  tipoOperacionSaldo.value = operacion
+
+  operacionSaldoForm.value = {
+    monto: null,
+    observacion: '',
+  }
+
+  error.value = ''
+  dialogOperacionSaldo.value = true
+}
+
+const cerrarOperacionSaldo = () => {
+
+  dialogOperacionSaldo.value = false
+
+  operacionSaldoForm.value = {
+    monto: null,
+    observacion: '',
+  }
+
+  cuentaSeleccionada.value = null
+}
+
+const guardarOperacionSaldo = async () => {
+  if (!puedeGuardarOperacionSaldo.value) return
+
+  loadingOperacionSaldo.value = true
+  error.value = ''
+
+  const cuentaId = cuentaSeleccionada.value.id
+
+  const endpoint = esIngresoSaldo.value
+    ? 'ingreso'
+    : 'retiro'
+
+  try {
+    await api.post(
+      `/cafeteria/movimientos-cuenta/${cuentaId}/${endpoint}`,
+      {
+        monto: Number(operacionSaldoForm.value.monto),
+        observacion:
+          operacionSaldoForm.value.observacion?.trim() || undefined,
+      }
+    )
+
+
+    await cargarCuentas()
+
+    // Si el historial está abierto para esta cuenta,
+    // actualizamos sus movimientos.
+    if (
+      dialogMovimientos.value &&
+      cuentaSeleccionada.value?.id === cuentaId
+    ) {
+      await verMovimientos(
+        cuentas.value.find(cuenta => cuenta.id === cuentaId) ||
+        cuentaSeleccionada.value
+      )
+    }
+
+    cerrarOperacionSaldo()
+    cuentaSeleccionada.value = null
+
+    operacionSaldoForm.value = {
+      monto: null,
+      observacion: '',
+    }
+  } catch (err) {
+    console.error(
+      `Error realizando ${endpoint} manual:`,
+      err
+    )
+
+    error.value =
+      err.response?.data?.message ||
+      `No fue posible ${esIngresoSaldo.value ? 'agregar' : 'retirar'} el saldo.`
+  } finally {
+    loadingOperacionSaldo.value = false
   }
 }
 
@@ -331,7 +456,7 @@ const transferirDinero = async () => {
   error.value = ''
 
   try {
-    await api.post('/cafeteria/cuentas/transferencia', {
+    await api.post('/cafeteria/movimientos-cuenta/transferencia', {
       cuentaOrigenId:
         transferenciaForm.value.cuentaOrigenId,
 
@@ -346,9 +471,9 @@ const transferirDinero = async () => {
         transferenciaForm.value.observacion?.trim() || undefined,
     })
 
-    cerrarTransferencia()
-
+    
     await cargarCuentas()
+    cerrarTransferencia()
   } catch (err) {
     console.error('Error realizando transferencia:', err)
 
@@ -439,24 +564,12 @@ onMounted(() => {
 
       <div class="header-actions">
 
-        <v-btn
-          color="primary"
-          size="small"
-          variant="tonal"
-          prepend-icon="mdi-swap-horizontal"
-          :disabled="cuentasActivas < 2"
-          @click="abrirTransferencia"
-        >
+        <v-btn color="primary" size="small" variant="tonal" prepend-icon="mdi-swap-horizontal"
+          :disabled="cuentasActivas < 2" @click="abrirTransferencia">
           Transferir
         </v-btn>
 
-        <v-btn
-          color="primary"
-          size="small"
-          variant="flat"
-          prepend-icon="mdi-plus"
-          @click="abrirCrearCuenta"
-        >
+        <v-btn color="primary" size="small" variant="flat" prepend-icon="mdi-plus" @click="abrirCrearCuenta">
           Nueva cuenta
         </v-btn>
 
@@ -468,15 +581,8 @@ onMounted(() => {
          ERROR
     ====================================================== -->
 
-    <v-alert
-      v-if="error"
-      type="error"
-      variant="tonal"
-      density="compact"
-      closable
-      class="mb-3"
-      @click:close="error = ''"
-    >
+    <v-alert v-if="error" type="error" variant="tonal" density="compact" closable class="mb-3"
+      @click:close="error = ''">
       {{ error }}
     </v-alert>
 
@@ -486,16 +592,9 @@ onMounted(() => {
 
     <v-row dense class="mb-3">
 
-      <v-col
-        cols="12"
-        sm="6"
-        md="4"
-      >
+      <v-col cols="12" sm="6" md="4">
 
-        <v-card
-          class="metric-card"
-          elevation="0"
-        >
+        <v-card class="metric-card" elevation="0">
           <v-card-text>
 
             <div class="d-flex justify-space-between align-start">
@@ -529,16 +628,9 @@ onMounted(() => {
 
       </v-col>
 
-      <v-col
-        cols="12"
-        sm="6"
-        md="4"
-      >
+      <v-col cols="12" sm="6" md="4">
 
-        <v-card
-          class="metric-card"
-          elevation="0"
-        >
+        <v-card class="metric-card" elevation="0">
           <v-card-text>
 
             <div class="d-flex justify-space-between align-start">
@@ -572,16 +664,9 @@ onMounted(() => {
 
       </v-col>
 
-      <v-col
-        cols="12"
-        sm="6"
-        md="4"
-      >
+      <v-col cols="12" sm="6" md="4">
 
-        <v-card
-          class="metric-card"
-          elevation="0"
-        >
+        <v-card class="metric-card" elevation="0">
           <v-card-text>
 
             <div class="d-flex justify-space-between align-start">
@@ -622,17 +707,9 @@ onMounted(() => {
          LOADING
     ====================================================== -->
 
-    <v-card
-      v-if="loading"
-      class="loading-card"
-      elevation="0"
-    >
+    <v-card v-if="loading" class="loading-card" elevation="0">
       <v-card-text class="py-10 text-center">
-        <v-progress-circular
-          indeterminate
-          color="primary"
-          size="32"
-        />
+        <v-progress-circular indeterminate color="primary" size="32" />
 
         <div class="loading-text">
           Cargando cuentas...
@@ -646,19 +723,10 @@ onMounted(() => {
 
     <template v-else>
 
-      <div
-        v-if="cuentas.length"
-        class="accounts-grid"
-      >
+      <div v-if="cuentas.length" class="accounts-grid">
 
-        <v-card
-          v-for="cuenta in cuentas"
-          :key="cuenta.id"
-          class="account-card"
-          :class="{ 'account-disabled': !cuenta.activo }"
-          elevation="0"
-          @click="verMovimientos(cuenta)"
-        >
+        <v-card v-for="cuenta in cuentas" :key="cuenta.id" class="account-card"
+          :class="{ 'account-disabled': !cuenta.activo }" elevation="0" @click="verMovimientos(cuenta)">
 
           <v-card-text>
 
@@ -666,10 +734,7 @@ onMounted(() => {
 
             <div class="d-flex justify-space-between align-start">
 
-              <div
-                class="account-icon"
-                :class="`account-icon-${cuenta.tipo.toLowerCase()}`"
-              >
+              <div class="account-icon" :class="`account-icon-${cuenta.tipo.toLowerCase()}`">
                 <v-icon size="20">
                   {{ obtenerIcono(cuenta.tipo) }}
                 </v-icon>
@@ -679,38 +744,32 @@ onMounted(() => {
 
                 <template #activator="{ props }">
 
-                  <v-btn
-                    v-bind="props"
-                    icon="mdi-dots-vertical"
-                    variant="text"
-                    density="comfortable"
-                    size="small"
-                    @click.stop
-                  />
+                  <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text" density="comfortable" size="small"
+                    @click.stop />
 
                 </template>
-
                 <v-list density="compact">
 
-                  <v-list-item
-                    prepend-icon="mdi-history"
-                    title="Ver movimientos"
-                    @click="verMovimientos(cuenta)"
-                  />
+                  <v-list-item prepend-icon="mdi-history" title="Ver movimientos" @click="verMovimientos(cuenta)" />
 
-                  <v-list-item
-                    :prepend-icon="
-                      cuenta.activo
-                        ? 'mdi-pause-circle-outline'
-                        : 'mdi-play-circle-outline'
-                    "
-                    :title="
-                      cuenta.activo
-                        ? 'Desactivar cuenta'
-                        : 'Activar cuenta'
-                    "
-                    @click="cambiarEstado(cuenta)"
-                  />
+                  <v-divider class="my-1" />
+
+                  <v-list-item prepend-icon="mdi-plus-circle-outline" title="Agregar saldo" :disabled="!cuenta.activo"
+                    @click="abrirOperacionSaldo(cuenta, 'INGRESO')" />
+
+                  <v-list-item prepend-icon="mdi-minus-circle-outline" title="Retirar saldo"
+                    :disabled="!cuenta.activo || Number(cuenta.saldo) <= 0"
+                    @click="abrirOperacionSaldo(cuenta, 'EGRESO')" />
+
+                  <v-divider class="my-1" />
+
+                  <v-list-item :prepend-icon="cuenta.activo
+                    ? 'mdi-pause-circle-outline'
+                    : 'mdi-play-circle-outline'
+                    " :title="cuenta.activo
+                      ? 'Desactivar cuenta'
+                      : 'Activar cuenta'
+                      " @click="cambiarEstado(cuenta)" />
 
                 </v-list>
 
@@ -742,12 +801,9 @@ onMounted(() => {
 
               <div class="d-flex align-center ga-2">
 
-                <span
-                  class="status-dot"
-                  :class="{
-                    active: cuenta.activo
-                  }"
-                />
+                <span class="status-dot" :class="{
+                  active: cuenta.activo
+                }" />
 
                 <span class="account-status">
                   {{ cuenta.activo ? 'Activa' : 'Inactiva' }}
@@ -774,16 +830,9 @@ onMounted(() => {
            SIN CUENTAS
       ==================================================== -->
 
-      <v-card
-        v-else
-        class="empty-card"
-        elevation="0"
-      >
+      <v-card v-else class="empty-card" elevation="0">
 
-        <v-icon
-          size="40"
-          color="grey"
-        >
+        <v-icon size="40" color="grey">
           mdi-wallet-outline
         </v-icon>
 
@@ -795,13 +844,7 @@ onMounted(() => {
           Crea las cuentas donde la cafetería administra su dinero.
         </div>
 
-        <v-btn
-          color="primary"
-          size="small"
-          class="mt-4"
-          prepend-icon="mdi-plus"
-          @click="abrirCrearCuenta"
-        >
+        <v-btn color="primary" size="small" class="mt-4" prepend-icon="mdi-plus" @click="abrirCrearCuenta">
           Crear cuenta
         </v-btn>
 
@@ -813,10 +856,7 @@ onMounted(() => {
          DIALOG CREAR
     ====================================================== -->
 
-    <v-dialog
-      v-model="dialogCrear"
-      max-width="460"
-    >
+    <v-dialog v-model="dialogCrear" max-width="460">
 
       <v-card class="dialog-card">
 
@@ -844,12 +884,7 @@ onMounted(() => {
 
           </div>
 
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            @click="cerrarCrearCuenta"
-          />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="cerrarCrearCuenta" />
 
         </div>
 
@@ -861,31 +896,16 @@ onMounted(() => {
             Nombre de la cuenta
           </div>
 
-          <v-text-field
-            v-model="form.nombre"
-            placeholder="Ej. Nequi Cafetería"
-            variant="outlined"
-            density="compact"
-            prepend-inner-icon="mdi-wallet-outline"
-            hide-details
-            class="mb-4"
-          />
+          <v-text-field v-model="form.nombre" placeholder="Ej. Nequi Cafetería" variant="outlined" density="compact"
+            prepend-inner-icon="mdi-wallet-outline" hide-details class="mb-4" />
 
           <div class="field-label">
             Tipo de cuenta
           </div>
 
-          <v-select
-            v-model="form.tipo"
-            :items="tiposCuenta"
-            item-title="title"
-            item-value="value"
-            placeholder="Selecciona un tipo"
-            variant="outlined"
-            density="compact"
-            prepend-inner-icon="mdi-shape-outline"
-            hide-details
-          />
+          <v-select v-model="form.tipo" :items="tiposCuenta" item-title="title" item-value="value"
+            placeholder="Selecciona un tipo" variant="outlined" density="compact" prepend-inner-icon="mdi-shape-outline"
+            hide-details />
 
         </v-card-text>
 
@@ -893,24 +913,193 @@ onMounted(() => {
 
         <v-card-actions class="px-4 py-3">
 
-          <v-btn
-            variant="text"
-            size="small"
-            @click="cerrarCrearCuenta"
-          >
+          <v-btn variant="text" size="small" @click="cerrarCrearCuenta">
             Cancelar
           </v-btn>
 
           <v-spacer />
 
-          <v-btn
-            color="primary"
-            variant="flat"
-            size="small"
-            :disabled="!form.nombre.trim() || !form.tipo"
-            @click="crearCuenta"
-          >
+          <v-btn color="primary" variant="flat" size="small" :disabled="!form.nombre.trim() || !form.tipo"
+            @click="crearCuenta">
             Crear cuenta
+          </v-btn>
+
+        </v-card-actions>
+
+      </v-card>
+
+    </v-dialog>
+
+    <!-- =====================================================
+     DIALOG INGRESO / RETIRO DE SALDO
+====================================================== -->
+
+    <v-dialog v-model="dialogOperacionSaldo" max-width="460" persistent>
+
+      <v-card class="dialog-card">
+
+        <!-- HEADER -->
+
+        <div class="dialog-header">
+
+          <div class="d-flex align-center ga-3">
+
+            <div class="dialog-icon" :class="esIngresoSaldo
+                ? 'balance-income-icon'
+                : 'balance-expense-icon'
+              ">
+
+              <v-icon size="19">
+                {{
+                  esIngresoSaldo
+                    ? 'mdi-plus-circle-outline'
+                    : 'mdi-minus-circle-outline'
+                }}
+              </v-icon>
+
+            </div>
+
+            <div>
+
+              <div class="dialog-title">
+                {{ esIngresoSaldo ? 'Agregar saldo' : 'Retirar saldo' }}
+              </div>
+
+              <div class="dialog-subtitle">
+                {{ cuentaSeleccionada?.nombre }}
+              </div>
+
+            </div>
+
+          </div>
+
+          <v-btn icon="mdi-close" variant="text" size="small" :disabled="loadingOperacionSaldo"
+            @click="cerrarOperacionSaldo" />
+
+        </div>
+
+        <v-divider />
+
+        <v-card-text class="pa-4">
+
+          <!-- SALDO ACTUAL -->
+
+          <div class="balance-current">
+
+            <span>
+              Saldo actual
+            </span>
+
+            <strong>
+              {{ formatearDinero(saldoDisponibleOperacion) }}
+            </strong>
+
+          </div>
+
+          <!-- MONTO -->
+
+          <div class="field-label">
+            {{ esIngresoSaldo ? 'Monto a agregar' : 'Monto a retirar' }}
+          </div>
+
+          <v-text-field v-model.number="operacionSaldoForm.monto" type="number" min="0" step="1000" placeholder="0"
+            variant="outlined" density="compact" prefix="$" hide-details="auto" :error="!esIngresoSaldo &&
+              Number(operacionSaldoForm.monto) > saldoDisponibleOperacion
+              " :error-messages="!esIngresoSaldo &&
+            Number(operacionSaldoForm.monto) > saldoDisponibleOperacion
+            ? 'El monto supera el saldo disponible'
+            : ''
+          " class="amount-input mb-4" />
+
+          <!-- OBSERVACIÓN -->
+
+          <div class="field-label">
+            Motivo de la operación
+            <span class="optional">
+              Opcional
+            </span>
+          </div>
+
+          <v-textarea v-model="operacionSaldoForm.observacion" :placeholder="esIngresoSaldo
+              ? 'Ej. Saldo inicial de caja'
+              : 'Ej. Retiro para gastos de cafetería'
+            " variant="outlined" density="compact" rows="2" auto-grow hide-details />
+
+          <!-- RESUMEN -->
+
+          <div v-if="montoOperacionValido" class="balance-summary">
+
+            <div class="summary-row">
+
+              <span>
+                {{ esIngresoSaldo ? 'Saldo actual' : 'Saldo actual' }}
+              </span>
+
+              <strong>
+                {{ formatearDinero(saldoDisponibleOperacion) }}
+              </strong>
+
+            </div>
+
+            <div class="summary-row">
+
+              <span>
+                {{ esIngresoSaldo ? 'Ingreso' : 'Retiro' }}
+              </span>
+
+              <strong :class="esIngresoSaldo
+                  ? 'summary-income'
+                  : 'summary-expense'
+                ">
+                {{ esIngresoSaldo ? '+' : '-' }}
+                {{ formatearDinero(operacionSaldoForm.monto) }}
+              </strong>
+
+            </div>
+
+            <v-divider class="my-2" />
+
+            <div class="summary-row">
+
+              <strong>
+                Saldo resultante
+              </strong>
+
+              <strong class="resulting-balance">
+                {{
+                  formatearDinero(
+                    saldoDisponibleOperacion +
+                    (
+                      esIngresoSaldo
+                        ? Number(operacionSaldoForm.monto)
+                        : -Number(operacionSaldoForm.monto)
+                    )
+                  )
+                }}
+              </strong>
+
+            </div>
+
+          </div>
+
+        </v-card-text>
+
+        <v-divider />
+
+        <v-card-actions class="px-4 py-3">
+
+          <v-btn variant="text" size="small" :disabled="loadingOperacionSaldo" @click="cerrarOperacionSaldo">
+            Cancelar
+          </v-btn>
+
+          <v-spacer />
+
+          <v-btn :color="esIngresoSaldo ? 'success' : 'error'" variant="flat" size="small"
+            :loading="loadingOperacionSaldo" :disabled="!puedeGuardarOperacionSaldo" :prepend-icon="esIngresoSaldo
+                ? 'mdi-plus'
+                : 'mdi-minus'
+              " @click="guardarOperacionSaldo">
+            {{ esIngresoSaldo ? 'Agregar saldo' : 'Confirmar retiro' }}
           </v-btn>
 
         </v-card-actions>
@@ -923,11 +1112,7 @@ onMounted(() => {
          DIALOG TRANSFERENCIA
     ====================================================== -->
 
-    <v-dialog
-      v-model="dialogTransferencia"
-      max-width="500"
-      persistent
-    >
+    <v-dialog v-model="dialogTransferencia" max-width="500" persistent>
 
       <v-card class="dialog-card">
 
@@ -957,13 +1142,8 @@ onMounted(() => {
 
           </div>
 
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            :disabled="loadingTransferencia"
-            @click="cerrarTransferencia"
-          />
+          <v-btn icon="mdi-close" variant="text" size="small" :disabled="loadingTransferencia"
+            @click="cerrarTransferencia" />
 
         </div>
 
@@ -977,34 +1157,19 @@ onMounted(() => {
             Cuenta de origen
           </div>
 
-          <v-select
-            v-model="transferenciaForm.cuentaOrigenId"
-            :items="cuentas.filter(cuenta => cuenta.activo)"
-            item-title="nombre"
-            item-value="id"
-            placeholder="Selecciona la cuenta de origen"
-            variant="outlined"
-            density="compact"
-            prepend-inner-icon="mdi-arrow-up-right"
-            hide-details
-            class="mb-2"
-            @update:model-value="seleccionarCuentaOrigen"
-          >
+          <v-select v-model="transferenciaForm.cuentaOrigenId" :items="cuentas.filter(cuenta => cuenta.activo)"
+            item-title="nombre" item-value="id" placeholder="Selecciona la cuenta de origen" variant="outlined"
+            density="compact" prepend-inner-icon="mdi-arrow-up-right" hide-details class="mb-2"
+            @update:model-value="seleccionarCuentaOrigen">
 
             <template #item="{ props, item }">
 
-              <v-list-item
-                v-bind="props"
-                :title="item.raw.nombre"
-                :subtitle="`${obtenerNombreTipo(item.raw.tipo)} · ${formatearDinero(item.raw.saldo)}`"
-              >
+              <v-list-item v-bind="props" :title="item.raw.nombre"
+                :subtitle="`${obtenerNombreTipo(item.raw.tipo)} · ${formatearDinero(item.raw.saldo)}`">
 
                 <template #prepend>
 
-                  <div
-                    class="select-account-icon"
-                    :class="`account-icon-${item.raw.tipo.toLowerCase()}`"
-                  >
+                  <div class="select-account-icon" :class="`account-icon-${item.raw.tipo.toLowerCase()}`">
                     <v-icon size="16">
                       {{ obtenerIcono(item.raw.tipo) }}
                     </v-icon>
@@ -1020,10 +1185,7 @@ onMounted(() => {
 
               <div class="selected-account">
 
-                <div
-                  class="select-account-icon"
-                  :class="`account-icon-${item.raw.tipo.toLowerCase()}`"
-                >
+                <div class="select-account-icon" :class="`account-icon-${item.raw.tipo.toLowerCase()}`">
                   <v-icon size="15">
                     {{ obtenerIcono(item.raw.tipo) }}
                   </v-icon>
@@ -1041,10 +1203,7 @@ onMounted(() => {
 
           <!-- SALDO DISPONIBLE -->
 
-          <div
-            v-if="cuentaOrigenSeleccionada"
-            class="available-balance"
-          >
+          <div v-if="cuentaOrigenSeleccionada" class="available-balance">
 
             <span>
               Saldo disponible
@@ -1062,32 +1221,18 @@ onMounted(() => {
             Monto a transferir
           </div>
 
-          <v-text-field
-            v-model.number="transferenciaForm.monto"
-            type="number"
-            min="0"
-            step="1000"
-            placeholder="0"
-            variant="outlined"
-            density="compact"
-            prefix="$"
-            hide-details
-            :error="
-              transferenciaForm.monto > 0 &&
+          <v-text-field v-model.number="transferenciaForm.monto" type="number" min="0" step="1000" placeholder="0"
+            variant="outlined" density="compact" prefix="$" hide-details :error="transferenciaForm.monto > 0 &&
               cuentaOrigenSeleccionada &&
               Number(transferenciaForm.monto) >
-                Number(cuentaOrigenSeleccionada.saldo)
-            "
-            :error-messages="
-              transferenciaForm.monto > 0 &&
-              cuentaOrigenSeleccionada &&
-              Number(transferenciaForm.monto) >
+              Number(cuentaOrigenSeleccionada.saldo)
+              " :error-messages="transferenciaForm.monto > 0 &&
+                cuentaOrigenSeleccionada &&
+                Number(transferenciaForm.monto) >
                 Number(cuentaOrigenSeleccionada.saldo)
                 ? 'El monto supera el saldo disponible'
                 : ''
-            "
-            class="amount-input"
-          />
+                " class="amount-input" />
 
           <!-- DESTINO -->
 
@@ -1095,33 +1240,17 @@ onMounted(() => {
             Cuenta de destino
           </div>
 
-          <v-select
-            v-model="transferenciaForm.cuentaDestinoId"
-            :items="cuentasDestinoDisponibles"
-            item-title="nombre"
-            item-value="id"
-            placeholder="Selecciona la cuenta destino"
-            variant="outlined"
-            density="compact"
-            prepend-inner-icon="mdi-arrow-down-left"
-            hide-details
-            class="mb-4"
-          >
+          <v-select v-model="transferenciaForm.cuentaDestinoId" :items="cuentasDestinoDisponibles" item-title="nombre"
+            item-value="id" placeholder="Selecciona la cuenta destino" variant="outlined" density="compact"
+            prepend-inner-icon="mdi-arrow-down-left" hide-details class="mb-4">
 
             <template #item="{ props, item }">
 
-              <v-list-item
-                v-bind="props"
-                :title="item.raw.nombre"
-                :subtitle="obtenerNombreTipo(item.raw.tipo)"
-              >
+              <v-list-item v-bind="props" :title="item.raw.nombre" :subtitle="obtenerNombreTipo(item.raw.tipo)">
 
                 <template #prepend>
 
-                  <div
-                    class="select-account-icon"
-                    :class="`account-icon-${item.raw.tipo.toLowerCase()}`"
-                  >
+                  <div class="select-account-icon" :class="`account-icon-${item.raw.tipo.toLowerCase()}`">
                     <v-icon size="16">
                       {{ obtenerIcono(item.raw.tipo) }}
                     </v-icon>
@@ -1137,10 +1266,7 @@ onMounted(() => {
 
               <div class="selected-account">
 
-                <div
-                  class="select-account-icon"
-                  :class="`account-icon-${item.raw.tipo.toLowerCase()}`"
-                >
+                <div class="select-account-icon" :class="`account-icon-${item.raw.tipo.toLowerCase()}`">
                   <v-icon size="15">
                     {{ obtenerIcono(item.raw.tipo) }}
                   </v-icon>
@@ -1158,14 +1284,11 @@ onMounted(() => {
 
           <!-- RESUMEN -->
 
-          <div
-            v-if="
-              cuentaOrigenSeleccionada &&
-              transferenciaForm.cuentaDestinoId &&
-              Number(transferenciaForm.monto) > 0
-            "
-            class="transfer-summary"
-          >
+          <div v-if="
+            cuentaOrigenSeleccionada &&
+            transferenciaForm.cuentaDestinoId &&
+            Number(transferenciaForm.monto) > 0
+          " class="transfer-summary">
 
             <div class="summary-row">
 
@@ -1214,15 +1337,8 @@ onMounted(() => {
             </span>
           </div>
 
-          <v-textarea
-            v-model="transferenciaForm.observacion"
-            placeholder="Ej. Traslado de efectivo a Nequi"
-            variant="outlined"
-            density="compact"
-            rows="2"
-            auto-grow
-            hide-details
-          />
+          <v-textarea v-model="transferenciaForm.observacion" placeholder="Ej. Traslado de efectivo a Nequi"
+            variant="outlined" density="compact" rows="2" auto-grow hide-details />
 
         </v-card-text>
 
@@ -1230,26 +1346,14 @@ onMounted(() => {
 
         <v-card-actions class="px-4 py-3">
 
-          <v-btn
-            variant="text"
-            size="small"
-            :disabled="loadingTransferencia"
-            @click="cerrarTransferencia"
-          >
+          <v-btn variant="text" size="small" :disabled="loadingTransferencia" @click="cerrarTransferencia">
             Cancelar
           </v-btn>
 
           <v-spacer />
 
-          <v-btn
-            color="primary"
-            variant="flat"
-            size="small"
-            :loading="loadingTransferencia"
-            :disabled="!puedeTransferir"
-            prepend-icon="mdi-swap-horizontal"
-            @click="transferirDinero"
-          >
+          <v-btn color="primary" variant="flat" size="small" :loading="loadingTransferencia"
+            :disabled="!puedeTransferir" prepend-icon="mdi-swap-horizontal" @click="transferirDinero">
             Transferir dinero
           </v-btn>
 
@@ -1263,11 +1367,7 @@ onMounted(() => {
          DIALOG MOVIMIENTOS
     ====================================================== -->
 
-    <v-dialog
-      v-model="dialogMovimientos"
-      max-width="760"
-      scrollable
-    >
+    <v-dialog v-model="dialogMovimientos" max-width="760" scrollable>
 
       <v-card class="dialog-card">
 
@@ -1275,17 +1375,11 @@ onMounted(() => {
 
         <div class="dialog-header">
 
-          <div
-            v-if="cuentaSeleccionada"
-            class="d-flex align-center ga-3"
-          >
+          <div v-if="cuentaSeleccionada" class="d-flex align-center ga-3">
 
-            <div
-              class="account-icon"
-              :class="`
+            <div class="account-icon" :class="`
                 account-icon-${cuentaSeleccionada.tipo.toLowerCase()}
-              `"
-            >
+              `">
               <v-icon size="20">
                 {{ obtenerIcono(cuentaSeleccionada.tipo) }}
               </v-icon>
@@ -1317,12 +1411,7 @@ onMounted(() => {
 
           </div>
 
-          <v-btn
-            icon="mdi-close"
-            variant="text"
-            size="small"
-            @click="cerrarMovimientos"
-          />
+          <v-btn icon="mdi-close" variant="text" size="small" @click="cerrarMovimientos" />
 
         </div>
 
@@ -1330,16 +1419,9 @@ onMounted(() => {
 
         <!-- LOADING -->
 
-        <div
-          v-if="loadingMovimientos"
-          class="loading-movements"
-        >
+        <div v-if="loadingMovimientos" class="loading-movements">
 
-          <v-progress-circular
-            indeterminate
-            color="primary"
-            size="30"
-          />
+          <v-progress-circular indeterminate color="primary" size="30" />
 
           <span>
             Cargando movimientos...
@@ -1349,27 +1431,16 @@ onMounted(() => {
 
         <!-- MOVIMIENTOS -->
 
-        <div
-          v-else-if="movimientos.length"
-          class="movements-list"
-        >
+        <div v-else-if="movimientos.length" class="movements-list">
 
-          <div
-            v-for="movimiento in movimientos"
-            :key="movimiento.id"
-            class="movement-item"
-          >
+          <div v-for="movimiento in movimientos" :key="movimiento.id" class="movement-item">
 
             <!-- ICONO -->
 
-            <div
-              class="movement-icon"
-              :class="
-                movimiento.tipo === 'INGRESO'
-                  ? 'movement-income'
-                  : 'movement-expense'
-              "
-            >
+            <div class="movement-icon" :class="movimiento.tipo === 'INGRESO'
+              ? 'movement-income'
+              : 'movement-expense'
+              ">
 
               <v-icon size="17">
                 {{ obtenerIconoMovimiento(movimiento.tipo) }}
@@ -1387,14 +1458,10 @@ onMounted(() => {
                   {{ obtenerTextoConcepto(movimiento.concepto) }}
                 </span>
 
-                <span
-                  class="movement-amount"
-                  :class="
-                    movimiento.tipo === 'INGRESO'
-                      ? 'amount-income'
-                      : 'amount-expense'
-                  "
-                >
+                <span class="movement-amount" :class="movimiento.tipo === 'INGRESO'
+                  ? 'amount-income'
+                  : 'amount-expense'
+                  ">
                   {{ obtenerSignoMovimiento(movimiento.tipo) }}
                   {{ formatearDinero(movimiento.monto) }}
                 </span>
@@ -1413,10 +1480,7 @@ onMounted(() => {
 
               </div>
 
-              <div
-                v-if="movimiento.observacion"
-                class="movement-observation"
-              >
+              <div v-if="movimiento.observacion" class="movement-observation">
                 {{ movimiento.observacion }}
               </div>
 
@@ -1442,15 +1506,9 @@ onMounted(() => {
 
         <!-- SIN MOVIMIENTOS -->
 
-        <div
-          v-else
-          class="empty-movements"
-        >
+        <div v-else class="empty-movements">
 
-          <v-icon
-            size="38"
-            color="grey"
-          >
+          <v-icon size="38" color="grey">
             mdi-history
           </v-icon>
 
@@ -1470,11 +1528,7 @@ onMounted(() => {
 
           <v-spacer />
 
-          <v-btn
-            variant="text"
-            size="small"
-            @click="cerrarMovimientos"
-          >
+          <v-btn variant="text" size="small" @click="cerrarMovimientos">
             Cerrar
           </v-btn>
 
@@ -1735,6 +1789,58 @@ onMounted(() => {
   font-size: 0.65rem;
   color: rgb(var(--v-theme-primary));
   font-weight: 600;
+}
+/* ============================================================
+   OPERACIONES MANUALES DE SALDO
+============================================================ */
+
+.balance-income-icon {
+  background: rgba(var(--v-theme-success), 0.10);
+  color: rgb(var(--v-theme-success));
+}
+
+.balance-expense-icon {
+  background: rgba(var(--v-theme-error), 0.10);
+  color: rgb(var(--v-theme-error));
+}
+
+.balance-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(var(--v-border-color), 0.10);
+  border-radius: 9px;
+  background: rgba(var(--v-theme-on-surface), 0.025);
+}
+
+.balance-current span {
+  font-size: 0.72rem;
+  color: rgba(var(--v-theme-on-surface), 0.55);
+}
+
+.balance-current strong {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.balance-summary {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid rgba(var(--v-border-color), 0.10);
+  border-radius: 9px;
+  background: rgba(var(--v-theme-on-surface), 0.02);
+}
+
+.balance-summary .summary-row {
+  min-height: 25px;
+}
+
+.resulting-balance {
+  font-size: 0.82rem !important;
+  font-weight: 700;
 }
 
 /* ============================================================

@@ -1628,7 +1628,7 @@ async function cargarProductos() {
   loadingProductos.value = true
 
   try {
-    const { data } = await api.get('/producto/activos')
+    const { data } = await api.get('/cafeteria/producto/activos')
 
     productos.value = Array.isArray(data) ? data : []
   } catch (error) {

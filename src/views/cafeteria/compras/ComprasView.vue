@@ -273,7 +273,7 @@ async function cargarCompras() {
   loading.value = true
 
   try {
-    const response = await axios.get('/compras')
+    const response = await axios.get('/cafeteria/compras')
     compras.value = response.data
   } catch (error) {
     console.error(error)
@@ -290,7 +290,7 @@ async function cargarCompras() {
 
 async function cargarProveedores() {
   try {
-    const response = await axios.get('/proveedor')
+    const response = await axios.get('/cafeteria/proveedor')
     proveedores.value = response.data
   } catch (error) {
     console.error(error)
@@ -305,7 +305,7 @@ async function cargarProveedores() {
 
 async function cargarProductos() {
   try {
-    const response = await axios.get('/producto')
+    const response = await axios.get('/cafeteria/producto')
     productos.value = response.data
   } catch (error) {
     console.error(error)
@@ -637,7 +637,7 @@ async function guardarCompra() {
         form.observaciones.trim()
     }
 
-    await axios.post('/compras', payload)
+    await axios.post('/cafeteria/compras', payload)
 
     cerrarCompraDialog()
 
@@ -671,7 +671,7 @@ async function abrirDetalle(compra) {
 
   try {
     const response = await axios.get(
-      `/compras/${compra.id}`,
+      `/cafeteria/compras/${compra.id}`,
     )
 
     detalleCompra.value = response.data
@@ -720,7 +720,7 @@ async function anularCompra() {
 
   try {
     await axios.patch(
-      `/compras/${compraSeleccionada.value.id}/anular`,
+      `/cafeteria/compras/${compraSeleccionada.value.id}/anular`,
     )
 
     cerrarAnular()

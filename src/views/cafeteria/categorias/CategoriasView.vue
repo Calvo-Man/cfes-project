@@ -472,7 +472,7 @@ async function cargarCategorias() {
 
     try {
         const { data } = await api.get(
-            '/categoria-producto',
+            '/cafeteria/categoria-producto',
         )
 
         categorias.value = Array.isArray(data)
@@ -541,7 +541,7 @@ async function guardarCategoria() {
     try {
         if (modoEdicion.value) {
             await api.patch(
-                `/categoria-producto/${categoriaSeleccionada.value.id}`,
+                `/cafeteria/categoria-producto/${categoriaSeleccionada.value.id}`,
                 {
                     nombre: form.nombre.trim(),
                     descripcion:
@@ -554,7 +554,7 @@ async function guardarCategoria() {
                 'Categoría actualizada correctamente.',
             )
         } else {
-            await api.post('/categoria-producto', {
+            await api.post('/cafeteria/categoria-producto', {
                 nombre: form.nombre.trim(),
                 descripcion:
                     form.descripcion?.trim() || undefined,
@@ -597,7 +597,7 @@ async function desactivarCategoria() {
 
     try {
         await api.delete(
-            `/categoria-producto/${categoriaSeleccionada.value.id}`,
+            `/cafeteria/categoria-producto/${categoriaSeleccionada.value.id}`,
         )
 
         mostrarMensaje(
@@ -620,7 +620,7 @@ async function desactivarCategoria() {
 async function activarCategoria(categoria) {
     try {
         await api.patch(
-            `/categoria-producto/${categoria.id}`,
+            `/cafeteria/categoria-producto/${categoria.id}`,
             {
                 activo: true,
             },

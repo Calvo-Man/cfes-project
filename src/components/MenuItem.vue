@@ -1,5 +1,8 @@
+```vue
 <script>
+import { useRoute } from 'vue-router'
 import { useUserStore } from '@/store/userStore'
+import { useCafeteriaAuthStore } from '@/store/cafeteriaAuthStore'
 
 export default {
   name: 'MenuItem',
@@ -54,6 +57,11 @@ export default {
       type: Boolean,
       default: false,
     },
+
+    permiso: {
+      type: String,
+      default: '',
+    },
   },
 
   emits: ['closeSidebar'],
@@ -65,57 +73,103 @@ export default {
       containerHeight: '0px',
 
       userStore: useUserStore(),
+      cafeteriaAuthStore: useCafeteriaAuthStore(),
+      route: useRoute(),
     }
   },
 
   computed: {
 
     /*
-     * Determina si este elemento tiene submenús
+     * Detectamos si actualmente estamos
+     * dentro del módulo de cafetería.
      */
-    hasChildren() {
-      return Array.isArray(this.data) && this.data.length > 0
+    esCafeteria() {
+      return (
+        this.route.path === '/cafeteria' ||
+        this.route.path.startsWith('/cafeteria/')
+      )
     },
 
     /*
-     * Determina si el usuario puede ver este elemento
+     * Hijos visibles según el sistema activo.
      */
-    showItems() {
-      const rolUsuario = this.userStore.user?.rol
-
-      // No requiere permisos especiales
-      if (!this.RequiresAdmin && !this.RequiresPastor) {
-        return true
+    visibleData() {
+      if (!Array.isArray(this.data)) {
+        return []
       }
 
-      // Requiere Admin o Pastor
-      if (this.RequiresAdmin && this.RequiresPastor) {
-        return (
-          rolUsuario === 'administrador' ||
-          rolUsuario === 'pastor'
+      return this.data.filter((item) => {
+        return this.puedeVerItem(item)
+      })
+    },
+
+    /*
+     * Un padre solo existe visualmente
+     * si tiene al menos un hijo visible.
+     */
+    hasChildren() {
+      return this.visibleData.length > 0
+    },
+
+    /*
+     * Determina si ESTE elemento debe aparecer.
+     */
+    showItems() {
+
+      /*
+       * Si tiene hijos, el padre aparece
+       * solamente si tiene hijos visibles.
+       */
+      if (
+        Array.isArray(this.data) &&
+        this.data.length > 0
+      ) {
+        return this.hasChildren
+      }
+
+      /*
+       * ========================================
+       * MODO CAFETERÍA
+       * ========================================
+       *
+       * En cafetería NO mostramos elementos
+       * normales de Iglesia.
+       */
+      if (this.esCafeteria) {
+        if (!this.permiso) {
+          return false
+        }
+
+        return this.cafeteriaAuthStore.tienePermiso(
+          this.permiso,
         )
       }
 
-      // Solo Admin
-      if (this.RequiresAdmin) {
-        return rolUsuario === 'administrador'
+      /*
+       * ========================================
+       * MODO IGLESIA
+       * ========================================
+       *
+       * En Iglesia NO mostramos elementos
+       * que pertenezcan exclusivamente
+       * a cafetería.
+       */
+      if (this.permiso) {
+        return false
       }
 
-      // Solo Pastor
-      if (this.RequiresPastor) {
-        return rolUsuario === 'pastor'
-      }
-
-      return false
+      return this.puedeVerRol({
+        RequiresAdmin: this.RequiresAdmin,
+        RequiresPastor: this.RequiresPastor,
+      })
     },
 
-    /*
-     * Clases dinámicas del elemento
-     */
     itemClasses() {
       return {
         'is-collapsed':
-          this.smallMenu && this.depth === 0,
+          this.smallMenu &&
+          this.depth === 0,
 
         'has-children':
           this.hasChildren,
@@ -129,7 +183,122 @@ export default {
   methods: {
 
     /*
-     * Click sobre un elemento
+     * Comprueba si un elemento del árbol
+     * puede mostrarse.
+     */
+    puedeVerItem(item) {
+
+      /*
+       * ========================================
+       * SI TIENE HIJOS
+       * ========================================
+       *
+       * Revisamos recursivamente.
+       */
+      if (
+        Array.isArray(item.children) &&
+        item.children.length > 0
+      ) {
+        return item.children.some((child) => {
+          return this.puedeVerItem(child)
+        })
+      }
+
+      /*
+       * ========================================
+       * MODO CAFETERÍA
+       * ========================================
+       */
+      if (this.esCafeteria) {
+
+        /*
+         * Un elemento sin permiso no pertenece
+         * al menú de cafetería.
+         */
+        if (!item.permiso) {
+          return false
+        }
+
+        return this.cafeteriaAuthStore.tienePermiso(
+          item.permiso,
+        )
+      }
+
+      /*
+       * ========================================
+       * MODO IGLESIA
+       * ========================================
+       */
+
+      /*
+       * Un elemento con permiso de cafetería
+       * no aparece en el menú normal.
+       */
+      if (item.permiso) {
+        return false
+      }
+
+      return this.puedeVerRol(item)
+    },
+
+    /*
+     * Lógica de roles del sistema normal.
+     */
+    puedeVerRol(item) {
+
+      const rolUsuario =
+        this.userStore.user?.rol
+
+      /*
+       * No requiere ningún rol especial.
+       */
+      if (
+        !item.RequiresAdmin &&
+        !item.RequiresPastor
+      ) {
+        return true
+      }
+
+      /*
+       * Admin o Pastor.
+       */
+      if (
+        item.RequiresAdmin &&
+        item.RequiresPastor
+      ) {
+        return (
+          rolUsuario === 'administrador' ||
+          rolUsuario === 'pastor' ||
+          rolUsuario === 'ADMINISTRADOR' ||
+          rolUsuario === 'PASTOR'
+        )
+      }
+
+      /*
+       * Solo Admin.
+       */
+      if (item.RequiresAdmin) {
+        return (
+          rolUsuario === 'administrador' ||
+          rolUsuario === 'ADMINISTRADOR'
+        )
+      }
+
+      /*
+       * Solo Pastor.
+       */
+      if (item.RequiresPastor) {
+        return (
+          rolUsuario === 'pastor' ||
+          rolUsuario === 'PASTOR'
+        )
+      }
+
+      return false
+    },
+
+    /*
+     * Click sobre un elemento.
      */
     handleClick() {
 
@@ -140,9 +309,8 @@ export default {
       this.closeSidebarOnMobile()
     },
 
-
     /*
-     * Abrir / cerrar submenú
+     * Abrir / cerrar submenú.
      */
     toggleMenu() {
 
@@ -160,9 +328,8 @@ export default {
       this.expanded = !this.expanded
     },
 
-
     /*
-     * Abrir submenú con animación
+     * Abrir submenú con animación.
      */
     openChildren() {
 
@@ -170,7 +337,8 @@ export default {
 
       this.$nextTick(() => {
 
-        const container = this.$refs.container
+        const container =
+          this.$refs.container
 
         if (!container) return
 
@@ -183,21 +351,23 @@ export default {
 
           if (!this.expanded) return
 
-          this.containerHeight = 'fit-content'
+          this.containerHeight =
+            'fit-content'
 
-          container.style.overflow = 'visible'
+          container.style.overflow =
+            'visible'
 
         }, 300)
       })
     },
 
-
     /*
-     * Cerrar submenú con animación
+     * Cerrar submenú con animación.
      */
     closeChildren() {
 
-      const container = this.$refs.container
+      const container =
+        this.$refs.container
 
       if (!container) {
         this.showChildren = false
@@ -205,7 +375,8 @@ export default {
         return
       }
 
-      container.style.overflow = 'hidden'
+      container.style.overflow =
+        'hidden'
 
       this.containerHeight =
         `${container.scrollHeight}px`
@@ -215,147 +386,246 @@ export default {
       })
 
       setTimeout(() => {
-
         this.showChildren = false
-
       }, 300)
     },
 
-
     /*
-     * Cierra el sidebar solamente en móvil
+     * Cierra el sidebar solamente en móvil.
      */
     closeSidebarOnMobile() {
 
-      if (window.innerWidth < 1024) {
+      if (window.innerWidth <= 1024) {
         this.$emit('closeSidebar')
       }
     },
   },
 }
 </script>
+```
 
 
 <template>
+  <div
+    v-if="showItems"
+    class="menu-item"
+    :class="itemClasses"
+  >
 
-  <!-- =====================================================
-       ITEM
-  ====================================================== -->
+    <!-- =========================================
+         ELEMENTO CON SUBMENÚ
+    ========================================== -->
 
-  <div v-if="showItems" class="menu-item" :class="itemClasses">
-
-    <!-- ===================================================
-         ITEM PRINCIPAL
-    ==================================================== -->
-
-    <!-- ROUTER LINK -->
-
-    <router-link v-if="to" :to="to" class="menu-link" :title="smallMenu ? label : ''" @click="closeSidebarOnMobile">
+    <button
+      v-if="hasChildren"
+      type="button"
+      class="menu-link menu-button"
+      :class="{ 'submenu-active': expanded }"
+      :title="smallMenu ? label : ''"
+      @click.stop="toggleMenu"
+    >
 
       <div class="menu-link-content">
 
-        <!-- ICONO -->
-
-        <span v-if="icon" class="material-icons menu-icon">
+        <span
+          v-if="icon"
+          class="material-icons menu-icon"
+        >
           {{ icon }}
         </span>
 
-
-        <!-- TEXTO -->
-
-        <span v-if="!smallMenu || depth > 0" class="menu-text">
+        <span
+          v-if="!smallMenu || depth > 0"
+          class="menu-text"
+        >
           {{ label }}
         </span>
 
       </div>
 
-
-      <!-- FLECHA -->
-
-      <span v-if="hasChildren && !smallMenu" class="material-icons menu-arrow" :class="{ rotated: expanded }">
+      <span
+        v-if="!smallMenu"
+        class="material-icons menu-arrow"
+        :class="{ rotated: expanded }"
+      >
         expand_more
       </span>
+
+    </button>
+
+
+    <!-- =========================================
+         ELEMENTO CON RUTA
+    ========================================== -->
+
+    <router-link
+      v-else-if="to"
+      :to="to"
+      class="menu-link"
+      :title="smallMenu ? label : ''"
+      @click="closeSidebarOnMobile"
+    >
+
+      <div class="menu-link-content">
+
+        <span
+          v-if="icon"
+          class="material-icons menu-icon"
+        >
+          {{ icon }}
+        </span>
+
+        <span
+          v-if="!smallMenu || depth > 0"
+          class="menu-text"
+        >
+          {{ label }}
+        </span>
+
+      </div>
 
     </router-link>
 
 
-    <!-- ===================================================
-         ITEM SIN ROUTER
-    ==================================================== -->
+    <!-- =========================================
+         ELEMENTO CON ENLACE EXTERNO
+    ========================================== -->
 
-    <div v-else class="menu-link" :title="smallMenu ? label : ''" @click="handleClick">
+    <a
+      v-else-if="href"
+      :href="href"
+      :download="shouldDownload ? '' : null"
+      class="menu-link"
+      :title="smallMenu ? label : ''"
+      @click="closeSidebarOnMobile"
+    >
 
       <div class="menu-link-content">
 
-        <!-- ICONO -->
-
-        <span v-if="icon" class="material-icons menu-icon">
+        <span
+          v-if="icon"
+          class="material-icons menu-icon"
+        >
           {{ icon }}
         </span>
 
-
-        <!-- TEXTO -->
-
-        <span v-if="!smallMenu || depth > 0" class="menu-text">
+        <span
+          v-if="!smallMenu || depth > 0"
+          class="menu-text"
+        >
           {{ label }}
         </span>
 
       </div>
 
-
-      <!-- FLECHA -->
-
-      <span v-if="hasChildren && !smallMenu" class="material-icons menu-arrow" :class="{ rotated: expanded }">
-        expand_more
-      </span>
-
-    </div>
+    </a>
 
 
-    <!-- ===================================================
-         SUBMENÚ NORMAL
-    ==================================================== -->
+    <!-- =========================================
+         ELEMENTO SIN RUTA
+    ========================================== -->
 
-    <div v-if="hasChildren && !smallMenu" v-show="showChildren" ref="container" class="items-container"
-      :style="{ height: containerHeight }">
+    <div
+      v-else
+      class="menu-link"
+      :title="smallMenu ? label : ''"
+    >
 
-      <MenuItem v-for="(item, index) in data" :key="index" :data="item.children" :label="item.label" :icon="item.icon"
-        :RequiresAdmin="item.RequiresAdmin" :RequiresPastor="item.RequiresPastor" :to="item.to" :href="item.href"
-        :shouldDownload="item.shouldDownload" :depth="depth + 1" :smallMenu="smallMenu"
-        @closeSidebar="$emit('closeSidebar')" />
+      <div class="menu-link-content">
 
-    </div>
+        <span
+          v-if="icon"
+          class="material-icons menu-icon"
+        >
+          {{ icon }}
+        </span>
 
-
-    <!-- ===================================================
-         SUBMENÚ FLOTANTE
-         SOLO SIDEBAR COMPRIMIDO
-    ==================================================== -->
-
-    <div v-if="
-      hasChildren &&
-      smallMenu &&
-      depth === 0
-    " class="collapsed-submenu">
-
-      <!-- TITULO -->
-
-      <div class="collapsed-submenu-title">
-
-        {{ label }}
+        <span
+          v-if="!smallMenu || depth > 0"
+          class="menu-text"
+        >
+          {{ label }}
+        </span>
 
       </div>
 
+    </div>
 
-      <!-- ITEMS -->
+
+    <!-- =========================================
+         SUBMENÚ NORMAL
+    ========================================== -->
+
+    <div
+      v-if="hasChildren && !smallMenu"
+      v-show="showChildren"
+      ref="container"
+      class="items-container"
+      :style="{ height: containerHeight }"
+    >
+
+      <MenuItem
+        v-for="(item, index) in visibleData"
+        :key="index"
+
+        :data="item.children"
+        :label="item.label"
+        :icon="item.icon"
+
+        :RequiresAdmin="item.RequiresAdmin"
+        :RequiresPastor="item.RequiresPastor"
+
+        :permiso="item.permiso"
+
+        :to="item.to"
+        :href="item.href"
+        :shouldDownload="item.shouldDownload"
+
+        :depth="depth + 1"
+        :smallMenu="smallMenu"
+
+        @closeSidebar="$emit('closeSidebar')"
+      />
+
+    </div>
+
+
+    <!-- =========================================
+         SUBMENÚ FLOTANTE
+         SIDEBAR COMPRIMIDO
+    ========================================== -->
+
+    <div
+      v-if="
+        hasChildren &&
+        smallMenu &&
+        depth === 0
+      "
+      class="collapsed-submenu"
+    >
+
+      <div class="collapsed-submenu-title">
+        {{ label }}
+      </div>
 
       <div class="collapsed-submenu-list">
 
-        <template v-for="(item, index) in data" :key="index">
+        <template
+          v-for="(item, index) in visibleData"
+          :key="index"
+        >
 
-          <router-link v-if="item.to" :to="item.to" class="collapsed-submenu-item" @click="closeSidebarOnMobile">
+          <router-link
+            v-if="item.to"
+            :to="item.to"
+            class="collapsed-submenu-item"
+            @click="closeSidebarOnMobile"
+          >
 
-            <span v-if="item.icon" class="material-icons">
+            <span
+              v-if="item.icon"
+              class="material-icons"
+            >
               {{ item.icon }}
             </span>
 
@@ -365,13 +635,22 @@ export default {
 
           </router-link>
 
+          <a
+            v-else-if="item.href"
+            :href="item.href"
+            :download="
+              item.shouldDownload
+                ? ''
+                : null
+            "
+            class="collapsed-submenu-item"
+            @click="closeSidebarOnMobile"
+          >
 
-          <a v-else-if="item.href" :href="item.href" :download="item.shouldDownload
-              ? ''
-              : null
-            " class="collapsed-submenu-item" @click="closeSidebarOnMobile">
-
-            <span v-if="item.icon" class="material-icons">
+            <span
+              v-if="item.icon"
+              class="material-icons"
+            >
               {{ item.icon }}
             </span>
 
@@ -388,7 +667,6 @@ export default {
     </div>
 
   </div>
-
 </template>
 
 
@@ -437,6 +715,67 @@ export default {
     background .2s ease,
     color .2s ease,
     transform .2s ease;
+}
+
+.menu-button {
+  appearance: none;
+  -webkit-appearance: none;
+
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+
+  background: transparent;
+  border: none;
+
+  outline: none;
+}
+
+.menu-button.submenu-active {
+  background: rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+}
+
+.menu-button.submenu-active .menu-icon {
+  color: #ffffff;
+}
+
+@media (max-width: 1024px) {
+  .menu-button {
+    width: 100%;
+    min-height: 48px;
+    touch-action: manipulation;
+  }
+
+  .menu-button:active {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .items-container {
+    width: 100%;
+    margin-left: 0;
+    padding-left: 12px;
+
+    background: rgba(0, 0, 0, 0.10);
+
+    border-left: 2px solid rgba(255, 255, 255, 0.18);
+
+    overflow: hidden;
+  }
+
+  .items-container :deep(.menu-link) {
+    min-height: 44px;
+    height: auto;
+    padding: 10px 12px;
+  }
+
+  .items-container :deep(.menu-text) {
+    white-space: normal;
+  }
+
+  .collapsed-submenu {
+    display: none;
+  }
 }
 
 

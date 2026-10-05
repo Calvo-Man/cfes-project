@@ -1058,7 +1058,7 @@ function manejarError(error, mensajePorDefecto) {
 
 async function cargarProductos() {
     try {
-        const { data } = await api.get('/producto')
+        const { data } = await api.get('/cafeteria/producto')
         productos.value = Array.isArray(data) ? data : []
     } catch (error) {
         manejarError(
@@ -1070,7 +1070,7 @@ async function cargarProductos() {
 
 async function cargarCategorias() {
     try {
-        const { data } = await api.get('/categoria-producto')
+        const { data } = await api.get('/cafeteria/categoria-producto')
         categorias.value = Array.isArray(data) ? data : []
     } catch (error) {
         manejarError(
@@ -1166,7 +1166,7 @@ async function guardarProducto() {
             }
 
             await api.patch(
-                `/producto/${productoSeleccionado.value.id}`,
+                `/cafeteria/producto/${productoSeleccionado.value.id}`,
                 payload,
             )
 
@@ -1187,7 +1187,7 @@ async function guardarProducto() {
                 activo: form.activo,
             }
 
-            await api.post('/producto', payload)
+            await api.post('/cafeteria/producto', payload)
 
             mostrarMensaje(
                 'Producto creado correctamente.',
@@ -1224,7 +1224,7 @@ async function desactivarProducto() {
 
     try {
         await api.delete(
-            `/producto/${productoSeleccionado.value.id}`,
+            `/cafeteria/producto/${productoSeleccionado.value.id}`,
         )
 
         mostrarMensaje(
@@ -1246,7 +1246,7 @@ async function desactivarProducto() {
 
 async function activarProducto(producto) {
     try {
-        await api.patch(`/producto/${producto.id}`, {
+        await api.patch(`/cafeteria/producto/${producto.id}`, {
             activo: true,
         })
 

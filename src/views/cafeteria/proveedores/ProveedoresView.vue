@@ -113,7 +113,7 @@ async function cargarProveedores() {
   loading.value = true
 
   try {
-    const response = await axios.get('/proveedor')
+    const response = await axios.get('/cafeteria/proveedor')
 
     proveedores.value = Array.isArray(response.data)
       ? response.data
@@ -245,7 +245,7 @@ async function guardarProveedor() {
 
     if (editando.value) {
       await axios.patch(
-        `/proveedor/${proveedorSeleccionado.value.id}`,
+        `/cafeteria/proveedor/${proveedorSeleccionado.value.id}`,
         payload,
       )
 
@@ -255,7 +255,7 @@ async function guardarProveedor() {
       )
     } else {
       await axios.post(
-        '/proveedor',
+        '/cafeteria/proveedor',
         payload,
       )
 
@@ -306,7 +306,7 @@ async function desactivarProveedor() {
 
   try {
     await axios.delete(
-      `/proveedor/${proveedorSeleccionado.value.id}`,
+      `/cafeteria/proveedor/${proveedorSeleccionado.value.id}`,
     )
 
     eliminarDialog.value = false

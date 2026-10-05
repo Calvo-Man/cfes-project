@@ -1,34 +1,134 @@
+
 // src/plugins/axios.js
+
 import axios from 'axios'
+
 import { useUserStore } from '@/store/userStore'
-import { useRouter } from 'vue-router'
-const router = useRouter()
+import { useCafeteriaAuthStore } from '@/store/cafeteriaAuthStore'
+
+import { router } from '@/router'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BACKEND,
   timeout: 20000,
 })
 
-// Interceptor para agregar token a cada petición
-api.interceptors.request.use((config) => {
-  const store = useUserStore()
-  if (store.token) {
-    config.headers.Authorization = `Bearer ${store.token}`
-  }
-  return config
-})
+// =====================================================
+// DETERMINAR SI ES UNA RUTA DE CAFETERÍA
+// =====================================================
 
-// Interceptor para manejar errores globales
-api.interceptors.response.use(
-  (response) => response,
+const esRutaCafeteria = (url = '') => {
+  // Esta ruta pertenece al sistema normal
+  if (
+    url === '/cafeteria/permisos' ||
+    url.startsWith('/cafeteria/permisos/')
+  ) {
+    return false
+  }
+
+  return (
+    url === '/cafeteria' ||
+    url.startsWith('/cafeteria/')
+  )
+}
+
+// =====================================================
+// CERRAR TODAS LAS SESIONES
+// =====================================================
+
+const cerrarTodasLasSesiones = () => {
+  const userStore = useUserStore()
+  const cafeteriaStore = useCafeteriaAuthStore()
+
+  userStore.logout()
+  cafeteriaStore.logout()
+}
+
+// =====================================================
+// REQUEST INTERCEPTOR
+// =====================================================
+
+api.interceptors.request.use(
+  (config) => {
+    const url = config.url || ''
+
+    // -------------------------------------------------
+    // CAFETERÍA
+    // -------------------------------------------------
+
+    if (esRutaCafeteria(url)) {
+      const cafeteriaStore =
+        useCafeteriaAuthStore()
+
+      if (cafeteriaStore.token) {
+        config.headers = config.headers || {}
+
+        config.headers.Authorization =
+          `Bearer ${cafeteriaStore.token}`
+      }
+
+      return config
+    }
+
+    // -------------------------------------------------
+    // SISTEMA NORMAL
+    // -------------------------------------------------
+
+    const userStore = useUserStore()
+
+    if (userStore.token) {
+      config.headers = config.headers || {}
+
+      config.headers.Authorization =
+        `Bearer ${userStore.token}`
+    }
+
+    return config
+  },
+
   (error) => {
-    const store = useUserStore()
+    return Promise.reject(error)
+  },
+)
+
+// =====================================================
+// RESPONSE INTERCEPTOR
+// =====================================================
+
+api.interceptors.response.use(
+  (response) => {
+    return response
+  },
+
+  (error) => {
     const status = error.response?.status
+    const url = error.config?.url || ''
+
+    console.log('ERROR API:', {
+      status,
+      url,
+      esCafeteria: esRutaCafeteria(url),
+    })
 
     if (status === 401) {
-      // Token inválido o expirado
-      store.logout()
-      router.push({ path: '/login' })
+      console.log(
+        '401 detectado. Cerrando ambas sesiones.',
+      )
+
+      cerrarTodasLasSesiones()
+
+      if (esRutaCafeteria(url)) {
+        return router.push({
+          path: '/login',
+          query: {
+            modo: 'cafeteria',
+          },
+        })
+      }
+
+      return router.push({
+        path: '/login',
+      })
     }
 
     return Promise.reject(error)

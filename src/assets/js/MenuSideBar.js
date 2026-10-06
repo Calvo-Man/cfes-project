@@ -24,6 +24,12 @@ export const MenuSideBar = [
     to: '/cafeteria/dashboard',
     permiso: 'CAFETERIA_DASHBOARD',
   },
+  {
+    label: 'Reportes',
+    icon: 'bar_chart',
+    to: '/cafeteria/reportes',
+    permiso: 'CAFETERIA_REPORTES',
+  },
 
   {
     label: 'Ventas',

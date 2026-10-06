@@ -113,7 +113,7 @@
             </strong>
 
             <span>
-              {{ miembroActual.user || 'Sin usuario' }}
+              {{ miembroActual.cedula || 'Sin cedula' }}
             </span>
 
           </div>

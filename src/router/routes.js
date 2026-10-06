@@ -29,10 +29,18 @@ export const routes = [
 
       {
         path: 'cafeteria/dashboard',
-        name: 'Cafetería',
+        name: 'Dashboard',
         component: () => import('../views/cafeteria/DashboardCafeteria.vue'),
         meta: {
           cafeteriaPermission: 'CAFETERIA_DASHBOARD',
+        },
+      },
+      {
+        path: 'cafeteria/reportes',
+        name: 'Reportes',
+        component: () => import('../views/cafeteria/reportes/ReportesView.vue'),
+        meta: {
+          cafeteriaPermission: 'CAFETERIA_REPORTES',
         },
       },
 
